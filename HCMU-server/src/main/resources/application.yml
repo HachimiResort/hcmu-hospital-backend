@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: HCMU-server
+
+server:
+  port: 8088
