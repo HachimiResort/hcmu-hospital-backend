@@ -21,28 +21,18 @@
 		<module>HCMU-pojo</module>
 	</modules>
 
-	<name>HCMU-Hospital</name>
-	<description>HCMU-Hospital</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+
 	<properties>
 		<java.version>17</java.version>
+		<mybatis.spring>2.2.0</mybatis.spring>
+		<lombok>1.18.20</lombok>
+		<fastjson>1.2.76</fastjson>
+		<pagehelper>1.3.0</pagehelper>
+		<knife4j>3.0.2</knife4j>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
-
 			<dependency>
 				<groupId>org.hcmu</groupId>
 				<artifactId>HCMU-common</artifactId>
@@ -58,18 +48,34 @@
 				<artifactId>HCMU-server</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.mysql</groupId>
 				<artifactId>mysql-connector-j</artifactId>
 				<scope>runtime</scope>
 			</dependency>
-
+			<!--lambok-->
 			<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
-				<optional>true</optional>
+				<version>${lombok}</version>
 			</dependency>
+
+			<!--自动分页-->
+			<dependency>
+				<groupId>com.github.pagehelper</groupId>
+				<artifactId>pagehelper-spring-boot-starter</artifactId>
+				<version>${pagehelper}</version>
+			</dependency>
+
+			<!--knife4j-->
+			<dependency>
+				<groupId>com.github.xiaoymin</groupId>
+				<artifactId>knife4j-spring-boot-starter</artifactId>
+				<version>${knife4j}</version>
+			</dependency>
+
+
+
 
 		</dependencies>
 	</dependencyManagement>
