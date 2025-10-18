@@ -51,15 +51,9 @@
 			<dependency>
 				<groupId>com.mysql</groupId>
 				<artifactId>mysql-connector-j</artifactId>
+				<version>8.0.33</version>
 				<scope>runtime</scope>
 			</dependency>
-			<!--lambok-->
-			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>${lombok}</version>
-			</dependency>
-
 			<!--自动分页-->
 			<dependency>
 				<groupId>com.github.pagehelper</groupId>
@@ -67,7 +61,6 @@
 				<version>${pagehelper}</version>
 			</dependency>
 
-			<!--knife4j-->
 			<dependency>
 				<groupId>com.github.xiaoymin</groupId>
 				<artifactId>knife4j-spring-boot-starter</artifactId>
