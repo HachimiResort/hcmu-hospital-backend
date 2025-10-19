@@ -29,6 +29,7 @@
 		<fastjson>1.2.76</fastjson>
 		<pagehelper>1.3.0</pagehelper>
 		<knife4j>3.0.2</knife4j>
+		<jjwt>0.9.1</jjwt>
 	</properties>
 
 	<dependencyManagement>
@@ -54,17 +55,18 @@
 				<version>8.0.33</version>
 				<scope>runtime</scope>
 			</dependency>
-			<!--自动分页-->
-			<dependency>
-				<groupId>com.github.pagehelper</groupId>
-				<artifactId>pagehelper-spring-boot-starter</artifactId>
-				<version>${pagehelper}</version>
-			</dependency>
+
 
 			<dependency>
 				<groupId>com.github.xiaoymin</groupId>
 				<artifactId>knife4j-spring-boot-starter</artifactId>
 				<version>${knife4j}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.jsonwebtoken</groupId>
+				<artifactId>jjwt</artifactId>
+				<version>${jjwt}</version>
 			</dependency>
 
 
