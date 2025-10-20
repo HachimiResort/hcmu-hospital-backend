@@ -40,6 +40,7 @@
 			<artifactId>HCMU-common</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.hcmu</groupId>
 			<artifactId>HCMU-pojo</artifactId>
@@ -64,6 +65,11 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>com.github.xiaoymin</groupId>
 			<artifactId>knife4j-spring-boot-starter</artifactId>
 		</dependency>
@@ -72,6 +78,8 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
+
+
 
 		<!--mybatis-plus依赖-->
 		<dependency>

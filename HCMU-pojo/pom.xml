@@ -50,6 +50,19 @@
 			<artifactId>knife4j-spring-boot-starter</artifactId>
 		</dependency>
 
+		<!-- Spring Security 依赖 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- FastJSON 依赖 -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.76</version>
+		</dependency>
+
 		<!--mybatis-plus依赖-->
 		<dependency>
 			<groupId>com.baomidou</groupId>
