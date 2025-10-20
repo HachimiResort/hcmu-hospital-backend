@@ -89,6 +89,19 @@
 			<artifactId>mybatis-plus-join-boot-starter</artifactId>
 			<version>1.4.11</version>
 		</dependency>
+
+		<!--redis依赖-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!--fastjson依赖-->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.33</version>
+		</dependency>
 	</dependencies>
 
 	<build>
