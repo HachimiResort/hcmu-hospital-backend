@@ -2,7 +2,7 @@ package org.hcmu.hcmuserver.handler;
 
 import org.apache.catalina.connector.ClientAbortException;
 import org.hcmu.hcmucommon.exception.ServiceException;
-import org.hcmu.hcmupojo.BaseResponse;
+import org.hcmu.hcmucommon.result.Result;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.ObjectError;
@@ -28,8 +28,8 @@ public class ExceptionMaster {
 
     @ExceptionHandler(ServiceException.class)
     @ResponseBody
-    public BaseResponse serviceException(ServiceException e) {
-        return BaseResponse.error(e.getCode(), e.getMessage());
+    public Result serviceException(ServiceException e) {
+        return Result.error(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(ClientAbortException.class)
@@ -40,16 +40,16 @@ public class ExceptionMaster {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
-    public BaseResponse methodArgumentNotValidException(MethodArgumentNotValidException e) {
-        return BaseResponse.error(e.getBindingResult().getAllErrors().stream()
+    public Result methodArgumentNotValidException(MethodArgumentNotValidException e) {
+        return Result.error(e.getBindingResult().getAllErrors().stream()
                     .map(ObjectError::getDefaultMessage)
                     .collect(Collectors.joining(",")));
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    public BaseResponse exception(Exception e) {
+    public Result exception(Exception e) {
         e.printStackTrace();
-        return BaseResponse.error(e.getMessage());
+        return Result.error(e.getMessage());
     }
 }

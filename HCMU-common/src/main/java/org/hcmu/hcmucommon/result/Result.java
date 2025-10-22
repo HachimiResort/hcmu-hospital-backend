@@ -1,38 +1,40 @@
 package org.hcmu.hcmucommon.result;
 
 import lombok.Data;
-
-import java.io.Serializable;
+import lombok.NoArgsConstructor;
 
 /**
- * 后端统一返回结果
+ * 自定义的响应数据结构
  * @param <T>
  */
 @Data
-public class Result<T> implements Serializable {
+@NoArgsConstructor
+public class Result<T> {
+    private Integer code; // 编码：200成功，其它数字为失败
+    private String msg; // 错误信息
+    private T data; // 数据
 
-    private Integer code; //编码：1成功，0和其它数字为失败
-    private String msg; //错误信息
-    private T data; //数据
-
-    public static <T> Result<T> success() {
-        Result<T> result = new Result<T>();
-        result.code = 1;
-        return result;
+//    私有化构造方法
+    private Result(Integer code, String msg, T data) {
+        this.code = code;
+        this.msg = msg;
+        this.data = data;
     }
 
     public static <T> Result<T> success(T object) {
-        Result<T> result = new Result<T>();
-        result.data = object;
-        result.code = 1;
-        return result;
+        return new Result<T>(200, "响应成功!", object);
+    }
+
+    public static <T> Result<T> success(String msg, T object){
+        return new Result<T>(200, msg, object);
     }
 
     public static <T> Result<T> error(String msg) {
-        Result result = new Result();
-        result.msg = msg;
-        result.code = 0;
-        return result;
+        return new Result<T>(500, msg, null);
     }
 
+    public static <T> Result<T> error(Integer code, String msg) {
+        return new Result<T>(code, msg, null);
+    }
 }
+
