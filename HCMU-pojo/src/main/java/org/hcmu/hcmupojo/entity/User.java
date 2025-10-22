@@ -27,12 +27,7 @@ public class User implements Serializable {
      * 用户id/主键/自增
      */
     @TableId(value = "user_id", type = IdType.AUTO)
-    private Long id;
-
-    /**
-     * 用户姓名
-     */
-    private String name;
+    private Long userId;
 
     /**
      * 用户名，非空唯一
@@ -40,6 +35,16 @@ public class User implements Serializable {
     private String userName;
 
     private String password;
+
+    /**
+     * 用户姓名
+     */
+    private String name;
+
+    /**
+     * 用户昵称
+     */
+    private String nickname;
 
     private String sex;
 
@@ -56,6 +61,14 @@ public class User implements Serializable {
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
+
+    private String email;
+
+    private String phone;
+
+    private String avatar;
+
+    private String info;
 
 
 

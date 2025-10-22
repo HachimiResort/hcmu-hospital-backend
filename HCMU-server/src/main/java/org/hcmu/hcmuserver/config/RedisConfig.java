@@ -1,6 +1,6 @@
 package org.hcmu.hcmuserver.config;
 
-import org.hcmu.hcmuserver.annotation.RequestKeyParam;
+import org.hcmu.hcmucommon.annotation.RequestKeyParam;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;

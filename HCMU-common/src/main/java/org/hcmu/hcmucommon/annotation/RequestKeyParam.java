@@ -1,4 +1,4 @@
-package org.hcmu.hcmuserver.annotation;
+package org.hcmu.hcmucommon.annotation;
 
 import java.lang.annotation.*;
 
