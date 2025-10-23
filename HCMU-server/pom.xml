@@ -85,12 +85,13 @@
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
-			<version>3.4.3</version>
+			<version>3.5.6</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-generator</artifactId>
-			<version>3.4.1</version>
+			<version>3.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.yulichang</groupId>
@@ -110,7 +111,14 @@
 			<artifactId>fastjson</artifactId>
 			<version>1.2.33</version>
 		</dependency>
-	</dependencies>
+
+    <!-- 强制使用与 Spring Boot 3 兼容的 mybatis-spring -->
+    <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis-spring</artifactId>
+        <version>3.0.3</version>
+    </dependency>
+</dependencies>
 
 	<build>
 		<plugins>
