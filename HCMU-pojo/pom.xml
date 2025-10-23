@@ -34,18 +34,11 @@
 		<dependency>
 			<groupId>org.hcmu</groupId>
 			<artifactId>HCMU-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.9.2</version>
-		</dependency>
-		<!-- 删除这里原来的 knife4j-spring-boot-starter 依赖 -->
 
 		<!-- Spring Security 依赖 -->
 		<dependency>
@@ -53,28 +46,24 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-		<!-- FastJSON 依赖 -->
+		<!-- FastJSON2 依赖 -->
 		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.2.76</version>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2</artifactId>
 		</dependency>
 
 		<!--mybatis-plus依赖-->
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
-			<version>3.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-generator</artifactId>
-			<version>3.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.yulichang</groupId>
 			<artifactId>mybatis-plus-join-boot-starter</artifactId>
-			<version>1.4.11</version>
 		</dependency>
 
 		<dependency>

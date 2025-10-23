@@ -1,6 +1,6 @@
 package org.hcmu.hcmupojo;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hcmu.hcmucommon.enumeration.PermissionEnum;
@@ -39,16 +39,7 @@ public class LoginUser implements UserDetails {
             return authorities;
         }
         //把permissions中String类型的权限信息封装成SimpleGrantedAuthority对象
-       authorities = new ArrayList<>(0);
-//        for (PermissionEnum permission : permissions) {
-//            SimpleGrantedAuthority authority = new SimpleGrantedAuthority(permission.getName());
-//            authorities.add(authority);
-//        }
-//        authorities = permissions.stream()
-//                .map(SimpleGrantedAuthority::new)
-//                .collect(Collectors.toList());
-
-//        返回空列表 本项目使用自定义的权限认证函数 因此不需要springSecurity的权限列表
+        authorities = new ArrayList<>(0);
         return authorities;
 //        return null;
     }

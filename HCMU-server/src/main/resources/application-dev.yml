@@ -13,3 +13,22 @@ spring:
     port: 6379
     password:
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  packagesToScan: org.hcmu.hcmuserver.controller
+  api-docs:
+    enabled: true
+
+knife4j:
+  # 开启增强配置
+  enable: true
+  basic:
+    enable: false
+    # Basic认证用户名
+    username: test
+    # Basic认证密码
+    password: 123
+

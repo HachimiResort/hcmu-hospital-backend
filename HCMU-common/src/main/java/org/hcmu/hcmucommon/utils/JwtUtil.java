@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 import java.nio.charset.StandardCharsets;
 
@@ -37,7 +38,6 @@ public class JwtUtil {
     }
 
     private static JwtBuilder getJwtBuilder(String subject, Long ttlMillis, String uuid) {
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
         SecretKey secretKey = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
@@ -47,12 +47,12 @@ public class JwtUtil {
         long expMillis = nowMillis + ttlMillis;
         Date expDate = new Date(expMillis);
         return Jwts.builder()
-                .setId(uuid)              //唯一的ID
-                .setSubject(subject)   // 主题  可以是JSON数据
-                .setIssuer("HCMU")     // 签发者
-                .setIssuedAt(now)      // 签发时间
-                .signWith(signatureAlgorithm, secretKey) //使用HS256对称加密算法签名, 第二个参数为秘钥
-                .setExpiration(expDate);
+                .id(uuid)              //唯一的ID
+                .subject(subject)   // 主题  可以是JSON数据
+                .issuer("HCMU")     // 签发者
+                .issuedAt(now)      // 签发时间
+                .signWith(secretKey) //使用HS256对称加密算法签名
+                .expiration(expDate);
     }
 
 
@@ -61,9 +61,14 @@ public class JwtUtil {
      * @return
      */
     public static SecretKey generalKey() {
-        byte[] encodedKey = Base64.getDecoder().decode(JwtUtil.JWT_KEY);
-        SecretKey key = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
-        return key;
+        // 使用更安全的密钥生成方式
+        String keyString = JWT_KEY;
+        // 确保密钥长度足够（至少32字节用于HS256）
+        if (keyString.length() < 32) {
+            keyString = keyString + "0".repeat(32 - keyString.length());
+        }
+        byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
@@ -73,15 +78,15 @@ public class JwtUtil {
      * @return
      */
     public static Claims parseJWT(String token) {
-
         SecretKey secretKey = generalKey();
 
-        // 得到DefaultJwtParser
+        // 使用新版本JJWT API解析JWT
         Claims claims = Jwts.parser()
                 // 设置签名的秘钥
-                .setSigningKey(secretKey)
+                .verifyWith(secretKey)
+                .build()
                 // 设置需要解析的jwt
-                .parseClaimsJws(token).getBody();
+                .parseSignedClaims(token).getPayload();
         return claims;
     }
 

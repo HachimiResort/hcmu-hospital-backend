@@ -81,18 +81,15 @@
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-boot-starter</artifactId>
-			<version>3.5.6</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.baomidou</groupId>
 			<artifactId>mybatis-plus-generator</artifactId>
-			<version>3.5.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.yulichang</groupId>
 			<artifactId>mybatis-plus-join-boot-starter</artifactId>
-			<version>1.4.11</version>
 		</dependency>
 
 		<!--redis依赖-->
@@ -103,24 +100,21 @@
 
 		<!--fastjson依赖-->
 		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.2.33</version>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2</artifactId>
 		</dependency>
 
-    <!-- 强制使用与 Spring Boot 3 兼容的 mybatis-spring -->
-    <dependency>
-        <groupId>org.mybatis</groupId>
-        <artifactId>mybatis-spring</artifactId>
-        <version>3.0.3</version>
-    </dependency>
+		<!-- 强制使用与 Spring Boot 3 兼容的 mybatis-spring -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+		</dependency>
 
-
-    <!-- Knife4j UI，配合 springdoc 使用 -->
-    <dependency>
-        <groupId>com.github.xiaoymin</groupId>
-        <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
-    </dependency>
+		<!-- Knife4j UI，配合 springdoc 使用 -->
+		<dependency>
+			<groupId>com.github.xiaoymin</groupId>
+			<artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+		</dependency>
 </dependencies>
 
 	<build>
