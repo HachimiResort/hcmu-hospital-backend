@@ -12,7 +12,7 @@ import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.UserDTO.UserLoginDTO;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmupojo.entity.User;
-import org.hcmu.hcmuserver.service.LoginService;
+import org.hcmu.hcmuserver.service.AuthService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class LoginServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implements LoginService {
+public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implements AuthService {
 
     @Autowired
     private AuthenticationManager authenticationManager;

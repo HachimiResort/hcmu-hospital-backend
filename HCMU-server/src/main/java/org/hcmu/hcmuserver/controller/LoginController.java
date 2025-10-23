@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.annotation.Idempotent;
-import org.hcmu.hcmuserver.service.LoginService;
+import org.hcmu.hcmuserver.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,14 +29,14 @@ import javax.validation.Valid;
 @Validated
 public class LoginController {
     @Autowired
-    private LoginService loginService;
+    private AuthService authService;
 
     @AutoLog("用户登录")
     @PostMapping("/login")
     @Operation(summary = "用户登录")
     @Idempotent
     public Result login(@RequestBody @Valid UserLoginDTO userLogin) {
-        return loginService.login(userLogin);
+        return authService.login(userLogin);
     }
 
 }
