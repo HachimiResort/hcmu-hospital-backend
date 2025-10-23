@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 /**
  * 登录控制器
@@ -27,7 +27,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("auth")
 @Validated
-public class LoginController {
+public class AuthController {
     @Autowired
     private AuthService authService;
 

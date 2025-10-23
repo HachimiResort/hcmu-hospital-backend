@@ -51,7 +51,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         // 如果认证通过了，使用userid生成一个jwt jwt存入ResponseResult返回
         LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
         Long userId = loginUser.getUser().getUserId();
-        //TODO: token两小时过期
+
         String jwt = JwtUtil.createJWT(userId.toString(), 1000 * 60 * 60 * 2L);
         Map<String, String> map = new HashMap<>();
         map.put("token", jwt);
