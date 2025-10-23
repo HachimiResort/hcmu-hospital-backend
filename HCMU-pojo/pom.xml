@@ -45,10 +45,7 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>2.9.2</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.xiaoymin</groupId>
-			<artifactId>knife4j-spring-boot-starter</artifactId>
-		</dependency>
+		<!-- 删除这里原来的 knife4j-spring-boot-starter 依赖 -->
 
 		<!-- Spring Security 依赖 -->
 		<dependency>

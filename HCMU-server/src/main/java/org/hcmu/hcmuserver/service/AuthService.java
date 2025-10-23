@@ -11,7 +11,7 @@ import org.hcmu.hcmupojo.entity.User;
  * @author Kyy008
  * @since 2025-10-23
  */
-public interface LoginService extends MPJBaseService<User> {
+public interface AuthService extends MPJBaseService<User> {
     /**
      * 用户登录
      * @param userLogin 用户登录信息
