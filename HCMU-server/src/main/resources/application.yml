@@ -4,6 +4,14 @@ spring:
     name: HCMU-server
   profiles:
     active: dev
+  datasource:
+    #   hikari数据源配置，
+    hikari:
+      connection-test-query: SELECT 1 FROM DUAL
+      connection-timeout: 10000
+      maximum-pool-size: 20
+      max-lifetime: 60000
+      minimum-idle: 5
 
 mybatis-plus:
   configuration:

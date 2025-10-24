@@ -1,5 +1,6 @@
 package org.hcmu.hcmuserver.controller;
 
+import org.hcmu.hcmupojo.dto.UserDTO.UserRegisterDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserLoginDTO;
 
 
@@ -11,10 +12,7 @@ import org.hcmu.hcmucommon.annotation.Idempotent;
 import org.hcmu.hcmuserver.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
@@ -37,6 +35,21 @@ public class AuthController {
     @Idempotent
     public Result login(@RequestBody @Valid UserLoginDTO userLogin) {
         return authService.login(userLogin);
+    }
+
+    @AutoLog("用户退出")
+    @PostMapping("/logout/{userId}")
+    @Operation(summary = "用户退出")
+    public Result logout(@PathVariable Long userId) {
+        return authService.logout(userId);
+    }
+
+    @AutoLog("用户发起注册")
+    @PostMapping("/register")
+    @Operation(summary = "用户发起注册", description = "用户发起注册")
+    @Idempotent
+    public Result getRegisterCode(@RequestBody @Valid UserRegisterDTO userRegister) {
+        return authService.getRegisterCode(userRegister);
     }
 
 }
