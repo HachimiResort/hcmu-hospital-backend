@@ -50,6 +50,7 @@ public class RoleServiceImpl extends MPJBaseServiceImpl<RoleMapper, Role> implem
         if (baseMapper.selectOne(new LambdaQueryWrapper<Role>().eq(Role::getName, role.getName())) != null) {
             return Result.error("角色名已存在");
         }
+
         role.setIsDefault(0);
         baseMapper.insert(role);
         for (Long permissionId : roleCreateDTO.getPermissionList()) {

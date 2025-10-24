@@ -31,9 +31,6 @@ public class RoleDTO {
         @NotBlank(message = "角色描述不能为空")
         private String roleInfo;
 
-        @NotNull(message = "角色类型不能为空")
-        private Integer type;
-
         @NotNull(message = "不能没有权限")
         private List<Long> permissionList;
 
@@ -55,9 +52,6 @@ public class RoleDTO {
 
         @NotNull(message = "角色描述不能为空")
         private String roleInfo;
-
-        @NotNull(message = "角色类型不能为空")
-        private Integer type;
 
         private Integer isDefault = 0;
         /**

@@ -52,9 +52,6 @@ public interface RoleService extends MPJBaseService<Role> {
 
     /**
      * 修改角色权限
-     *
-     * @param roleId                 角色id
-     * @param List<RoleDTO.PermissionUpdateDTO> 角色权限信息
      */
     Result<String> updateRolePermissionById(Long roleId, @Valid List<RoleDTO.PermissionUpdateDTO> permissionList);
 

@@ -21,12 +21,9 @@ public enum PermissionEnum {
     /*
      * 角色管理
      */
-    MASTER_ROLE(42, "masterRole"),
+    MASTER_ROLE(7, "masterRole");
 
-    /*
-     * 字段管理
-     */
-    ADD_FIELD(45, "addField");
+
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
