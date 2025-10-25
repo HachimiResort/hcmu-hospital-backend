@@ -13,6 +13,27 @@ spring:
     port: 6379
     password: idontknow
 
+  #配置邮箱
+  mail:
+    host: smtp.126.com
+    port: 465
+    protocol: smtp
+    username: admin@admin.com
+    nickname: HCMU
+    password: admin123
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+          auth: true
+          starttls:
+            enable: true
+        debug: true #调试模式
+    test-connection: false #启动项目时验证是否可以正确通信 默认为false
+
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
