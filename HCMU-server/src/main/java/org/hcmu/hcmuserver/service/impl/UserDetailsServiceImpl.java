@@ -36,9 +36,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
 
-        //查询用户信息
+        //查询用户信息 - 使用BINARY确保用户名严格区分大小写
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUserName,userName);
+        queryWrapper.apply("BINARY user_name = {0}", userName);
         User user = userMapper.selectOne(queryWrapper);
         //如果没有查询到用户就抛出异常
         if(Objects.isNull(user)){
@@ -51,7 +51,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .leftJoin(UserRole.class, UserRole::getUserId,User::getUserId)
                 .leftJoin(RolePermission.class, RolePermission::getRoleId, UserRole::getRoleId)
                 .leftJoin(Permission.class, Permission::getPermissionId, RolePermission::getPermissionId)
-                .eq(User::getUserName, userName);
+                .apply("BINARY t.user_name = {0}", userName);
         List<PermissionEnum> list = userMapper.selectJoinList(PermissionEnum.class,permissionQueryWrapper);
         //把数据封装成UserDetails返回
 

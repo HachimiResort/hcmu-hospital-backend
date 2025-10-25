@@ -97,9 +97,9 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
             throw new ServiceException(HttpStatus.BAD_REQUEST.value(), "两次密码不一致!");
         }
 
-        // 判断用户名是否存在
+        // 判断用户名是否存在 - 使用BINARY确保用户名严格区分大小写
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUserName, userRegister.getUserName());
+        queryWrapper.apply("BINARY user_name = {0}", userRegister.getUserName());
         User user_tmp = baseMapper.selectOne(queryWrapper);
 
         // 如果找到了
