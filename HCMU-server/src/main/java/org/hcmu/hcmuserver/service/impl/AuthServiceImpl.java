@@ -56,14 +56,14 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
     @Autowired
     private UserRoleMapper userRoleMapper;
 
-    //@Autowired
-    //private MailServiceImpl mailService;
+    @Autowired
+    private MailServiceImpl mailService;
 
     @Override
     public Result login(UserLoginDTO userLoginDto) {
         // AuthenticationManager authenticate进行用户认证
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                userLoginDto.getUserAccount(), userLoginDto.getPassword());
+                userLoginDto.getUserName(), userLoginDto.getPassword());
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
 
         // 如果认证没通过，给出对应的提示
@@ -99,7 +99,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
         // 判断用户名是否存在
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUserName, userRegister.getUserAccount());
+        queryWrapper.eq(User::getUserName, userRegister.getUserName());
         User user_tmp = baseMapper.selectOne(queryWrapper);
 
         // 如果找到了
@@ -126,8 +126,8 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 //        将注册用户暂存到redis中
         redisUtil.setCacheObject(RedisEnum.REGISTER.getDesc() + userRegister.getEmail(), userRegister, 5, TimeUnit.MINUTES);
 
-        //TODO: 发送邮件
-       // mailService.sendVerifyCoed("注册邮箱验证", code, userRegister.getEmail());
+
+        mailService.sendVerifyCoed("注册邮箱验证", code, userRegister.getEmail());
 
         return Result.success("验证码发送成功!");
     }

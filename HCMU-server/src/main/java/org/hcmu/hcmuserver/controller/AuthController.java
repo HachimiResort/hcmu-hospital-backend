@@ -1,5 +1,6 @@
 package org.hcmu.hcmuserver.controller;
 
+import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserRegisterDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserLoginDTO;
 
@@ -50,6 +51,14 @@ public class AuthController {
     @Idempotent
     public Result getRegisterCode(@RequestBody @Valid UserRegisterDTO userRegister) {
         return authService.getRegisterCode(userRegister);
+    }
+
+    @AutoLog("用户注册验证")
+    @PostMapping("/register/verify")
+    @Operation(summary = "用户注册验证", description = "用户注册验证")
+    @Idempotent
+    public Result verifyRegister(@RequestBody @Valid UserDTO.UserEmailVerifyDTO userEmailVerifyDTO) {
+        return authService.verifyRegister(userEmailVerifyDTO);
     }
 
 }

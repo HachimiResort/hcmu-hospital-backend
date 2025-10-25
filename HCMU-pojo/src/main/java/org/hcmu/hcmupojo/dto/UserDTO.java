@@ -14,9 +14,8 @@ import java.util.stream.Collectors;
 public class UserDTO {
     @Data
     public static class UserGetRequestDTO {
-        private String userAccount;
         private String userName;
-        private String branchName;
+        private String nickName;
         private String roleName;
         private Long pageNum = 1L;
         private Long pageSize = 20L;
@@ -26,8 +25,8 @@ public class UserDTO {
     @Data
     public static class UserLoginDTO {
         @RequestKeyParam
-        @NotBlank(message = "账号不能为空")
-        private String userAccount;
+        @NotBlank(message = "用户名不能为空")
+        private String userName;
 
         @NotBlank(message = "密码不能为空")
         private String password;
@@ -36,8 +35,8 @@ public class UserDTO {
     @Data
     public static class UserRegisterDTO {
         @RequestKeyParam
-        @NotBlank(message = "账号不能为空")
-        private String userAccount;
+        @NotBlank(message = "用户名不能为空")
+        private String userName;
 
         @NotBlank(message = "密码不能为空")
         private String password;
@@ -45,8 +44,8 @@ public class UserDTO {
         @NotBlank(message = "确认密码不能为空")
         private String checkPassword;
 
-        @NotBlank(message = "用户名不能为空")
-        private String userName;
+        @NotBlank(message = "昵称不能为空")
+        private String nickName;
 
         private String phone;
 
@@ -120,14 +119,10 @@ public class UserDTO {
     public static class UserListDTO {
         private Long userId;
         private String userName;
-        private String userAccount;
+        private String name;
         private String roleId;
         private String roleName;
-        private String branchId;
-        private String branchName;
         private Integer stateId;
-        private Integer score;
-        private Integer contribution;
 
         static public UserListDTO convert(User user) {
             if (user == null) {
@@ -136,7 +131,6 @@ public class UserDTO {
             UserListDTO userListDTO = new UserListDTO();
             userListDTO.setUserId(user.getUserId());
             userListDTO.setUserName(user.getUserName());
-            userListDTO.setUserAccount(user.getUserName());
             return userListDTO;
         }
 
@@ -151,20 +145,13 @@ public class UserDTO {
     @Data
     public static class UserInfoDTO {
         private Long userId;
-        private String userAccount;
         private String userName;
+        private String name;
         private String roleId;
         private String roleName;
-        private String branchId;
-        private String branchName;
         private String phone;
         private String email;
-        private String sex;
-        private String info;
         private String nickname;
-        private Integer age;
-        private Integer score;
-        private Integer contribution;
 
         public void applyMask(Long mask) {
             try {

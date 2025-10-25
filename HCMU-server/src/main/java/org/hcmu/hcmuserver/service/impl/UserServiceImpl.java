@@ -67,7 +67,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
                 .selectAs(Role::getName, "roleName")
                 .like(userGetRequestDTO.getUserName() != null, User::getUserName, userGetRequestDTO.getUserName())
-                .like(userGetRequestDTO.getUserAccount() != null, User::getUserName, userGetRequestDTO.getUserAccount())
+                .like(userGetRequestDTO.getUserName() != null, User::getUserName, userGetRequestDTO.getUserName())
                 .like(userGetRequestDTO.getRoleName() != null, Role::getName, userGetRequestDTO.getRoleName());
         IPage<UserDTO.UserListDTO> page = baseMapper.selectJoinPage(new Page<>(userGetRequestDTO.getPageNum(), userGetRequestDTO.getPageSize()), UserDTO.UserListDTO.class, queryWrapper);
         return Result.success(new PageDTO<UserDTO.UserListDTO>(page.getCurrent(), page.getSize(), page.getTotal()));

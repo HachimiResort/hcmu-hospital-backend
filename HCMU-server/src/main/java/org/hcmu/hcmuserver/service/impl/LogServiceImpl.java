@@ -24,7 +24,7 @@ public class LogServiceImpl extends MPJBaseServiceImpl<LogMapper, Log> implement
                     .select(User::getUserName, User::getUserName)
                     .leftJoin(User.class, User::getUserId, Log::getUserId)
                     .like(logGetRequestDTO.getUserName() != null, User::getUserName, logGetRequestDTO.getUserName())
-                    .like(logGetRequestDTO.getUserAccount() != null, User::getUserName, logGetRequestDTO.getUserAccount())
+                    .like(logGetRequestDTO.getUserName() != null, User::getUserName, logGetRequestDTO.getUserName())
                     .like(logGetRequestDTO.getOperation() != null, Log::getOperation, logGetRequestDTO.getOperation())
                     .like(logGetRequestDTO.getIp() != null, Log::getIp, logGetRequestDTO.getIp())
                     .orderByDesc(Log::getCreateTime);
