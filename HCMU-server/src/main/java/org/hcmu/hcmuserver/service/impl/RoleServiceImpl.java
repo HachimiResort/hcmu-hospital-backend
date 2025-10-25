@@ -2,6 +2,7 @@ package org.hcmu.hcmuserver.service.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import jakarta.validation.Valid;
@@ -88,7 +89,8 @@ public class RoleServiceImpl extends MPJBaseServiceImpl<RoleMapper, Role> implem
 
     @Override
     @Cacheable(value="permissions",keyGenerator = "keyGenerator")
-    public Result<List<PermissionListDTO>> findRolePermissionById(Long roleId) {
+    public Result<List<PermissionListDTO>> findRolePermissionById(@RequestKeyParam Long roleId) {
+        log.info("根据角色ID查权限信息Service: {}", roleId);
         LambdaQueryWrapper<Role> roleQueryWrapper = new LambdaQueryWrapper<>();
         roleQueryWrapper.eq(Role::getRoleId, roleId);
         Role role = baseMapper.selectOne(roleQueryWrapper);
@@ -164,7 +166,25 @@ public class RoleServiceImpl extends MPJBaseServiceImpl<RoleMapper, Role> implem
     }
 
     @Override
-    public Result<String> deleteRoleById(Long roleId) {
-        return null;
+    public Result<String> deleteRoleById(@RequestKeyParam Long roleId) {
+        Role role = baseMapper.selectById(roleId);
+        if (role == null) {
+            return Result.error("角色不存在");
+        }
+        int isDefault = role.getIsDefault();
+        if (isDefault == 1 || isDefault == -1) {
+            return Result.error("默认角色不可删除");
+        }
+
+        // 删除角色
+        baseMapper.deleteById(roleId);
+        
+        // 逻辑删除相关的角色权限关系
+        LambdaUpdateWrapper<RolePermission> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(RolePermission::getRoleId, roleId)
+                    .set(RolePermission::getIsDeleted, 1);
+        rolePermissionMapper.update(null, updateWrapper);
+        
+        return Result.success("删除成功");
     }
 }

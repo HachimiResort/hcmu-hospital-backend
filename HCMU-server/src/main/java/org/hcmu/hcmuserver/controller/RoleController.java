@@ -3,6 +3,7 @@ package org.hcmu.hcmuserver.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.RoleDTO;
@@ -30,6 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("roles")
 @Validated
+@Slf4j
 public class RoleController {
 
     @Autowired
@@ -63,6 +65,7 @@ public class RoleController {
     @GetMapping("/{roleId}/permissions")
     @PreAuthorize("@ex.hasSysAuthority('MASTER_ROLE')")
     public Result<List<PermissionListDTO>> getRolePermissions(@PathVariable Long roleId) {
+        log.info("根据角色ID查权限信息Controller: {}", roleId);
         return roleService.findRolePermissionById(roleId);
     }
 
