@@ -21,7 +21,7 @@ public class LogServiceImpl extends MPJBaseServiceImpl<LogMapper, Log> implement
     public Result<PageDTO<LogDTO.LogListDTO>> findLogs(LogDTO.LogGetRequestDTO logGetRequestDTO) {
         MPJLambdaWrapper<Log> queryWrapper = new MPJLambdaWrapper<Log>();
         queryWrapper.select(Log::getLogId, Log::getOperation, Log::getUserId, Log::getCreateTime, Log::getIp)
-                    .select(User::getUserName, User::getUserName)
+                    .select(User::getUserName, User::getNickname)
                     .leftJoin(User.class, User::getUserId, Log::getUserId)
                     .like(logGetRequestDTO.getUserName() != null, User::getUserName, logGetRequestDTO.getUserName())
                     .like(logGetRequestDTO.getUserName() != null, User::getUserName, logGetRequestDTO.getUserName())
