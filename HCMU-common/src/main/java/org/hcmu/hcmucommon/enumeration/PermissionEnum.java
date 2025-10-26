@@ -23,7 +23,7 @@ public enum PermissionEnum {
      */
     MASTER_ROLE(7, "masterRole"),
 
-    CHECK_LOG(8, "checkLog"),
+    LOG_PAGE(8, "logPage"),
 
     /*
      * 科室管理

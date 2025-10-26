@@ -18,6 +18,8 @@ public class Permission implements Serializable {
 
     private PermissionEnum keyValue;
 
+    private Integer type;
+
     /**
      * 权限描述
      */
