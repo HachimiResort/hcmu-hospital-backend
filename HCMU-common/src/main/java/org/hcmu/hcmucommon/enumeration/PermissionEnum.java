@@ -16,13 +16,23 @@ public enum PermissionEnum {
     DEL_MB(3, "delMB"),
     ALT_MB(4, "altMB"),
     CHECK_MB(5, "checkMB"),
-    GENERATE_CODE(6, "generateCode"),
+    IMPORT_MB(6, "importMB"),
 
     /*
      * 角色管理
      */
-    MASTER_ROLE(7, "masterRole");
+    MASTER_ROLE(7, "masterRole"),
 
+    CHECK_LOG(8, "checkLog"),
+
+    /*
+     * 科室管理
+     */
+    DEPART_MG_PAGE(9, "departMGPage"),
+    ADD_DEPART(10, "addDepart"),
+    DEL_DEPART(11, "delDepart"),
+    ALT_DEPART(12, "altDepart"),
+    CHECK_DEPART(13, "checkDepart");
 
 
     PermissionEnum(Integer code, String name) {
