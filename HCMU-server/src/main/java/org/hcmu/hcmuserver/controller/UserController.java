@@ -1,11 +1,11 @@
 package org.hcmu.hcmuserver.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.RoleDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmuserver.service.UserService;

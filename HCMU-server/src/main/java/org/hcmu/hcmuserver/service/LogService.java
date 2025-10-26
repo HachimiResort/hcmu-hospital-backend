@@ -1,9 +1,9 @@
 package org.hcmu.hcmuserver.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yulichang.base.MPJBaseService;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.LogDTO;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Log;
 
 public interface LogService extends MPJBaseService<Log> {
