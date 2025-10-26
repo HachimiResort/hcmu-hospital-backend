@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +14,7 @@ import org.hcmu.hcmucommon.exception.ServiceException;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.utils.RedisUtil;
 import org.hcmu.hcmupojo.LoginUser;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.Permission;
 import org.hcmu.hcmupojo.entity.Role;
@@ -70,7 +70,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .like(userGetRequestDTO.getUserName() != null, User::getUserName, userGetRequestDTO.getUserName())
                 .like(userGetRequestDTO.getRoleName() != null, Role::getName, userGetRequestDTO.getRoleName());
         IPage<UserDTO.UserListDTO> page = baseMapper.selectJoinPage(new Page<>(userGetRequestDTO.getPageNum(), userGetRequestDTO.getPageSize()), UserDTO.UserListDTO.class, queryWrapper);
-        return Result.success(new PageDTO<UserDTO.UserListDTO>(page.getCurrent(), page.getSize(), page.getTotal()));
+        return Result.success(new PageDTO<UserDTO.UserListDTO>(page));
     }
 
     @Override

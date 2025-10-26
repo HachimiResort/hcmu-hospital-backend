@@ -144,6 +144,7 @@ public class RoleDTO {
             permissionListDTO.setName(permission.getName());
             permissionListDTO.setPermissionId(permission.getPermissionId());
             permissionListDTO.setKeyValue(permission.getKeyValue());
+            permissionListDTO.setType(permission.getType());
             return permissionListDTO;
         }
 

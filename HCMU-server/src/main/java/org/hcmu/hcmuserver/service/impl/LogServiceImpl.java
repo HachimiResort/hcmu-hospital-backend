@@ -3,11 +3,11 @@ package org.hcmu.hcmuserver.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.LogDTO;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Log;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.user.LogMapper;
@@ -29,6 +29,6 @@ public class LogServiceImpl extends MPJBaseServiceImpl<LogMapper, Log> implement
                     .like(logGetRequestDTO.getIp() != null, Log::getIp, logGetRequestDTO.getIp())
                     .orderByDesc(Log::getCreateTime);
         IPage<LogDTO.LogListDTO> page = baseMapper.selectJoinPage(new Page<>(logGetRequestDTO.getPageNum(), logGetRequestDTO.getPageSize()), LogDTO.LogListDTO.class, queryWrapper);
-        return Result.success(new PageDTO<LogDTO.LogListDTO>(page.getCurrent(), page.getSize(), page.getTotal()));
+        return Result.success(new PageDTO<LogDTO.LogListDTO>(page));
     }
 }

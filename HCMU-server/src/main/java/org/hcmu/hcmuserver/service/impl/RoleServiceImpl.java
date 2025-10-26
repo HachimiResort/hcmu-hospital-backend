@@ -103,7 +103,7 @@ public class RoleServiceImpl extends MPJBaseServiceImpl<RoleMapper, Role> implem
                 .eq(Role::getRoleId, roleId)
                 .leftJoin(RolePermission.class, RolePermission::getRoleId, Role::getRoleId)
                 .leftJoin(Permission.class, Permission::getPermissionId, RolePermission::getPermissionId)
-                .select(Permission::getPermissionId, Permission::getName, Permission::getKeyValue);
+                .select(Permission::getPermissionId, Permission::getName, Permission::getKeyValue, Permission::getType);
         List<PermissionListDTO> rolePermList = baseMapper.selectJoinList(PermissionListDTO.class, queryWrapper);
         return Result.success(rolePermList);
     }

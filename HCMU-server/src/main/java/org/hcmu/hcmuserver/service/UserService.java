@@ -1,8 +1,8 @@
 package org.hcmu.hcmuserver.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yulichang.base.MPJBaseService;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.User;
 
