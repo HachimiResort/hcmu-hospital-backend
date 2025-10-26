@@ -100,7 +100,8 @@ jobs:
             -v \${CONFIG_FILE}:/app/config/application-\${SPRING_PROFILE}.yml \
             -e SPRING_PROFILES_ACTIVE=\${SPRING_PROFILE} \
             --restart always \
-            \${FULL_IMAGE_NAME}
+            \${FULL_IMAGE_NAME} \
+            --spring.config.location=file:/app/config/application-\${SPRING_PROFILE}.yml
 
           echo ">>> 7. 清理无用的 Docker 镜像..."
           docker image prune -f
