@@ -80,11 +80,7 @@ jobs:
           mkdir -p \${CONFIG_DIR}
           
           echo ">>> 2. 将生产配置文件写入服务器..."
-          # 将 GitHub Secret 的内容写入到服务器上的文件
-          # 使用 cat 和 here document 来处理多行文本
-          cat > \${CONFIG_FILE} <<'CONFIG_EOF'
-          ${{ secrets.PROD_APPLICATION_YML }}
-          CONFIG_EOF
+          echo '${{ secrets.PROD_APPLICATION_YML }}' > \${CONFIG_FILE}
           
           echo ">>> 3. 登录到阿里云镜像服务..."
           docker login --username=${{ secrets.ALIYUN_DOCKER_HUB_USER }} --password=${{ secrets.ALIYUN_DOCKER_HUB_TOKEN }} \${REGISTRY}
@@ -103,7 +99,10 @@ jobs:
             --name \${IMAGE_NAME} \
             -v \${CONFIG_FILE}:/app/config/application-\${SPRING_PROFILE}.yml \
             -e SPRING_PROFILES_ACTIVE=\${SPRING_PROFILE} \
+            --restart always \
             \${FULL_IMAGE_NAME}
 
+          echo ">>> 7. 清理无用的 Docker 镜像..."
+          docker image prune -f
           echo ">>> 部署完成！"
         EOF
