@@ -61,7 +61,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
     @Override
     public Result<PageDTO<UserDTO.UserListDTO>> findAllUsers(UserDTO.UserGetRequestDTO userGetRequestDTO) {
         MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<User>();
-        queryWrapper.select(User::getUserId, User::getUserName, User::getUserName)
+        queryWrapper.select(User::getUserId, User::getUserName, User::getName, User::getPhone, User::getEmail, User::getInfo, User::getSex, User::getNickname)
                 .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
                 .select(UserRole::getRoleId)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
@@ -76,7 +76,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
     @Override
     public Result findUserById(Long userId) {
         MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<User>();
-        queryWrapper.select(User::getUserId, User::getUserName, User::getUserName, User::getPhone, User::getEmail, User::getInfo, User::getSex, User::getNickname)
+        queryWrapper.select(User::getUserId, User::getUserName, User::getName, User::getPhone, User::getEmail, User::getInfo, User::getSex, User::getNickname)
                 .select(UserRole::getRoleId)
                 .selectAs(Role::getName, "roleName")
                 .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
