@@ -1,10 +1,10 @@
 package org.hcmu.hcmuserver.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.LogDTO;
+import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmuserver.service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
