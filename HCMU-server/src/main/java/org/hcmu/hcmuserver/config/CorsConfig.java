@@ -1,8 +1,14 @@
 package org.hcmu.hcmuserver.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.Collections;
 
 /**
  * 处理跨域问题的配置类
@@ -17,7 +23,7 @@ public class CorsConfig implements WebMvcConfigurer {
       // 设置允许跨域的路径
         registry.addMapping("/**")
                 // 设置允许跨域请求的域名
-                .allowedOriginPatterns("http://localhost:5173")
+                .allowedOriginPatterns("*")
                 // 是否允许cookie
                 .allowCredentials(true)
                 // 设置允许的请求方式
