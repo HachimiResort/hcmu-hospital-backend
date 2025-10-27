@@ -15,7 +15,7 @@ public class UserDTO {
     @Data
     public static class UserGetRequestDTO {
         private String userName;
-        private String nickName;
+        private String nickname;
         private String roleName;
         private Long pageNum = 1L;
         private Long pageSize = 20L;
@@ -45,7 +45,7 @@ public class UserDTO {
         private String checkPassword;
 
         @NotBlank(message = "昵称不能为空")
-        private String nickName;
+        private String nickname;
 
         private String phone;
 

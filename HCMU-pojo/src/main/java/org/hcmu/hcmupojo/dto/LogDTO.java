@@ -9,7 +9,7 @@ public class LogDTO {
     @Data
     public static class LogGetRequestDTO {
         private String userName;
-        private String nickName;
+        private String nickname;
         private String roleName;
         private String ip;
         private String operation;
@@ -23,7 +23,7 @@ public class LogDTO {
         private String operation;
         private String userId;
         private String userName;
-        private String nickName;
+        private String nickname;
         private String ip;
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",locale = "zh", timezone = "GMT+8")
         private Date createTime;
