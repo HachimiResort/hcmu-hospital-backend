@@ -44,8 +44,8 @@ public class UserDTO {
         @NotBlank(message = "确认密码不能为空")
         private String checkPassword;
 
-        @NotBlank(message = "昵称不能为空")
-        private String nickname;
+        @NotBlank(message = "姓名不能为空")
+        private String name;
 
         private String phone;
 
@@ -68,6 +68,8 @@ public class UserDTO {
             user.setUserName(userName);
             user.setPhone(phone);
             user.setEmail(email);
+            user.setName(name);
+            user.setNickname(name);
             return user;
         }
     }
