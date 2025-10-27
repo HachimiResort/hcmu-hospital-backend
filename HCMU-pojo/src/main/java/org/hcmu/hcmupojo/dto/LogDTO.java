@@ -9,7 +9,7 @@ public class LogDTO {
     @Data
     public static class LogGetRequestDTO {
         private String userName;
-        private String nickName;
+        private String nickname;
         private String roleName;
         private String ip;
         private String operation;
