@@ -161,20 +161,18 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     @Override
     public Result<String> deleteDoctorProfile(Long doctorProfileId) {
         // 校验医生档案是否存在
-        LambdaQueryWrapper<DoctorProfile> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DoctorProfile::getDoctorProfileId, doctorProfileId)
-                .eq(DoctorProfile::getIsDeleted, 0);
-        DoctorProfile doctorProfile = baseMapper.selectOne(queryWrapper);
+        DoctorProfile doctorProfile = baseMapper.selectById(doctorProfileId);
         if (doctorProfile == null) {
             return Result.error("医生档案不存在");
         }
 
-        // 逻辑删除
-        doctorProfile.setIsDeleted(1);
-        doctorProfile.setUpdateTime(LocalDateTime.now());
-        baseMapper.updateById(doctorProfile);
-        log.info("删除医生档案成功: {}", doctorProfileId);
-        return Result.success("删除成功");
+        boolean deleted = baseMapper.deleteById(doctorProfileId) > 0;
+        if (deleted) {
+            log.info("删除医生档案成功: {}", doctorProfileId);
+            return Result.success("删除成功");
+        } else {
+            return Result.error("删除失败");
+        }
     }
 
     @Override
@@ -183,25 +181,12 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             return Result.error("请选择要删除的医生档案");
         }
 
-        // 校验所有档案是否存在且未删除
-        LambdaQueryWrapper<DoctorProfile> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DoctorProfile::getDoctorProfileId, doctorProfileIds)
-                .eq(DoctorProfile::getIsDeleted, 0);
-        long existCount = baseMapper.selectCount(queryWrapper);
-        if (existCount != doctorProfileIds.size()) {
-            return Result.error("部分医生档案不存在或已删除");
+        int deletedCount = baseMapper.deleteBatchIds(doctorProfileIds);
+        if (deletedCount > 0) {
+            log.info("批量删除医生档案成功，共{}条", deletedCount);
+            return Result.success("批量删除成功");
+        } else {
+            return Result.error("批量删除失败，可能档案不存在或已删除");
         }
-
-        // 批量逻辑删除
-        DoctorProfile update = new DoctorProfile();
-        update.setIsDeleted(1);
-        update.setUpdateTime(LocalDateTime.now());
-
-        LambdaUpdateWrapper<DoctorProfile> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.in(DoctorProfile::getDoctorProfileId, doctorProfileIds);
-
-        baseMapper.update(update, updateWrapper);
-        log.info("批量删除医生档案成功，共{}条", doctorProfileIds.size());
-        return Result.success("批量删除成功");
     }
 }
