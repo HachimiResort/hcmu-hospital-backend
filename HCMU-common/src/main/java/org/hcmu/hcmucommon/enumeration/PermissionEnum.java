@@ -23,6 +23,9 @@ public enum PermissionEnum {
      */
     MASTER_ROLE(7, "masterRole"),
 
+    /*
+     * 日志管理
+     */
     LOG_PAGE(8, "logPage"),
 
     /*

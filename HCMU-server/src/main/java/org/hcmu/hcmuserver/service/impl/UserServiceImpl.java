@@ -60,7 +60,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
     @Override
     public Result<PageDTO<UserDTO.UserListDTO>> findAllUsers(UserDTO.UserGetRequestDTO userGetRequestDTO) {
-        MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<User>();
+        MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.select(User::getUserId, User::getUserName, User::getName, User::getPhone, User::getEmail, User::getInfo, User::getSex, User::getNickname)
                 .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
                 .select(UserRole::getRoleId)
@@ -70,7 +70,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .like(userGetRequestDTO.getUserName() != null, User::getUserName, userGetRequestDTO.getUserName())
                 .like(userGetRequestDTO.getRoleName() != null, Role::getName, userGetRequestDTO.getRoleName());
         IPage<UserDTO.UserListDTO> page = baseMapper.selectJoinPage(new Page<>(userGetRequestDTO.getPageNum(), userGetRequestDTO.getPageSize()), UserDTO.UserListDTO.class, queryWrapper);
-        return Result.success(new PageDTO<UserDTO.UserListDTO>(page));
+        return Result.success(new PageDTO<>(page));
     }
 
     @Override

@@ -27,7 +27,7 @@ public class DepartmentController {
     @AutoLog("创建科室")
     @Operation(description = "创建科室", summary = "创建科室('DEPT_MANAGE')")
     @PostMapping("")
-    @PreAuthorize("@ex.hasSysAuthority('DEPT_MANAGE')")
+    @PreAuthorize("@ex.hasSysAuthority('ADD_DEPART')")
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(@RequestBody @Valid DepartmentDTO.DepartmentCreateDTO createDTO) {
         return departmentService.createDepartment(createDTO);
     }
@@ -49,7 +49,7 @@ public class DepartmentController {
     @AutoLog("更新科室信息")
     @Operation(description = "更新科室信息", summary = "更新科室信息('DEPT_MANAGE')")
     @PutMapping("/{departmentId}")
-    @PreAuthorize("@ex.hasSysAuthority('DEPT_MANAGE')")
+    @PreAuthorize("@ex.hasSysAuthority('ALT_DEPART')")
     public Result<String> updateDepartment(@PathVariable Long departmentId, @RequestBody @Valid DepartmentDTO.DepartmentUpdateDTO updateDTO) {
         return departmentService.updateDepartmentById(departmentId, updateDTO);
     }
@@ -57,7 +57,7 @@ public class DepartmentController {
     @AutoLog("删除科室（逻辑删除）")
     @Operation(description = "删除科室（逻辑删除）", summary = "删除科室('DEPT_MANAGE')")
     @DeleteMapping("/{departmentId}")
-    @PreAuthorize("@ex.hasSysAuthority('DEPT_MANAGE')")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
     public Result<String> deleteDepartment(@PathVariable Long departmentId) {
         return departmentService.deleteDepartmentById(departmentId);
     }
@@ -66,7 +66,7 @@ public class DepartmentController {
     @AutoLog("批量删除科室（逻辑删除）")
     @Operation(description = "批量删除科室", summary = "批量删除科室('DEPT_MANAGE')")
     @DeleteMapping("/batch")
-    @PreAuthorize("@ex.hasSysAuthority('DEPT_MANAGE')")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
     public Result<String> batchDeleteDepartments(@RequestBody List<Long> departmentIds) {
         return departmentService.batchDeleteDepartments(departmentIds);
     }

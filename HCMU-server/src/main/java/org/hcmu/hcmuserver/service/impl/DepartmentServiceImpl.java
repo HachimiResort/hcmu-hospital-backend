@@ -1,16 +1,23 @@
 package org.hcmu.hcmuserver.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import com.github.yulichang.base.MPJBaseServiceImpl;
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
+
 import org.hcmu.hcmucommon.result.Result;
+
 import org.hcmu.hcmupojo.dto.DepartmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,30 +60,20 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
     @Override
     public Result<PageDTO<DepartmentDTO.DepartmentListDTO>> findAllDepartments(DepartmentDTO.DepartmentGetRequestDTO requestDTO) {
-        LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
+        MPJLambdaWrapper<Department> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Department::getDepartmentId, Department::getName, Department::getParentId, 
+                           Department::getDescription, Department::getLocation, Department::getCreateTime)
+                .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
                 .eq(requestDTO.getIsDeleted() != null, Department::getIsDeleted, requestDTO.getIsDeleted())
                 .orderByDesc(Department::getCreateTime);
-
-        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Department> page =
-                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(requestDTO.getPageNum(), requestDTO.getPageSize());
-        baseMapper.selectPage(page, wrapper);
-
-        PageDTO<DepartmentDTO.DepartmentListDTO> pageDTO = new PageDTO<>();
-        pageDTO.setTotal(page.getTotal());
-        pageDTO.setList(page.getRecords().stream().map(dept -> {
-            DepartmentDTO.DepartmentListDTO dto = new DepartmentDTO.DepartmentListDTO();
-            dto.setDepartmentId(dept.getDepartmentId());
-            dto.setName(dept.getName());
-            dto.setParentId(dept.getParentId());
-            dto.setDescription(dept.getDescription());
-            dto.setLocation(dept.getLocation());
-            dto.setCreateTime(dept.getCreateTime());
-            return dto;
-        }).toList());
-
-        return Result.success(pageDTO);
+        
+        IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
+                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()), 
+                DepartmentDTO.DepartmentListDTO.class, 
+                queryWrapper);
+        
+        return Result.success(new PageDTO<>(page));
     }
 
     @Override
