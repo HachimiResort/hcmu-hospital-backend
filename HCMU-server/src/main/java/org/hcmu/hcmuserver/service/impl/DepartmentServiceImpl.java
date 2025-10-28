@@ -119,22 +119,19 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<String> deleteDepartmentById(Long departmentId) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null) {
             return Result.error("科室不存在");
         }
 
         // 校验是否有子科室
         LambdaQueryWrapper<Department> childWrapper = new LambdaQueryWrapper<>();
-        childWrapper.eq(Department::getParentId, departmentId)
-                .eq(Department::getIsDeleted, 0);
+        childWrapper.eq(Department::getParentId, departmentId);
         if (baseMapper.selectCount(childWrapper) > 0) {
             return Result.error("该科室存在子科室，无法删除");
         }
 
-        // 逻辑删除
-        department.setIsDeleted(1);
-        department.setUpdateTime(LocalDateTime.now());
-        baseMapper.updateById(department);
+        // 使用MyBatis-Plus的逻辑删除
+        baseMapper.deleteById(departmentId);
         return Result.success("删除成功");
     }
 
