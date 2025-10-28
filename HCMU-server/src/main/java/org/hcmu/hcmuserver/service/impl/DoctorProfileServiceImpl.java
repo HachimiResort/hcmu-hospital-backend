@@ -150,20 +150,8 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             }
         }
 
-        // 更新字段
-        if (updateDTO.getDepartmentId() != null) {
-            doctorProfile.setDepartmentId(updateDTO.getDepartmentId());
-        }
-        if (updateDTO.getTitle() != null) {
-            doctorProfile.setTitle(updateDTO.getTitle());
-        }
-        if (updateDTO.getSpecialty() != null) {
-            doctorProfile.setSpecialty(updateDTO.getSpecialty());
-        }
-        if (updateDTO.getBio() != null) {
-            doctorProfile.setBio(updateDTO.getBio());
-        }
-        doctorProfile.setUpdateTime(LocalDateTime.now());
+        // 使用DTO的updateDoctorProfile方法更新字段
+        updateDTO.updateDoctorProfile(doctorProfile);
 
         baseMapper.updateById(doctorProfile);
         log.info("更新医生档案成功: {}", doctorProfileId);

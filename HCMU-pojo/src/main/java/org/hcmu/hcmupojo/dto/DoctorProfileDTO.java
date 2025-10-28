@@ -1,6 +1,8 @@
 package org.hcmu.hcmupojo.dto;
 
 import lombok.Data;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -61,5 +63,13 @@ public class DoctorProfileDTO {
         private String title;
         private String specialty;
         private String bio;
+
+        public void updateDoctorProfile(DoctorProfile doctorProfile) {
+            if (departmentId != null) doctorProfile.setDepartmentId(departmentId);
+            if (title != null && !title.trim().isEmpty()) doctorProfile.setTitle(title);
+            if (specialty != null && !specialty.trim().isEmpty()) doctorProfile.setSpecialty(specialty);
+            if (bio != null && !bio.trim().isEmpty()) doctorProfile.setBio(bio);
+            doctorProfile.setUpdateTime(LocalDateTime.now());
+        }
     }
 }
