@@ -1,6 +1,5 @@
 package org.hcmu.hcmuserver.service.impl;
 
-import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -15,6 +14,7 @@ import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.DepartmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.springframework.stereotype.Service;
@@ -130,7 +130,18 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("该科室存在子科室，无法删除");
         }
 
-        // 使用MyBatis-Plus的逻辑删除
+        // 逻辑外键约束
+        MPJLambdaWrapper<Department> doctorProfileWrapper = new MPJLambdaWrapper<>();
+        doctorProfileWrapper.select(Department::getDepartmentId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getDepartmentId, Department::getDepartmentId)
+                .eq(Department::getDepartmentId, departmentId)
+                .isNotNull(DoctorProfile::getDoctorProfileId);
+        
+        Long doctorCount = baseMapper.selectJoinCount(doctorProfileWrapper);
+        if (doctorCount > 0) {
+            return Result.error("该科室下存在医生档案，无法删除");
+        }
+
         baseMapper.deleteById(departmentId);
         return Result.success("删除成功");
     }
@@ -142,30 +153,34 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("请选择需要删除的科室");
         }
 
-        // 校验科室是否存在且未删除
+        // 校验科室是否存在
         LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(Department::getDepartmentId, departmentIds)
-                .eq(Department::getIsDeleted, 0);
+        wrapper.in(Department::getDepartmentId, departmentIds);
         long existCount = baseMapper.selectCount(wrapper);
         if (existCount != departmentIds.size()) {
-            return Result.error("部分科室不存在或已删除");
+            return Result.error("部分科室不存在");
         }
 
         // 校验是否有子科室
         LambdaQueryWrapper<Department> childWrapper = new LambdaQueryWrapper<>();
-        childWrapper.in(Department::getParentId, departmentIds)
-                .eq(Department::getIsDeleted, 0);
+        childWrapper.in(Department::getParentId, departmentIds);
         if (baseMapper.selectCount(childWrapper) > 0) {
             return Result.error("部分科室存在子科室，无法删除");
         }
 
-        // 批量逻辑删除
-        Department update = new Department();
-        update.setIsDeleted(1);
-        update.setUpdateTime(LocalDateTime.now());
-        LambdaQueryWrapper<Department> updateWrapper = new LambdaQueryWrapper<>();
-        updateWrapper.in(Department::getDepartmentId, departmentIds);
-        baseMapper.update(update, updateWrapper);
+        //逻辑外键约束
+        MPJLambdaWrapper<Department> doctorProfileWrapper = new MPJLambdaWrapper<>();
+        doctorProfileWrapper.select(Department::getDepartmentId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getDepartmentId, Department::getDepartmentId)
+                .in(Department::getDepartmentId, departmentIds)
+                .isNotNull(DoctorProfile::getDoctorProfileId);
+        
+        Long doctorCount = baseMapper.selectJoinCount(doctorProfileWrapper);
+        if (doctorCount > 0) {
+            return Result.error("部分科室下存在医生档案，无法删除");
+        }
+
+        baseMapper.deleteBatchIds(departmentIds);
 
         return Result.success("批量删除成功");
     }
