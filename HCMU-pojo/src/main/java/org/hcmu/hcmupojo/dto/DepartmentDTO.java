@@ -46,10 +46,10 @@ public class DepartmentDTO {
         private String location;
 
         public void updateDepartment(Department department) {
-            if (name != null) department.setName(name);
+            if (name != null && !name.trim().isEmpty()) department.setName(name);
             if (parentId != null) department.setParentId(parentId);
-            if (description != null) department.setDescription(description);
-            if (location != null) department.setLocation(location);
+            if (description != null && !description.trim().isEmpty()) department.setDescription(description);
+            if (location != null && !location.trim().isEmpty()) department.setLocation(location);
             department.setUpdateTime(LocalDateTime.now());
         }
     }
