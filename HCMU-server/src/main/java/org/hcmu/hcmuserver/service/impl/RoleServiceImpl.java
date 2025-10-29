@@ -16,6 +16,7 @@ import org.hcmu.hcmupojo.dto.RoleDTO.RoleGetRequestDTO;
 import org.hcmu.hcmupojo.entity.Permission;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.relation.RolePermission;
+import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.role.PermissionMapper;
 import org.hcmu.hcmuserver.mapper.role.RolePermissionMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
@@ -174,6 +175,18 @@ public class RoleServiceImpl extends MPJBaseServiceImpl<RoleMapper, Role> implem
         int isDefault = role.getIsDefault();
         if (isDefault == 1 || isDefault == -1) {
             return Result.error("默认角色不可删除");
+        }
+
+        // 逻辑外键约束
+        MPJLambdaWrapper<Role> userRoleWrapper = new MPJLambdaWrapper<>();
+        userRoleWrapper.select(Role::getRoleId)
+                .leftJoin(UserRole.class, UserRole::getRoleId, Role::getRoleId)
+                .eq(Role::getRoleId, roleId)
+                .isNotNull(UserRole::getUserId);
+        
+        Long userCount = baseMapper.selectJoinCount(userRoleWrapper);
+        if (userCount > 0) {
+            return Result.error("该角色下存在用户，无法删除");
         }
 
         // 删除角色
