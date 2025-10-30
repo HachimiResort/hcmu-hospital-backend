@@ -1,5 +1,8 @@
 package org.hcmu.hcmuserver.service.impl;
 
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.text.csv.CsvReader;
+import cn.hutool.core.text.csv.CsvUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,8 +22,12 @@ import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.Permission;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelReader;
 import org.hcmu.hcmupojo.entity.relation.RolePermission;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
+import org.hcmu.hcmupojo.entity.PendingUser;
+import org.hcmu.hcmuserver.mapper.user.PendingUserMapper;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
@@ -29,9 +36,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +67,9 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PendingUserMapper pendingUserMapper;
 
     @Override
     public Result<PageDTO<UserDTO.UserListDTO>> findAllUsers(UserDTO.UserGetRequestDTO userGetRequestDTO) {
@@ -220,4 +233,145 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         return Result.success("邮箱修改成功!");
     }
 
+    @Override
+    public Result<String> importPendingUsers(MultipartFile file, Long roleId) {
+        if (file == null || file.isEmpty()) {
+            return Result.error("上传的文件不能为空");
+        }
+
+        String filename = file.getOriginalFilename();
+        List<List<Object>> readAll;
+
+        try {
+            // 1. 自动根据文件类型选择解析器
+            if (filename != null && filename.toLowerCase().endsWith(".csv")) {
+                // --- 处理 CSV 文件 ---
+                CsvReader reader = CsvUtil.getReader();
+                // CSV文件可能存在编码问题，这里使用UTF-8，如果你的文件是GBK，可以改成 CharsetUtil.CHARSET_GBK
+                readAll = reader.read(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
+                                .getRows().stream()
+                                .map(csvRow -> new ArrayList<Object>(csvRow.getRawList()))
+                                .collect(Collectors.toList());
+            } else if (filename != null && (filename.toLowerCase().endsWith(".xls") || filename.toLowerCase().endsWith(".xlsx"))) {
+                // --- 处理 Excel 文件 ---
+                ExcelReader reader = ExcelUtil.getReader(file.getInputStream());
+                readAll = reader.read();
+                IoUtil.close(reader);
+            } else {
+                return Result.error("不支持的文件格式，请上传 .xls, .xlsx 或 .csv 文件");
+            }
+
+            // 2. 将解析后的数据交由统一的逻辑处理
+            return processParsedData(readAll, roleId);
+
+        } catch (Exception e) {
+            log.error("导入用户时发生未知异常", e);
+            return Result.error("导入失败，系统发生内部错误，请联系管理员");
+        }
+    }
+
+    /**
+     * 统一处理解析后的数据（无论是来自Excel还是CSV）
+     */
+    private Result<String> processParsedData(List<List<Object>> readAll, Long roleId) {
+        if (readAll.size() <= 1) {
+            return Result.error("文件为空或只包含表头，无法导入");
+        }
+
+        // --- 表头解析 ---
+        List<Object> headerRow = readAll.get(0);
+        Map<String, Integer> headerMap = new java.util.HashMap<>();
+        for (int i = 0; i < headerRow.size(); i++) {
+            headerMap.put(Objects.toString(headerRow.get(i), "").trim(), i);
+        }
+
+        Integer userNameIndex = headerMap.getOrDefault("用户名", headerMap.get("username"));
+        Integer nameIndex = headerMap.getOrDefault("姓名", headerMap.get("name"));
+        Integer emailIndex = headerMap.getOrDefault("邮箱", headerMap.get("email"));
+        
+        // --- 数据预处理与全量校验 ---
+        List<PendingUser> pendingUsersToInsert = new ArrayList<>();
+        List<String> errorMessages = new ArrayList<>();
+
+        for (int i = 1; i < readAll.size(); i++) {
+            List<Object> row = readAll.get(i);
+            int rowNum = i + 1;
+
+            String userName = getCellValue(row, userNameIndex);
+            String name = getCellValue(row, nameIndex);
+            String email = getCellValue(row, emailIndex);
+
+            if (userName.isEmpty() && name.isEmpty() && email.isEmpty()) {
+                continue; // 跳过空行
+            }
+
+            if (userName.isEmpty()) errorMessages.add("第 " + rowNum + "行：用户名不能为空");
+            if (name.isEmpty()) errorMessages.add("第 " + rowNum + "行：姓名不能为空");
+            if (email.isEmpty()) {
+                errorMessages.add("第 " + rowNum + "行：邮箱不能为空");
+            } else if (!isValidEmail(email)) {
+                errorMessages.add("第 " + rowNum + "行：邮箱格式不正确 (" + email + ")");
+            }
+
+            // 只有当本行目前没有错误时，才构建对象（为了后续的文件内查重）
+            if (errorMessages.stream().noneMatch(e -> e.startsWith("第 " + rowNum + "行"))) {
+                 pendingUsersToInsert.add(PendingUser.builder()
+                        .userName(userName).name(name).email(email).roleId(roleId).build());
+            }
+        }
+        
+        // 文件内数据重复性校验
+        if (!pendingUsersToInsert.isEmpty()) {
+            List<String> duplicateUserNames = findDuplicates(
+                pendingUsersToInsert.stream().map(PendingUser::getUserName).collect(Collectors.toList())
+            );
+            if (!duplicateUserNames.isEmpty()) {
+                errorMessages.add("文件内存在重复的用户名: " + String.join(", ", duplicateUserNames));
+            }
+        }
+
+        // --- 原子性判断 ---
+        if (!errorMessages.isEmpty()) {
+            return Result.error("导入失败，数据校验未通过：\n" + String.join("\n", errorMessages));
+        }
+        
+        if (pendingUsersToInsert.isEmpty()) {
+            return Result.success("文件中没有有效数据行，成功导入 0 个用户");
+        }
+
+        for (PendingUser pu : pendingUsersToInsert) {
+            pendingUserMapper.insert(pu);
+        }
+
+        return Result.success("导入成功，共导入 " + pendingUsersToInsert.size() + " 个用户");
+    }
+    /**
+     * 安全地从行数据中获取字符串值
+     */
+    private String getCellValue(List<Object> row, Integer index) {
+        if (index == null || index >= row.size() || row.get(index) == null) {
+            return "";
+        }
+        return row.get(index).toString().trim();
+    }
+
+    /**
+     * 简单的邮箱格式校验
+     */
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        return email.matches(emailRegex);
+    }
+
+    /**
+     * 查找列表中的重复项
+     */
+    private <T> List<T> findDuplicates(List<T> list) {
+        return list.stream()
+                .collect(Collectors.groupingBy(e -> e, Collectors.counting()))
+                .entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
 }
