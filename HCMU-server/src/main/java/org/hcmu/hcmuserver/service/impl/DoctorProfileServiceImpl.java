@@ -157,9 +157,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile = new DoctorProfile();
             doctorProfile.setUserId(userId);
             doctorProfile.setDepartmentId(0L); // 默认department_id=0，表示没分配部门
-            doctorProfile.setTitle("");
-            doctorProfile.setSpecialty("");
-            doctorProfile.setBio("");
+            doctorProfile.setTitle("暂无");
+            doctorProfile.setSpecialty("暂无");
+            doctorProfile.setBio("暂无");
             doctorProfile.setCreateTime(LocalDateTime.now());
             doctorProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(doctorProfile);
@@ -275,10 +275,10 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                     if (doctorProfile == null) {
                         doctorProfile = new DoctorProfile();
                         doctorProfile.setUserId(user.getUserId());
-                        doctorProfile.setDepartmentId(0L); // 默认department_id=0，表示没分配部门
-                        doctorProfile.setTitle(""); // 默认职称为空
-                        doctorProfile.setSpecialty(""); // 默认专业为空
-                        doctorProfile.setBio(""); // 默认简介为空
+                        doctorProfile.setDepartmentId(0L); // 默认没分配部门
+                        doctorProfile.setTitle("暂无");
+                        doctorProfile.setSpecialty("暂无");
+                        doctorProfile.setBio("暂无");
                         doctorProfile.setCreateTime(LocalDateTime.now());
                         doctorProfile.setUpdateTime(LocalDateTime.now());
                         baseMapper.insert(doctorProfile);
