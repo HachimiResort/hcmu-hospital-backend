@@ -30,6 +30,8 @@ public class Role implements Serializable {
      */
     private Integer isDeleted;
 
+    private Integer type;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
