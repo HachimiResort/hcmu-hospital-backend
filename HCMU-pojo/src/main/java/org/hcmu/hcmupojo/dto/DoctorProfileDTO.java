@@ -1,5 +1,6 @@
 package org.hcmu.hcmupojo.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 
