@@ -196,17 +196,52 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     }
 
     @Override
-    public Result<String> updateDoctorProfile(Long doctorProfileId, DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO) {
-        // 校验医生档案是否存在
-        LambdaQueryWrapper<DoctorProfile> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DoctorProfile::getDoctorProfileId, doctorProfileId)
-                .eq(DoctorProfile::getIsDeleted, 0);
-        DoctorProfile doctorProfile = baseMapper.selectOne(queryWrapper);
-        if (doctorProfile == null) {
-            return Result.error("医生档案不存在");
+    public Result<String> updateDoctorProfileByUserId(Long userId, DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO) {
+        // 校验用户是否存在
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
         }
 
-        // 校验科室是否存在（如果更新科室）
+        // 校验用户是否为医生角色
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法更新医生档案");
+        }
+
+        // 看看有没有医生档案
+        LambdaQueryWrapper<DoctorProfile> doctorProfileWrapper = new LambdaQueryWrapper<>();
+        doctorProfileWrapper.eq(DoctorProfile::getUserId, userId)
+                .eq(DoctorProfile::getIsDeleted, 0);
+        
+        DoctorProfile doctorProfile = baseMapper.selectOne(doctorProfileWrapper);
+        
+        // 没有先创建默认档案
+        if (doctorProfile == null) {
+            doctorProfile = new DoctorProfile();
+            doctorProfile.setUserId(userId);
+            doctorProfile.setDepartmentId(0L); // 默认没分配部门
+            doctorProfile.setTitle("暂无");
+            doctorProfile.setSpecialty("暂无");
+            doctorProfile.setBio("暂无");
+            doctorProfile.setCreateTime(LocalDateTime.now());
+            doctorProfile.setUpdateTime(LocalDateTime.now());
+            baseMapper.insert(doctorProfile);
+            log.info("为用户{}创建默认医生档案: {}", userId, doctorProfile.getDoctorProfileId());
+        }
+
+        // 科室是否存在
         if (updateDTO.getDepartmentId() != null) {
             Department department = departmentService.getById(updateDTO.getDepartmentId());
             if (department == null) {
@@ -214,11 +249,11 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             }
         }
 
-        // 使用DTO的updateDoctorProfile方法更新字段
+
         updateDTO.updateDoctorProfile(doctorProfile);
 
         baseMapper.updateById(doctorProfile);
-        log.info("更新医生档案成功: {}", doctorProfileId);
+        log.info("更新医生档案成功: {}", doctorProfile.getDoctorProfileId());
         return Result.success("更新成功");
     }
 

@@ -61,10 +61,10 @@ public class DoctorProfileController {
 
     @AutoLog("更新医生档案")
     @Operation(description = "更新医生档案信息", summary = "更新医生档案('ALT_DOCTOR')")
-    @PutMapping("/{doctorProfileId}")
+    @PutMapping("/{userId}")
     @PreAuthorize("@ex.hasSysAuthority('ALT_DOCTOR')")
-    public Result<String> updateDoctorProfile(@PathVariable Long doctorProfileId, @RequestBody @Valid DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO) {
-        return doctorProfileService.updateDoctorProfile(doctorProfileId, updateDTO);
+    public Result<String> updateDoctorProfile(@PathVariable Long userId, @RequestBody @Valid DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO) {
+        return doctorProfileService.updateDoctorProfileByUserId(userId, updateDTO);
     }
 
     @AutoLog("删除医生档案（逻辑删除）")
