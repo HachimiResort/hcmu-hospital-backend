@@ -33,7 +33,7 @@ public class DoctorProfileController {
     }
 
     @AutoLog("查询医生档案列表")
-    @Operation(description = "分页查询医生档案列表", summary = "查询医生档案列表(‘CHECK_DOCTOR’)")
+    @Operation(description = "分页查询医生档案列表", summary = "查询医生档案列表('CHECK_DOCTOR')")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
     @GetMapping("")
     public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorProfiles(@ModelAttribute DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {
@@ -53,7 +53,7 @@ public class DoctorProfileController {
      * @return
      */
     @AutoLog("获取所有医生档案")
-    @Operation(description = "获取所有医生的详细档案信息", summary = "获取所有医生档案")
+    @Operation(description = "获取所有医生的详细档案信息（已废弃）", summary = "获取所有医生档案")
     @GetMapping("/getAllDoctor")
     public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctor() {
         return doctorProfileService.getAllDoctors();
@@ -67,7 +67,7 @@ public class DoctorProfileController {
         return doctorProfileService.updateDoctorProfile(doctorProfileId, updateDTO);
     }
 
-    @AutoLog("删除医生档案（逻辑删除，废弃）")
+    @AutoLog("删除医生档案（逻辑删除）")
     @Operation(description = "删除医生档案", summary = "删除医生档案('DEL_DOCTOR')")
     @DeleteMapping("/{doctorProfileId}")
     @PreAuthorize("@ex.hasSysAuthority('DEL_DOCTOR')")
@@ -75,7 +75,7 @@ public class DoctorProfileController {
         return doctorProfileService.deleteDoctorProfile(doctorProfileId);
     }
 
-    @AutoLog("批量删除医生档案（逻辑删除，废弃）")
+    @AutoLog("批量删除医生档案（逻辑删除）")
     @Operation(description = "批量删除医生档案", summary = "批量删除医生档案('DEL_DOCTOR')")
     @DeleteMapping("/batch")
     @PreAuthorize("@ex.hasSysAuthority('DEL_DOCTOR')")
