@@ -23,6 +23,9 @@ public enum PermissionEnum {
      */
     MASTER_ROLE(7, "masterRole"),
 
+    /*
+     * 日志管理
+     */
     LOG_PAGE(8, "logPage"),
 
     /*
@@ -32,8 +35,15 @@ public enum PermissionEnum {
     ADD_DEPART(10, "addDepart"),
     DEL_DEPART(11, "delDepart"),
     ALT_DEPART(12, "altDepart"),
-    CHECK_DEPART(13, "checkDepart");
+    CHECK_DEPART(13, "checkDepart"),
 
+    /*
+     *医生档案管理
+     */
+    ADD_DOCTOR(14, "addDoctor"),
+    ALT_DOCTOR(15, "altDoctor"),
+    DEL_DOCTOR(16, "delDoctor"),
+    CHECK_DOCTOR(17, "checkDoctor");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;

@@ -14,9 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-
 /**
  * 用户控制器
  * @Author Kyy008
@@ -92,5 +89,4 @@ public class UserController {
     public Result verifyEmailCode(@RequestBody @Valid UserDTO.UserEmailVerifyDTO userEmailVerifyDTO) {
         return userService.verifyEmailCode(userEmailVerifyDTO);
     }
-
 }

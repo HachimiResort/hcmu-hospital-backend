@@ -6,8 +6,6 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.User;
 
-import java.util.List;
-
 /**
  * <p>
  *  用户服务接口

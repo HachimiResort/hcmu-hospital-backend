@@ -15,9 +15,11 @@ import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserLoginDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserRegisterDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserEmailVerifyDTO;
+import org.hcmu.hcmupojo.entity.PendingUser;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
+import org.hcmu.hcmuserver.mapper.user.PendingUserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
@@ -25,6 +27,7 @@ import org.hcmu.hcmuserver.service.AuthService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.method.P;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -55,6 +58,9 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private PendingUserMapper pendingUserMapper;
 
     @Autowired
     private MailServiceImpl mailService;
@@ -117,6 +123,30 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
             throw new ServiceException(HttpStatus.BAD_REQUEST.value(), "该邮箱已被绑定!");
         }
 
+        // 接下来判断是否是待注册用户
+        LambdaQueryWrapper<PendingUser> pendingUserQueryWrapper = new LambdaQueryWrapper<>();
+        pendingUserQueryWrapper
+            .eq(PendingUser::getUserName, userRegister.getUserName())
+            .or()
+            .eq(PendingUser::getEmail, userRegister.getEmail())
+            .or()
+            .eq(PendingUser::getName, userRegister.getName());
+        PendingUser pendingUser_tmp = pendingUserMapper.selectOne(pendingUserQueryWrapper);
+
+        // 如果找到了
+        if (Objects.nonNull(pendingUser_tmp)) {
+            LambdaQueryWrapper<PendingUser> exactPendingUserQueryWrapper = new LambdaQueryWrapper<>();
+            exactPendingUserQueryWrapper
+                .eq(PendingUser::getUserName, userRegister.getUserName())
+                .eq(PendingUser::getEmail, userRegister.getEmail())
+                .eq(PendingUser::getName, userRegister.getName());
+            PendingUser exactPendingUser = pendingUserMapper.selectOne(exactPendingUserQueryWrapper);
+            if (Objects.isNull(exactPendingUser)) {
+                throw new ServiceException(HttpStatus.BAD_REQUEST.value(), "注册信息与待注册用户信息不匹配!");
+            }
+        }
+
+
         userRegister.setPassword(passwordEncoder.encode(userRegister.getPassword()));
 
         // TODO: 生成6位随机验证码
@@ -146,18 +176,36 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 //        从redis中删除
         redisUtil.deleteObject(RedisEnum.REGISTER.getDesc() + userEmailVerifyDTO.getEmail());
 
+        Long roleId = 0L;
+
+        LambdaQueryWrapper<PendingUser> exactPendingUserQueryWrapper = new LambdaQueryWrapper<>();
+        exactPendingUserQueryWrapper
+            .eq(PendingUser::getUserName, userRegister.getUserName())
+            .eq(PendingUser::getEmail, userRegister.getEmail())
+            .eq(PendingUser::getName, userRegister.getName());
+        PendingUser exactPendingUser = pendingUserMapper.selectOne(exactPendingUserQueryWrapper);
+        
+        if (Objects.isNull(exactPendingUser)) {
+            LambdaQueryWrapper<Role> roleQueryWrapper = new LambdaQueryWrapper<>();
+            roleQueryWrapper.eq(Role::getIsDefault, 1);
+
+            Role role = roleMapper.selectOne(roleQueryWrapper);
+            roleId = role.getRoleId();
+        } else {
+            roleId = exactPendingUser.getRoleId();
+            // 删除待注册用户信息
+            pendingUserMapper.delete(exactPendingUserQueryWrapper);
+        }
+
+
         // 将用户信息存入数据库
         User user = userRegister.toUser();
         baseMapper.insert(user);
-
-        LambdaQueryWrapper<Role> roleQueryWrapper = new LambdaQueryWrapper<>();
-        roleQueryWrapper.eq(Role::getIsDefault, 1);
-
-        Role role = roleMapper.selectOne(roleQueryWrapper);
+  
 
         UserRole sysUserRole = new UserRole();
         sysUserRole.setUserId(user.getUserId());
-        sysUserRole.setRoleId(role.getRoleId());
+        sysUserRole.setRoleId(roleId);
 
         userRoleMapper.insert(sysUserRole);
 

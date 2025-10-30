@@ -18,6 +18,7 @@ public class RoleDTO {
     @Data
     public static class RoleGetRequestDTO {
         private String roleName;
+        private Integer type;
         @RequestKeyParam
         private Long roleId;
 
@@ -31,6 +32,9 @@ public class RoleDTO {
         @NotBlank(message = "角色描述不能为空")
         private String roleInfo;
 
+        @NotNull(message = "角色类型不能为空")
+        private Integer type;
+
         @NotNull(message = "不能没有权限")
         private List<Long> permissionList;
 
@@ -38,6 +42,7 @@ public class RoleDTO {
             Role role = new Role();
             role.setName(roleName);
             role.setRoleInfo(roleInfo);
+            role.setType(type);
             return role;
         }
     }
@@ -52,6 +57,9 @@ public class RoleDTO {
 
         @NotNull(message = "角色描述不能为空")
         private String roleInfo;
+
+        @NotNull(message = "角色类型不能为空")
+        private Integer type;
 
         private Integer isDefault = 0;
         /**
@@ -68,6 +76,7 @@ public class RoleDTO {
             roleListDTO.setRoleId(role.getRoleId());
             roleListDTO.setRoleName(role.getName());
             roleListDTO.setRoleInfo(role.getRoleInfo());
+            roleListDTO.setType(role.getType());
             roleListDTO.setIsDefault(role.getIsDefault());
             return roleListDTO;
         }
