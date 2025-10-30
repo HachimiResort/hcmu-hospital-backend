@@ -76,7 +76,7 @@ public class RoleDTO {
             roleListDTO.setRoleId(role.getRoleId());
             roleListDTO.setRoleName(role.getName());
             roleListDTO.setRoleInfo(role.getRoleInfo());
-            roleListDTO.setType(role.getType().getCode());
+            roleListDTO.setType(role.getType());
             roleListDTO.setIsDefault(role.getIsDefault());
             return roleListDTO;
         }
