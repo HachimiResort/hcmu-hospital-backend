@@ -42,7 +42,8 @@ public enum PermissionEnum {
      */
     ADD_DOCTOR(14, "addDoctor"),
     ALT_DOCTOR(15, "altDoctor"),
-    DEL_DOCTOR(16, "delDoctor");
+    DEL_DOCTOR(16, "delDoctor"),
+    CHECK_DOCTOR(17, "checkDoctor");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
