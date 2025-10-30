@@ -39,11 +39,22 @@ public class DoctorProfileController {
         return doctorProfileService.getDoctorProfiles(requestDTO);
     }
 
-    @AutoLog("获取医生档案详情")
+    @AutoLog("通过用户Id获取医生档案")
     @Operation(description = "获取医生档案详情", summary = "获取医生档案详情")
     @GetMapping("/{userId}")
     public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(@PathVariable Long userId) {
         return doctorProfileService.getDoctorProfileByUserId(userId);
+    }
+
+    /**
+     * 查询所有医生信息
+     * @return
+     */
+    @AutoLog("获取所有医生档案")
+    @Operation(description = "获取所有医生的详细档案信息", summary = "获取所有医生档案")
+    @GetMapping("/getAllDoctor")
+    public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctor() {
+        return doctorProfileService.getAllDoctors();
     }
 
     @AutoLog("更新医生档案")

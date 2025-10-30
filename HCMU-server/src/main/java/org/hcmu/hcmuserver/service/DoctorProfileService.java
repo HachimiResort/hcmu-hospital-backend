@@ -16,6 +16,9 @@ public interface DoctorProfileService {
     // 根据用户ID获取医生档案详情
     Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(Long userId);
 
+    // 获取所有医生的详细档案
+    Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctors();
+
     // 更新医生档案
     Result<String> updateDoctorProfile(Long doctorProfileId, DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO);
 

@@ -239,6 +239,76 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         }
     }
 
+    /**
+     * 查询所有医生信息
+     * @return
+     */
+    @Override
+    public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctors() {
+
+        MPJLambdaWrapper<UserRole> doctorUsersWrapper = new MPJLambdaWrapper<>();
+        doctorUsersWrapper.select(User::getUserId, User::getUserName)
+                .leftJoin(User.class, User::getUserId, UserRole::getUserId)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0)
+                .eq(User::getIsDeleted, 0);
+
+        List<User> doctorUsers = userRoleMapper.selectJoinList(User.class, doctorUsersWrapper);
+        
+        if (doctorUsers.isEmpty()) {
+            return Result.success(List.of());
+        }
+
+
+        List<DoctorProfileDTO.DoctorProfileDetailDTO> doctorProfiles = doctorUsers.stream()
+                .map(user -> {
+                    // 是否有档案
+                    LambdaQueryWrapper<DoctorProfile> profileWrapper = new LambdaQueryWrapper<>();
+                    profileWrapper.eq(DoctorProfile::getUserId, user.getUserId())
+                            .eq(DoctorProfile::getIsDeleted, 0);
+                    
+                    DoctorProfile doctorProfile = baseMapper.selectOne(profileWrapper);
+                    
+                    // 创建一个默认的
+                    if (doctorProfile == null) {
+                        doctorProfile = new DoctorProfile();
+                        doctorProfile.setUserId(user.getUserId());
+                        doctorProfile.setDepartmentId(0L); // 默认department_id=0，表示没分配部门
+                        doctorProfile.setTitle(""); // 默认职称为空
+                        doctorProfile.setSpecialty(""); // 默认专业为空
+                        doctorProfile.setBio(""); // 默认简介为空
+                        doctorProfile.setCreateTime(LocalDateTime.now());
+                        doctorProfile.setUpdateTime(LocalDateTime.now());
+                        baseMapper.insert(doctorProfile);
+                    }
+
+                    // 查询医生档案详情（包含关联信息）
+                    MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
+                    queryWrapper.select(DoctorProfile::getDoctorProfileId,
+                                    DoctorProfile::getUserId,
+                                    DoctorProfile::getDepartmentId,
+                                    DoctorProfile::getTitle,
+                                    DoctorProfile::getSpecialty,
+                                    DoctorProfile::getBio,
+                                    DoctorProfile::getCreateTime,
+                                    DoctorProfile::getUpdateTime)
+                            .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
+                            .selectAs(User::getUserName, "userName")
+                            .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                            .selectAs(Department::getName, "departmentName")
+                            .eq(DoctorProfile::getUserId, user.getUserId())
+                            .eq(DoctorProfile::getIsDeleted, 0);
+
+                    return baseMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
+                })
+                .filter(profile -> profile != null) // 过滤掉null值
+                .collect(Collectors.toList());
+
+        return Result.success(doctorProfiles);
+    }
+
     @Override
     public Result<String> batchDeleteDoctorProfiles(List<Long> doctorProfileIds) {
         if (doctorProfileIds.isEmpty()) {
@@ -250,7 +320,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             log.info("批量删除医生档案成功，共{}条", deletedCount);
             return Result.success("批量删除成功");
         } else {
-            return Result.error("批量删除失败，可能档案不存在或已删除");
+            return Result.error("批量删除失败");
         }
     }
 }
