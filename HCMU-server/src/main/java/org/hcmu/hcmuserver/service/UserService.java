@@ -4,7 +4,6 @@ import com.github.yulichang.base.MPJBaseService;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
-import org.springframework.web.multipart.MultipartFile;
 import org.hcmu.hcmupojo.entity.User;
 
 /**
@@ -71,13 +70,5 @@ public interface UserService extends MPJBaseService<User> {
      * @param userEmailVerifyDTO 邮箱
      */
     Result verifyEmailCode(UserDTO.UserEmailVerifyDTO userEmailVerifyDTO);
-
-    /**
-     * 导入待注册用户
-     * @param file 表格文件
-     * @param roleId 角色ID
-     * @return Result 返回信息
-     */
-    Result<String> importPendingUsers(MultipartFile file, Long roleId);
 
 }

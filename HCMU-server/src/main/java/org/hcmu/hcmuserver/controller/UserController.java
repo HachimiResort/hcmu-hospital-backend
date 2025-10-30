@@ -12,10 +12,7 @@ import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 用户控制器
@@ -91,12 +88,5 @@ public class UserController {
     @PostMapping("/email/verify")
     public Result verifyEmailCode(@RequestBody @Valid UserDTO.UserEmailVerifyDTO userEmailVerifyDTO) {
         return userService.verifyEmailCode(userEmailVerifyDTO);
-    }
-
-    @AutoLog("上传待注册用户")
-    @Operation(description = "上传待注册用户", summary = "上传待注册用户")
-    @PostMapping("/import")
-    public Result<String> importPendingUsers(@RequestParam("file") MultipartFile file, @RequestParam("roleId") Long roleId) {
-        return userService.importPendingUsers(file, roleId);
     }
 }
