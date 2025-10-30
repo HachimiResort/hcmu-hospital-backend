@@ -41,9 +41,9 @@ public class DoctorProfileController {
 
     @AutoLog("获取医生档案详情")
     @Operation(description = "获取医生档案详情", summary = "获取医生档案详情")
-    @GetMapping("/{doctorProfileId}")
-    public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileById(@PathVariable Long doctorProfileId) {
-        return doctorProfileService.getDoctorProfileById(doctorProfileId);
+    @GetMapping("/{userId}")
+    public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(@PathVariable Long userId) {
+        return doctorProfileService.getDoctorProfileByUserId(userId);
     }
 
     @AutoLog("更新医生档案")

@@ -13,8 +13,8 @@ public interface DoctorProfileService {
     // 分页查询医生档案
     Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorProfiles(DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO);
 
-    // 获取医生档案详情
-    Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileById(Long doctorProfileId);
+    // 根据用户ID获取医生档案详情
+    Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(Long userId);
 
     // 更新医生档案
     Result<String> updateDoctorProfile(Long doctorProfileId, DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO);

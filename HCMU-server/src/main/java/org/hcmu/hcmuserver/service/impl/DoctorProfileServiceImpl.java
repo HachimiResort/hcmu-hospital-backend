@@ -3,17 +3,22 @@ package org.hcmu.hcmuserver.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
+import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.hcmu.hcmuserver.service.DoctorProfileService;
 import org.hcmu.hcmuserver.service.UserService;
@@ -34,6 +39,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
     @Autowired
     private DepartmentService departmentService;
+
+    @Autowired
+    private UserRoleMapper userRoleMapper;
 
     @Override
     public Result<DoctorProfileDTO.DoctorProfileListDTO> createDoctorProfile(DoctorProfileDTO.DoctorProfileCreateDTO createDTO) {
@@ -105,8 +113,59 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         return Result.success(new PageDTO<>(page));
     }
 
+    /**
+     * 根据用户id查询医生档案
+     * @param userId
+     * @return
+     */
     @Override
-    public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileById(Long doctorProfileId) {
+    public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(Long userId) {
+
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 是否为医生角色呢
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法查看医生档案");
+        }
+
+        // 是否已有医生档案呢
+        LambdaQueryWrapper<DoctorProfile> doctorProfileWrapper = new LambdaQueryWrapper<>();
+        doctorProfileWrapper.eq(DoctorProfile::getUserId, userId)
+                .eq(DoctorProfile::getIsDeleted, 0);
+        
+        DoctorProfile doctorProfile = baseMapper.selectOne(doctorProfileWrapper);
+        boolean isNewProfile = false; // 标记是否是新创建的档案
+        
+        // 创建一个默认的
+        if (doctorProfile == null) {
+            isNewProfile = true;
+            doctorProfile = new DoctorProfile();
+            doctorProfile.setUserId(userId);
+            doctorProfile.setDepartmentId(0L); // 默认department_id=0，表示没分配部门
+            doctorProfile.setTitle("");
+            doctorProfile.setSpecialty("");
+            doctorProfile.setBio("");
+            doctorProfile.setCreateTime(LocalDateTime.now());
+            doctorProfile.setUpdateTime(LocalDateTime.now());
+            baseMapper.insert(doctorProfile);
+        }
+
+        // 查询医生档案详情
         MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.select(DoctorProfile::getDoctorProfileId,
                         DoctorProfile::getUserId,
@@ -120,12 +179,17 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                 .selectAs(User::getUserName, "userName")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
-                .eq(DoctorProfile::getDoctorProfileId, doctorProfileId)
+                .eq(DoctorProfile::getUserId, userId)
                 .eq(DoctorProfile::getIsDeleted, 0);
 
         DoctorProfileDTO.DoctorProfileDetailDTO detailDTO = baseMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
         if (detailDTO == null) {
-            return Result.error("医生档案不存在");
+            return Result.error("医生档案查询失败");
+        }
+
+        // 新的档案
+        if (isNewProfile) {
+            return Result.success("医生档案已自动创建，请完善相关信息", detailDTO);
         }
 
         return Result.success(detailDTO);
