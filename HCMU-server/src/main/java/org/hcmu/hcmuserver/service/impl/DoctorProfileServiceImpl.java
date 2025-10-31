@@ -160,8 +160,6 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
-            doctorProfile.setCreateTime(LocalDateTime.now());
-            doctorProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(doctorProfile);
         }
 
@@ -235,8 +233,6 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
-            doctorProfile.setCreateTime(LocalDateTime.now());
-            doctorProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(doctorProfile);
             log.info("为用户{}创建默认医生档案: {}", userId, doctorProfile.getDoctorProfileId());
         }
@@ -314,8 +310,6 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         doctorProfile.setTitle("暂无");
                         doctorProfile.setSpecialty("暂无");
                         doctorProfile.setBio("暂无");
-                        doctorProfile.setCreateTime(LocalDateTime.now());
-                        doctorProfile.setUpdateTime(LocalDateTime.now());
                         baseMapper.insert(doctorProfile);
                     }
 

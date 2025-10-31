@@ -50,10 +50,19 @@ public class DoctorProfileDTO {
     // 创建请求
     @Data
     public static class DoctorProfileCreateDTO {
+        @NotNull(message = "用户ID不能为空")
         private Long userId; // 关联用户ID（必传）
+
+        @NotNull(message = "所属科室ID不能为空")
         private Long departmentId; // 所属科室ID（必传）
+
+        @NotNull(message = "职称不能为空")
         private String title;
+
+        @NotNull(message = "专长不能为空")
         private String specialty;
+
+        @NotNull(message = "简介不能为空")
         private String bio;
     }
 
@@ -72,5 +81,12 @@ public class DoctorProfileDTO {
             if (bio != null && !bio.trim().isEmpty()) doctorProfile.setBio(bio);
             doctorProfile.setUpdateTime(LocalDateTime.now());
         }
+    }
+
+    @Data
+    public static class DoctorByDeptRequestDTO {
+        private Integer pageNum = 1;
+        private Integer pageSize = 10;
+
     }
 }

@@ -24,6 +24,7 @@ public class DoctorProfileController {
     @Autowired
     private DoctorProfileService doctorProfileService;
 
+    @Deprecated
     @AutoLog("创建医生档案（已废弃）")
     @Operation(description = "创建医生档案", summary = "创建医生档案('ADD_DOCTOR')")
     @PostMapping("")
@@ -40,23 +41,21 @@ public class DoctorProfileController {
         return doctorProfileService.getDoctorProfiles(requestDTO);
     }
 
+    @Deprecated
+    @AutoLog("获取所有医生档案")
+    @Operation(description = "获取所有医生档案信息（已废弃）", summary = "获取所有医生档案")
+    @GetMapping("/getAllDoctor")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
+    public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctor() {
+        return doctorProfileService.getAllDoctors();
+    }
+
     @AutoLog("通过用户Id获取医生档案")
     @Operation(description = "获取医生档案详情", summary = "获取医生档案详情(‘CHECK_DOCTOR’)")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
     @GetMapping("/{userId}")
     public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(@PathVariable Long userId) {
         return doctorProfileService.getDoctorProfileByUserId(userId);
-    }
-
-    /**
-     * 查询所有医生信息
-     * @return
-     */
-    @AutoLog("获取所有医生档案")
-    @Operation(description = "获取所有医生的详细档案信息（已废弃）", summary = "获取所有医生档案")
-    @GetMapping("/getAllDoctor")
-    public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctor() {
-        return doctorProfileService.getAllDoctors();
     }
 
     @AutoLog("更新医生档案")
@@ -67,6 +66,7 @@ public class DoctorProfileController {
         return doctorProfileService.updateDoctorProfileByUserId(userId, updateDTO);
     }
 
+    @Deprecated
     @AutoLog("删除医生档案（逻辑删除）")
     @Operation(description = "删除医生档案", summary = "删除医生档案('DEL_DOCTOR')")
     @DeleteMapping("/{doctorProfileId}")
@@ -75,6 +75,7 @@ public class DoctorProfileController {
         return doctorProfileService.deleteDoctorProfile(doctorProfileId);
     }
 
+    @Deprecated
     @AutoLog("批量删除医生档案（逻辑删除）")
     @Operation(description = "批量删除医生档案", summary = "批量删除医生档案('DEL_DOCTOR')")
     @DeleteMapping("/batch")

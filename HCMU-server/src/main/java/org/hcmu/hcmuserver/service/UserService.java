@@ -6,6 +6,8 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.User;
 
+import java.util.List;
+
 /**
  * <p>
  *  用户服务接口
@@ -70,5 +72,19 @@ public interface UserService extends MPJBaseService<User> {
      * @param userEmailVerifyDTO 邮箱
      */
     Result verifyEmailCode(UserDTO.UserEmailVerifyDTO userEmailVerifyDTO);
+
+    /**
+     * 批量删除用户（逻辑删除），只能删除角色为默认角色的用户
+     * @param userIds 用户ID列表
+     * @return Result 返回信息
+     */
+    Result<String> batchDeleteUsers(List<Long> userIds);
+
+    /**
+     * 删除单个用户（逻辑删除），只能删除角色为默认角色的用户
+     * @param userId 用户ID
+     * @return Result 返回信息
+     */
+    Result<String> deleteUserById(Long userId);
 
 }
