@@ -128,7 +128,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         pendingUserQueryWrapper
             .eq(PendingUser::getUserName, userRegister.getUserName())
             .or()
-            .eq(PendingUser::getEmail, userRegister.getEmail())
+            .eq(PendingUser::getEmail, userRegister.getEmail());
         PendingUser pendingUser_tmp = pendingUserMapper.selectOne(pendingUserQueryWrapper);
 
         // 如果找到了
