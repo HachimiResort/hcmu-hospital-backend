@@ -65,6 +65,15 @@ public class PatientProfileController {
     }
 
     @Deprecated
+    @AutoLog("获取所有患者档案")
+    @Operation(description = "获取所有患者的详细档案信息（已废弃）", summary = "获取所有患者档案")
+    @GetMapping("/getAllPatient")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_PATIENT')")
+    public Result<List<PatientProfileDTO.PatientProfileDetailDTO>> getAllPatient() {
+        return patientProfileService.getAllPatients();
+    }
+
+    @Deprecated
     @AutoLog("删除患者档案（逻辑删除）")
     @Operation(description = "删除患者档案", summary = "删除患者档案('DEL_PATIENT')")
     @DeleteMapping("/{patientProfileId}")

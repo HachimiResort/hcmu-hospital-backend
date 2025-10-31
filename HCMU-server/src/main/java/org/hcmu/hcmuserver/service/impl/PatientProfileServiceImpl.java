@@ -76,7 +76,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         queryWrapper.select(PatientProfile::getPatientProfileId,
                         PatientProfile::getUserId,
                         PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacher,
+                        PatientProfile::getStudentTeacherId,
                         PatientProfile::getEmergencyContact,
                         PatientProfile::getCreateTime)
                 .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
@@ -110,7 +110,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         queryWrapper.select(PatientProfile::getPatientProfileId,
                         PatientProfile::getUserId,
                         PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacher,
+                        PatientProfile::getStudentTeacherId,
                         PatientProfile::getEmergencyContact,
                         PatientProfile::getEmergencyContactPhone,
                         PatientProfile::getMedicalHistory,
@@ -129,7 +129,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             PatientProfile patientProfile = new PatientProfile();
             patientProfile.setUserId(userId);
             patientProfile.setIdentityType(0); // 默认身份类型
-            patientProfile.setStudentTeacher("暂无");
+            patientProfile.setStudentTeacherId("暂无");
             patientProfile.setEmergencyContact("暂无");
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
@@ -166,7 +166,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             patientProfile = new PatientProfile();
             patientProfile.setUserId(userId);
             patientProfile.setIdentityType(0);
-            patientProfile.setStudentTeacher("");
+            patientProfile.setStudentTeacherId("");
             patientProfile.setEmergencyContact("暂无");
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
@@ -217,7 +217,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             patientProfile = new PatientProfile();
             patientProfile.setUserId(userId);
             patientProfile.setIdentityType(0);
-            patientProfile.setStudentTeacher("暂无");
+            patientProfile.setStudentTeacherId("暂无");
             patientProfile.setEmergencyContact("暂无");
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
@@ -256,7 +256,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         queryWrapper.select(PatientProfile::getPatientProfileId,
                         PatientProfile::getUserId,
                         PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacher,
+                        PatientProfile::getStudentTeacherId,
                         PatientProfile::getEmergencyContact,
                         PatientProfile::getEmergencyContactPhone,
                         PatientProfile::getMedicalHistory,

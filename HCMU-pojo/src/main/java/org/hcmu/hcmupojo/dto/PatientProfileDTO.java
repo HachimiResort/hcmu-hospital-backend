@@ -25,7 +25,7 @@ public class PatientProfileDTO {
         private Long userId;
         private String userName; // 关联用户表的用户名
         private Integer identityType;
-        private String studentTeacher;
+        private String studentTeacherId;
         private String emergencyContact;
         private LocalDateTime createTime;
     }
@@ -37,7 +37,7 @@ public class PatientProfileDTO {
         private Long userId;
         private String userName;
         private Integer identityType;
-        private String studentTeacher;
+        private String studentTeacherId;
         private String emergencyContact;
         private String emergencyContactPhone;
         private String medicalHistory;
@@ -55,7 +55,7 @@ public class PatientProfileDTO {
         @NotNull(message = "身份类型不能为空")
         private Integer identityType;
 
-        private String studentTeacher;
+        private String studentTeacherId;
         private String emergencyContact;
         private String emergencyContactPhone;
         private String medicalHistory;
@@ -66,7 +66,7 @@ public class PatientProfileDTO {
     @Data
     public static class PatientProfileUpdateDTO {
         private Integer identityType;
-        private String studentTeacher;
+        private String studentTeacherId;
         private String emergencyContact;
         private String emergencyContactPhone;
         private String medicalHistory;
@@ -74,7 +74,7 @@ public class PatientProfileDTO {
 
         public void updatePatientProfile(PatientProfile patientProfile) {
             if (identityType != null) patientProfile.setIdentityType(identityType);
-            if (studentTeacher != null && !studentTeacher.trim().isEmpty()) patientProfile.setStudentTeacher(studentTeacher);
+            if (studentTeacherId != null && !studentTeacherId.trim().isEmpty()) patientProfile.setStudentTeacherId(studentTeacherId);
             if (emergencyContact != null && !emergencyContact.trim().isEmpty()) patientProfile.setEmergencyContact(emergencyContact);
             if (emergencyContactPhone != null && !emergencyContactPhone.trim().isEmpty()) patientProfile.setEmergencyContactPhone(emergencyContactPhone);
             if (medicalHistory != null && !medicalHistory.trim().isEmpty()) patientProfile.setMedicalHistory(medicalHistory);

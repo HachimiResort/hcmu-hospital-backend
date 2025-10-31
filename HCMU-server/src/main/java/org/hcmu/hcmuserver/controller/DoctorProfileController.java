@@ -41,6 +41,15 @@ public class DoctorProfileController {
         return doctorProfileService.getDoctorProfiles(requestDTO);
     }
 
+    @Deprecated
+    @AutoLog("获取所有医生档案")
+    @Operation(description = "获取所有医生档案信息（已废弃）", summary = "获取所有医生档案")
+    @GetMapping("/getAllDoctor")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
+    public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctor() {
+        return doctorProfileService.getAllDoctors();
+    }
+
     @AutoLog("通过用户Id获取医生档案")
     @Operation(description = "获取医生档案详情", summary = "获取医生档案详情(‘CHECK_DOCTOR’)")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
