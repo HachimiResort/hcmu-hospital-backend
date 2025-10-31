@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.DepartmentDTO;
+import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +70,16 @@ public class DepartmentController {
     @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
     public Result<String> batchDeleteDepartments(@RequestBody List<Long> departmentIds) {
         return departmentService.batchDeleteDepartments(departmentIds);
+    }
+
+    // DepartmentController.java 中新增
+    @AutoLog("查询科室下所有医生")
+    @Operation(description = "查询指定科室的所有医生", summary = "查询科室下医生列表")
+    @GetMapping("/{departmentId}/doctor")
+    public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorsByDepartment(
+            @PathVariable Long departmentId,
+            @ModelAttribute DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {
+        // 直接调用DepartmentService的方法，无需注入DoctorProfileService
+        return departmentService.getDoctorsByDepartment(departmentId, requestDTO);
     }
 }

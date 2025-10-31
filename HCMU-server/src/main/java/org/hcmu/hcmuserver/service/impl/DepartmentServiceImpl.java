@@ -12,11 +12,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.result.Result;
 
 import org.hcmu.hcmupojo.dto.DepartmentDTO;
+import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,6 +29,9 @@ import java.util.List;
 @Service
 @Slf4j
 public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, Department> implements DepartmentService {
+
+    @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
 
     @Override
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(DepartmentDTO.DepartmentCreateDTO createDTO) {
@@ -61,18 +68,18 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<PageDTO<DepartmentDTO.DepartmentListDTO>> findAllDepartments(DepartmentDTO.DepartmentGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Department> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Department::getDepartmentId, Department::getName, Department::getParentId, 
-                           Department::getDescription, Department::getLocation, Department::getCreateTime)
+        queryWrapper.select(Department::getDepartmentId, Department::getName, Department::getParentId,
+                        Department::getDescription, Department::getLocation, Department::getCreateTime)
                 .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
                 .eq(requestDTO.getIsDeleted() != null, Department::getIsDeleted, requestDTO.getIsDeleted())
                 .orderByDesc(Department::getCreateTime);
-        
+
         IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
-                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()), 
-                DepartmentDTO.DepartmentListDTO.class, 
+                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
+                DepartmentDTO.DepartmentListDTO.class,
                 queryWrapper);
-        
+
         return Result.success(new PageDTO<>(page));
     }
 
@@ -136,7 +143,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                 .leftJoin(DoctorProfile.class, DoctorProfile::getDepartmentId, Department::getDepartmentId)
                 .eq(Department::getDepartmentId, departmentId)
                 .isNotNull(DoctorProfile::getDoctorProfileId);
-        
+
         Long doctorCount = baseMapper.selectJoinCount(doctorProfileWrapper);
         if (doctorCount > 0) {
             return Result.error("该科室下存在医生档案，无法删除");
@@ -174,7 +181,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                 .leftJoin(DoctorProfile.class, DoctorProfile::getDepartmentId, Department::getDepartmentId)
                 .in(Department::getDepartmentId, departmentIds)
                 .isNotNull(DoctorProfile::getDoctorProfileId);
-        
+
         Long doctorCount = baseMapper.selectJoinCount(doctorProfileWrapper);
         if (doctorCount > 0) {
             return Result.error("部分科室下存在医生档案，无法删除");
@@ -184,4 +191,43 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
         return Result.success("批量删除成功");
     }
+
+    // DoctorProfileServiceImpl.java 中新增
+    @Override
+    public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorsByDepartment(
+            Long departmentId,
+            DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {
+
+        // 1. 校验科室是否存在（复用自身的baseMapper，无需再调用departmentService）
+        Department department = baseMapper.selectById(departmentId);
+        if (department == null || department.getIsDeleted() == 1) {
+            return Result.error("科室不存在或已删除");
+        }
+
+        // 2. 构建查询条件：查询指定科室下的医生，关联用户表和科室表获取用户名、科室名
+        MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(DoctorProfile::getDoctorProfileId,
+                        DoctorProfile::getUserId,
+                        DoctorProfile::getDepartmentId,
+                        DoctorProfile::getTitle,
+                        DoctorProfile::getSpecialty,
+                        DoctorProfile::getCreateTime)
+                .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
+                .selectAs(User::getUserName, "userName")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(DoctorProfile::getDepartmentId, departmentId) // 筛选当前科室
+                .eq(DoctorProfile::getIsDeleted, 0) // 只查未删除的医生
+                .orderByDesc(DoctorProfile::getCreateTime);
+
+        // 3. 执行分页查询（使用DoctorProfileMapper进行查询，因数据来自DoctorProfile表）
+        IPage<DoctorProfileDTO.DoctorProfileListDTO> page = doctorProfileMapper.selectJoinPage(
+                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
+                DoctorProfileDTO.DoctorProfileListDTO.class,
+                queryWrapper
+        );
+
+        return Result.success(new PageDTO<>(page));
+    }
+
 }

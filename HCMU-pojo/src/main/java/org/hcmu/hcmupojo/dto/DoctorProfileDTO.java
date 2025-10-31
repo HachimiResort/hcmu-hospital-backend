@@ -82,4 +82,11 @@ public class DoctorProfileDTO {
             doctorProfile.setUpdateTime(LocalDateTime.now());
         }
     }
+
+    @Data
+    public static class DoctorByDeptRequestDTO {
+        private Integer pageNum = 1;
+        private Integer pageSize = 10;
+
+    }
 }
