@@ -26,7 +26,7 @@ public class DepartmentController {
     private DepartmentService departmentService;
 
     @AutoLog("创建科室")
-    @Operation(description = "创建科室", summary = "创建科室('DEPT_MANAGE')")
+    @Operation(description = "创建科室", summary = "创建科室('ADD_DEPART')")
     @PostMapping("")
     @PreAuthorize("@ex.hasSysAuthority('ADD_DEPART')")
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(@RequestBody @Valid DepartmentDTO.DepartmentCreateDTO createDTO) {
@@ -48,7 +48,7 @@ public class DepartmentController {
     }
 
     @AutoLog("更新科室信息")
-    @Operation(description = "更新科室信息", summary = "更新科室信息('DEPT_MANAGE')")
+    @Operation(description = "更新科室信息", summary = "更新科室信息('ALT_DEPART')")
     @PutMapping("/{departmentId}")
     @PreAuthorize("@ex.hasSysAuthority('ALT_DEPART')")
     public Result<String> updateDepartment(@PathVariable Long departmentId, @RequestBody @Valid DepartmentDTO.DepartmentUpdateDTO updateDTO) {
@@ -56,7 +56,7 @@ public class DepartmentController {
     }
 
     @AutoLog("删除科室（逻辑删除）")
-    @Operation(description = "删除科室（逻辑删除）", summary = "删除科室('DEPT_MANAGE')")
+    @Operation(description = "删除科室（逻辑删除）", summary = "删除科室('DEL_DEPART')")
     @DeleteMapping("/{departmentId}")
     @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
     public Result<String> deleteDepartment(@PathVariable Long departmentId) {
@@ -65,7 +65,7 @@ public class DepartmentController {
 
     // 新增：批量删除科室
     @AutoLog("批量删除科室（逻辑删除）")
-    @Operation(description = "批量删除科室", summary = "批量删除科室('DEPT_MANAGE')")
+    @Operation(description = "批量删除科室", summary = "批量删除科室('DEL_DEPART')")
     @DeleteMapping("/batch")
     @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
     public Result<String> batchDeleteDepartments(@RequestBody List<Long> departmentIds) {
@@ -75,7 +75,7 @@ public class DepartmentController {
     // DepartmentController.java 中新增
     @AutoLog("查询科室下所有医生")
     @Operation(description = "查询指定科室的所有医生", summary = "查询科室下医生列表")
-    @GetMapping("/{departmentId}/doctor")
+    @GetMapping("/{departmentId}/doctors")
     public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorsByDepartment(
             @PathVariable Long departmentId,
             @ModelAttribute DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {

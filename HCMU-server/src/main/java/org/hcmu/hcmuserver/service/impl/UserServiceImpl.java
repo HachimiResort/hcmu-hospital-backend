@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -214,6 +215,69 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         baseMapper.updateById(user);
 
         return Result.success("邮箱修改成功!");
+    }
+
+    @Override
+    public Result<String> batchDeleteUsers(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Result.error("用户ID列表不能为空");
+        }
+
+        // 查询这些用户的角色信息，检查是否为默认角色
+        MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(User::getUserId)
+                .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .in(User::getUserId, userIds)
+                .eq(Role::getIsDefault, 1); // 只选择默认角色的用户
+
+        List<User> usersToDelete = baseMapper.selectJoinList(User.class, queryWrapper);
+
+        if (usersToDelete.isEmpty()) {
+            return Result.error("没有找到符合条件的用户（角色为默认角色）");
+        }
+
+        // 获取符合条件的用户ID
+        List<Long> validUserIds = usersToDelete.stream()
+                .map(User::getUserId)
+                .collect(Collectors.toList());
+
+        // 逻辑删除这些用户
+        LambdaQueryWrapper<User> updateWrapper = new LambdaQueryWrapper<>();
+        updateWrapper.in(User::getUserId, validUserIds);
+        User updateUser = new User();
+        updateUser.setIsDeleted(1); // 假设逻辑删除字段为isDeleted
+        int updatedRows = baseMapper.update(updateUser, updateWrapper);
+
+        return Result.success("成功删除 " + updatedRows + " 个用户");
+    }
+
+    @Override
+    public Result<String> deleteUserById(Long userId) {
+        // 检查用户是否存在
+        User user = baseMapper.selectById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 查询用户的角色信息，检查是否为默认角色
+        MPJLambdaWrapper<UserRole> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Role::getIsDefault)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId);
+
+        Role role = UserRoleMapper.selectJoinOne(Role.class, queryWrapper);
+        if (role == null || role.getIsDefault() != 1) {
+            return Result.error("不能删除此用户，只有默认角色的用户才能被删除");
+        }
+
+        // 逻辑删除用户
+        User updateUser = new User();
+        updateUser.setUserId(userId);
+        updateUser.setIsDeleted(1); // 假设逻辑删除字段为isDeleted
+        baseMapper.updateById(updateUser);
+
+        return Result.success("用户删除成功");
     }
 
 }
