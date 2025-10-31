@@ -43,7 +43,15 @@ public enum PermissionEnum {
     ADD_DOCTOR(14, "addDoctor"),
     ALT_DOCTOR(15, "altDoctor"),
     DEL_DOCTOR(16, "delDoctor"),
-    CHECK_DOCTOR(17, "checkDoctor");
+    CHECK_DOCTOR(17, "checkDoctor"),
+
+    /*
+     * 患者档案管理
+     */
+    ADD_PATIENT(18, "addPatient"),
+    ALT_PATIENT(19, "altPatient"),
+    DEL_PATIENT(20, "delPatient"),
+    CHECK_PATIENT(21, "checkPatient");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
