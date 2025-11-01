@@ -17,10 +17,12 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.Permission;
 import org.hcmu.hcmupojo.entity.Role;
+import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.RolePermission;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
+import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.UserService;
@@ -48,6 +50,9 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
     @Autowired
     private RoleMapper roleMapper;
+
+    @Autowired
+    private ScheduleMapper scheduleMapper;
 
     @Autowired
     private MailServiceImpl mailService;
@@ -242,6 +247,14 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .map(User::getUserId)
                 .collect(Collectors.toList());
 
+        // 检查是否存在关联的排班记录
+        LambdaQueryWrapper<Schedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
+        scheduleQueryWrapper.in(Schedule::getDoctorUserId, validUserIds);
+        Long scheduleCount = scheduleMapper.selectCount(scheduleQueryWrapper);
+        if (scheduleCount > 0) {
+            return Result.error("不能删除这些用户，存在关联的排班记录");
+        }
+
         // 逻辑删除这些用户
         LambdaQueryWrapper<User> updateWrapper = new LambdaQueryWrapper<>();
         updateWrapper.in(User::getUserId, validUserIds);
@@ -269,6 +282,14 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         Role role = UserRoleMapper.selectJoinOne(Role.class, queryWrapper);
         if (role == null || role.getIsDefault() != 1) {
             return Result.error("不能删除此用户，只有默认角色的用户才能被删除");
+        }
+
+        // 检查是否存在关联的排班记录
+        LambdaQueryWrapper<Schedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
+        scheduleQueryWrapper.eq(Schedule::getDoctorUserId, userId);
+        Long scheduleCount = scheduleMapper.selectCount(scheduleQueryWrapper);
+        if (scheduleCount > 0) {
+            return Result.error("不能删除此用户，存在关联的排班记录");
         }
 
         // 逻辑删除用户

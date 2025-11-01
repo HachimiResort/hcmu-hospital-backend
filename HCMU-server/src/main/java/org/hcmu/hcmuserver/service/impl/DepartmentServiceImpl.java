@@ -16,9 +16,11 @@ import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
     @Autowired
     private DoctorProfileMapper doctorProfileMapper;
+
+    @Autowired
+    private ScheduleMapper scheduleMapper;
 
     @Override
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(DepartmentDTO.DepartmentCreateDTO createDTO) {
@@ -149,6 +154,14 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("该科室下存在医生档案，无法删除");
         }
 
+        // 检查是否存在相关排班记录
+        LambdaQueryWrapper<Schedule> scheduleWrapper = new LambdaQueryWrapper<>();
+        scheduleWrapper.eq(Schedule::getDepartmentId, departmentId);
+        Long scheduleCount = scheduleMapper.selectCount(scheduleWrapper);
+        if (scheduleCount > 0) {
+            return Result.error("该科室下存在排班记录，无法删除");
+        }
+
         baseMapper.deleteById(departmentId);
         return Result.success("删除成功");
     }
@@ -185,6 +198,14 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
         Long doctorCount = baseMapper.selectJoinCount(doctorProfileWrapper);
         if (doctorCount > 0) {
             return Result.error("部分科室下存在医生档案，无法删除");
+        }
+
+        // 检查是否存在相关排班记录
+        LambdaQueryWrapper<Schedule> scheduleWrapper = new LambdaQueryWrapper<>();
+        scheduleWrapper.in(Schedule::getDepartmentId, departmentIds);
+        Long scheduleCount = scheduleMapper.selectCount(scheduleWrapper);
+        if (scheduleCount > 0) {
+            return Result.error("部分科室下存在排班记录，无法删除");
         }
 
         baseMapper.deleteBatchIds(departmentIds);
