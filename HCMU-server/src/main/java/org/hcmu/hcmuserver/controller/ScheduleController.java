@@ -6,10 +6,7 @@ import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
-import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
-import org.hcmu.hcmupojo.dto.ScheduleDTO;
-import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +25,7 @@ public class ScheduleController {
     private ScheduleService scheduleService;
 
     @AutoLog("创建排班")
-    @Operation(description = "创建排班", summary = "创建排班('ADD_SCHDULE')")
+    @Operation(description = "创建排班", summary = "创建排班('ADD_SCHEDULE')")
     @PostMapping("")
     @PreAuthorize("@ex.hasSysAuthority('ADD_SCHEDULE')")
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(@RequestBody @Valid ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -42,36 +39,36 @@ public class ScheduleController {
         return scheduleService.findAllSchedules(requestDTO);
     }
 
-    @AutoLog("获取科室详情")
-    @Operation(description = "获取科室详情", summary = "获取科室详情")
-    @GetMapping("/{ScheduleId}")
-    public Result<ScheduleDTO.ScheduleListDTO> getScheduleById(@PathVariable Long ScheduleId) {
-        return scheduleService.findScheduleById(ScheduleId);
+    @AutoLog("获取排班详情")
+    @Operation(description = "获取排班详情", summary = "获取排班详情")
+    @GetMapping("/{scheduleId}")
+    public Result<ScheduleDTO.ScheduleListDTO> getScheduleById(@PathVariable Long scheduleId) {
+        return scheduleService.findScheduleById(scheduleId);
     }
 
-    @AutoLog("更新科室信息")
-    @Operation(description = "更新科室信息", summary = "更新科室信息('ALT_DEPART')")
-    @PutMapping("/{ScheduleId}")
-    @PreAuthorize("@ex.hasSysAuthority('ALT_DEPART')")
-    public Result<String> updateSchedule(@PathVariable Long ScheduleId, @RequestBody @Valid ScheduleDTO.ScheduleUpdateDTO updateDTO) {
-        return scheduleService.updateScheduleById(ScheduleId, updateDTO);
+    @AutoLog("更新排班信息")
+    @Operation(description = "更新排班信息", summary = "更新排班信息('ALT_SCHEDULE')")
+    @PutMapping("/{scheduleId}")
+    @PreAuthorize("@ex.hasSysAuthority('ALT_SCHEDULE')")
+    public Result<String> updateSchedule(@PathVariable Long scheduleId, @RequestBody @Valid ScheduleDTO.ScheduleUpdateDTO updateDTO) {
+        return scheduleService.updateScheduleById(scheduleId, updateDTO);
     }
 
-    @AutoLog("删除科室（逻辑删除）")
-    @Operation(description = "删除科室（逻辑删除）", summary = "删除科室('DEL_DEPART')")
-    @DeleteMapping("/{ScheduleId}")
-    @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
-    public Result<String> deleteSchedule(@PathVariable Long ScheduleId) {
-        return scheduleService.deleteScheduleById(ScheduleId);
+    @AutoLog("删除排班（逻辑删除）")
+    @Operation(description = "删除排班（逻辑删除）", summary = "删除排班('DEL_SCHEDULE')")
+    @DeleteMapping("/{scheduleId}")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_SCHEDULE')")
+    public Result<String> deleteSchedule(@PathVariable Long scheduleId) {
+        return scheduleService.deleteScheduleById(scheduleId);
     }
 
-    // 新增：批量删除科室
-    @AutoLog("批量删除科室（逻辑删除）")
-    @Operation(description = "批量删除科室", summary = "批量删除科室('DEL_DEPART')")
+    // 新增：批量删除排班
+    @AutoLog("批量删除排班（逻辑删除）")
+    @Operation(description = "批量删除排班", summary = "批量删除排班('DEL_SCHEDULE')")
     @DeleteMapping("/batch")
-    @PreAuthorize("@ex.hasSysAuthority('DEL_DEPART')")
-    public Result<String> batchDeleteSchedules(@RequestBody List<Long> ScheduleIds) {
-        return scheduleService.batchDeleteSchedules(ScheduleIds);
+    @PreAuthorize("@ex.hasSysAuthority('DEL_SCHEDULE')")
+    public Result<String> batchDeleteSchedules(@RequestBody List<Long> scheduleIds) {
+        return scheduleService.batchDeleteSchedules(scheduleIds);
     }
 
 
