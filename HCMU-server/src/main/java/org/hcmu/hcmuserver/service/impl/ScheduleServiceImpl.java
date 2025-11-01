@@ -10,20 +10,29 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.Role;
+import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
+import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Slf4j
 public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Schedule> implements ScheduleService {
+
+    @Autowired
+    private UserRoleMapper userRoleMapper;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -180,5 +189,72 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         baseMapper.deleteBatchIds(scheduleIds);
 
         return Result.success("批量删除成功");
+    }
+
+    @Override
+    public Result<String> copySchedule(ScheduleDTO.ScheduleCopyDTO copyDTO) {
+        Long doctorUserId = copyDTO.getDoctorUserId();
+        LocalDate targetDate = copyDTO.getTargetDate();
+        
+        // 是否为医生角色
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, doctorUserId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法复制排班");
+        }
+
+        // 检查是否已有排班
+        LambdaQueryWrapper<Schedule> targetDateWrapper = new LambdaQueryWrapper<>();
+        targetDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
+                .eq(Schedule::getScheduleDate, targetDate)
+                .eq(Schedule::getIsDeleted, 0);
+        
+        Long existingScheduleCount = baseMapper.selectCount(targetDateWrapper);
+        if (existingScheduleCount > 0) {
+            return Result.error("目标日期已有排班，无法复制");
+        }
+
+        // 查找7天前的排班
+        LocalDate sourceDate = targetDate.minusDays(7);
+        LambdaQueryWrapper<Schedule> sourceDateWrapper = new LambdaQueryWrapper<>();
+        sourceDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
+                .eq(Schedule::getScheduleDate, sourceDate)
+                .eq(Schedule::getIsDeleted, 0);
+        
+        List<Schedule> sourceSchedules = baseMapper.selectList(sourceDateWrapper);
+        if (sourceSchedules.isEmpty()) {
+            return Result.error("7天前没有排班记录");
+        }
+
+        // 4. 复制排班记录
+        for (Schedule sourceSchedule : sourceSchedules) {
+            Schedule newSchedule = new Schedule();
+            newSchedule.setDoctorUserId(sourceSchedule.getDoctorUserId());
+            newSchedule.setDepartmentId(sourceSchedule.getDepartmentId());
+            newSchedule.setScheduleDate(targetDate);
+            newSchedule.setSlotType(sourceSchedule.getSlotType());
+            newSchedule.setSlotPeriod(sourceSchedule.getSlotPeriod());
+            newSchedule.setTotalSlots(sourceSchedule.getTotalSlots());
+            newSchedule.setAvailableSlots(sourceSchedule.getTotalSlots()); 
+            newSchedule.setFee(sourceSchedule.getFee());
+            newSchedule.setStatus(sourceSchedule.getStatus());
+            newSchedule.setIsDeleted(0);
+            newSchedule.setCreateTime(LocalDateTime.now());
+            newSchedule.setUpdateTime(LocalDateTime.now());
+            
+            baseMapper.insert(newSchedule);
+        }
+
+        return Result.success("成功复制 " + sourceSchedules.size() + " 条排班记录到 " + targetDate);
     }
 }

@@ -105,4 +105,13 @@ public class ScheduleDTO {
             schedule.setUpdateTime(LocalDateTime.now());
         }
     }
+
+    // 复制排班请求
+    @Data
+    public static class ScheduleCopyDTO {
+        @NotNull(message = "医生用户ID不能为空")
+        private Long doctorUserId;
+        @NotNull(message = "目标日期不能为空")
+        private LocalDate targetDate;
+    }
 }

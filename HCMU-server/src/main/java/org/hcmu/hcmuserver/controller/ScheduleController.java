@@ -71,6 +71,16 @@ public class ScheduleController {
         return scheduleService.batchDeleteSchedules(scheduleIds);
     }
 
+    // 新增：复制7天前的排班
+    @AutoLog("复制7天前的排班")
+    @Operation(description = "复制7天前的排班", summary =
+            "复制7天前的排班('ADD_SCHEDULE')")
+    @PostMapping("/copy")
+    @PreAuthorize("@ex.hasSysAuthority('ADD_SCHEDULE')")
+    public Result<String> copySchedule(@RequestBody @Valid ScheduleDTO.ScheduleCopyDTO copyDTO) {
+        return scheduleService.copySchedule(copyDTO);
+    }
+
 
 
 }
