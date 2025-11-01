@@ -3,6 +3,7 @@ package org.hcmu.hcmupojo.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import lombok.Data;
 import org.hcmu.hcmupojo.entity.Schedule;
 
@@ -20,7 +21,11 @@ public class ScheduleDTO {
         private Long doctorUserId; // 按医生ID筛选
         private Long departmentId; // 按科室ID筛选
         private LocalDate scheduleDate; // 按出诊日期筛选
+        @Min(value = 1, message = "号别取值范围为1-3")
+        @Max(value = 3, message = "号别取值范围为1-3")
         private Integer slotType; // 按号别筛选
+        @Min(value = 1, message = "时间段取值范围为1-12")
+        @Max(value = 12, message = "时间段取值范围为1-12")
         private Integer slotPeriod; // 按时间段筛选
         private Integer status; // 按排班状态筛选
         private Integer isDeleted; // 逻辑删除状态
@@ -38,8 +43,12 @@ public class ScheduleDTO {
         @NotNull(message = "出诊日期不能为空")
         private LocalDate scheduleDate;
         @NotNull(message = "号别不能为空")
+        @Min(value = 1, message = "号别取值范围为1-3")
+        @Max(value = 3, message = "号别取值范围为1-3")
         private Integer slotType;
         @NotNull(message = "时间段不能为空")
+        @Min(value = 1, message = "时间段取值范围为1-12")
+        @Max(value = 12, message = "时间段取值范围为1-12")
         private Integer slotPeriod;
         @NotNull(message = "总号源数不能为空")
         private Integer totalSlots;
@@ -63,8 +72,12 @@ public class ScheduleDTO {
         @NotNull(message = "出诊日期不能为空")
         private LocalDate scheduleDate;
         @NotNull(message = "号别不能为空")
+        @Min(value = 1, message = "号别取值范围为1-3")
+        @Max(value = 3, message = "号别取值范围为1-3")
         private Integer slotType;
         @NotNull(message = "时间段不能为空")
+        @Min(value = 1, message = "时间段取值范围为1-12")
+        @Max(value = 12, message = "时间段取值范围为1-12")
         private Integer slotPeriod;
         @NotNull(message = "总号源数不能为空")
         @Min(value = 1, message = "总号源数必须大于0")
@@ -82,7 +95,11 @@ public class ScheduleDTO {
         private Long doctorUserId;
         private Long departmentId;
         private LocalDate scheduleDate;
+        @Min(value = 1, message = "号别取值范围为1-3")
+        @Max(value = 3, message = "号别取值范围为1-3")
         private Integer slotType;
+        @Min(value = 1, message = "时间段取值范围为1-12")
+        @Max(value = 12, message = "时间段取值范围为1-12")
         private Integer slotPeriod;
         @Min(value = 1, message = "总号源数必须大于0")
         private Integer totalSlots;

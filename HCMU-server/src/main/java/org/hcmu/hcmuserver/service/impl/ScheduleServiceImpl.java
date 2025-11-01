@@ -16,9 +16,13 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.Role;
+import org.hcmu.hcmupojo.entity.User;
+import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
+import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
+import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +36,13 @@ import java.util.List;
 public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Schedule> implements ScheduleService {
 
     @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -133,6 +143,31 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("排班不存在");
         }
 
+        if (updateDTO.getDoctorUserId() != null && !updateDTO.getDoctorUserId().equals(schedule.getDoctorUserId())) {
+            // 检查用户是否存在
+            User user = userMapper.selectById(updateDTO.getDoctorUserId());
+            if (user == null || user.getIsDeleted() == 1) {
+                return Result.error("指定的医生用户不存在");
+            }
+
+            // 检查用户是否为医生角色
+            MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+            roleQueryWrapper.select(Role::getType)
+                    .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                    .eq(UserRole::getUserId, updateDTO.getDoctorUserId())
+                    .eq(UserRole::getIsDeleted, 0)
+                    .eq(Role::getIsDeleted, 0);
+
+            Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+            if (userRole == null) {
+                return Result.error("用户未分配角色");
+            }
+
+            if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+                return Result.error("指定的用户不是医生角色，无法分配排班");
+            }
+        }
+
         if ((updateDTO.getDoctorUserId() != null && !updateDTO.getDoctorUserId().equals(schedule.getDoctorUserId())) ||
             (updateDTO.getScheduleDate() != null && !updateDTO.getScheduleDate().equals(schedule.getScheduleDate())) ||
             (updateDTO.getSlotType() != null && !updateDTO.getSlotType().equals(schedule.getSlotType()))) {
@@ -150,6 +185,22 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             if (baseMapper.selectCount(wrapper) > 0) {
                 return Result.error("该医生在此日期和时段已有排班");
             }
+        }
+
+        // 验证departmentId是否存在
+        if (updateDTO.getDepartmentId() != null) {
+            Department department = departmentMapper.selectById(updateDTO.getDepartmentId());
+            if (department == null || department.getIsDeleted() == 1) {
+                return Result.error("指定的科室不存在");
+            }
+        }
+
+
+        Integer totalSlots = updateDTO.getTotalSlots() != null ? updateDTO.getTotalSlots() : schedule.getTotalSlots();
+        Integer availableSlots = updateDTO.getAvailableSlots() != null ? updateDTO.getAvailableSlots() : schedule.getAvailableSlots();
+        
+        if (totalSlots != null && availableSlots != null && availableSlots > totalSlots) {
+            return Result.error("可用号源数不能大于总号源数");
         }
 
         updateDTO.updateSchedule(schedule);
