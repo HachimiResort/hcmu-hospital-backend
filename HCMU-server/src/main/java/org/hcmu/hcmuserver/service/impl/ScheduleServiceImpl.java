@@ -81,7 +81,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Schedule::getDoctorUserId, createDTO.getDoctorUserId())
                 .eq(Schedule::getScheduleDate, createDTO.getScheduleDate())
-                .eq(Schedule::getSlotType, createDTO.getSlotType())
+                .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod())
                 .eq(Schedule::getIsDeleted, 0);
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("该医生在此日期和时段已有排班");
