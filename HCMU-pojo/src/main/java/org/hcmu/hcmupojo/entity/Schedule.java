@@ -17,10 +17,7 @@ public class Schedule {
     
     @TableField("doctor_user_id")
     private Long doctorUserId; // 医生用户ID
-    
-    @TableField("department_id")
-    private Long departmentId; // 科室ID
-    
+
     @TableField("schedule_date")
     private LocalDate scheduleDate; // 出诊日期
     

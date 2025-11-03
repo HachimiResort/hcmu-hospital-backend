@@ -154,13 +154,8 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("该科室下存在医生档案，无法删除");
         }
 
-        // 检查是否存在相关排班记录
-        LambdaQueryWrapper<Schedule> scheduleWrapper = new LambdaQueryWrapper<>();
-        scheduleWrapper.eq(Schedule::getDepartmentId, departmentId);
-        Long scheduleCount = scheduleMapper.selectCount(scheduleWrapper);
-        if (scheduleCount > 0) {
-            return Result.error("该科室下存在排班记录，无法删除");
-        }
+        // TODO: 检查是否存在相关排班记录
+
 
         baseMapper.deleteById(departmentId);
         return Result.success("删除成功");
@@ -200,13 +195,8 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("部分科室下存在医生档案，无法删除");
         }
 
-        // 检查是否存在相关排班记录
-        LambdaQueryWrapper<Schedule> scheduleWrapper = new LambdaQueryWrapper<>();
-        scheduleWrapper.in(Schedule::getDepartmentId, departmentIds);
-        Long scheduleCount = scheduleMapper.selectCount(scheduleWrapper);
-        if (scheduleCount > 0) {
-            return Result.error("部分科室下存在排班记录，无法删除");
-        }
+        // TODO: 检查是否存在相关排班记录
+
 
         baseMapper.deleteBatchIds(departmentIds);
 

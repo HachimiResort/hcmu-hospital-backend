@@ -18,8 +18,7 @@ public class ScheduleDTO {
     public static class ScheduleGetRequestDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;
-        private Long doctorUserId; 
-        private Long departmentId;
+        private Long doctorUserId;
         private LocalDate scheduleStartDate; // 查询起始日期
         private LocalDate scheduleEndDate;   // 查询终止日期 
         @Min(value = 1, message = "号别取值范围为1-3")
@@ -38,8 +37,6 @@ public class ScheduleDTO {
         private Long scheduleId;
         @NotNull(message = "医生用户ID不能为空")
         private Long doctorUserId;
-        @NotNull(message = "科室ID不能为空")
-        private Long departmentId;
         @NotNull(message = "出诊日期不能为空")
         private LocalDate scheduleDate;
         @NotNull(message = "号别不能为空")
@@ -67,8 +64,6 @@ public class ScheduleDTO {
     public static class ScheduleCreateDTO {
         @NotNull(message = "医生用户ID不能为空")
         private Long doctorUserId;
-        @NotNull(message = "科室ID不能为空")
-        private Long departmentId;
         @NotNull(message = "出诊日期不能为空")
         private LocalDate scheduleDate;
         @NotNull(message = "号别不能为空")
@@ -93,7 +88,6 @@ public class ScheduleDTO {
     @Data
     public static class ScheduleUpdateDTO {
         private Long doctorUserId;
-        private Long departmentId;
         private LocalDate scheduleDate;
         @Min(value = 1, message = "号别取值范围为1-3")
         @Max(value = 3, message = "号别取值范围为1-3")
@@ -111,7 +105,6 @@ public class ScheduleDTO {
 
         public void updateSchedule(Schedule schedule) {
             if (doctorUserId != null && !doctorUserId.toString().trim().isEmpty()) schedule.setDoctorUserId(doctorUserId);
-            if (departmentId != null && !departmentId.toString().trim().isEmpty()) schedule.setDepartmentId(departmentId);
             if (scheduleDate != null && !scheduleDate.toString().trim().isEmpty()) schedule.setScheduleDate(scheduleDate);
             if (slotType != null && !slotType.toString().trim().isEmpty()) schedule.setSlotType(slotType);
             if (slotPeriod != null && !slotPeriod.toString().trim().isEmpty()) schedule.setSlotPeriod(slotPeriod);

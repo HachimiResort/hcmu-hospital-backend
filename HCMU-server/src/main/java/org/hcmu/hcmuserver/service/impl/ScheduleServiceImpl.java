@@ -76,6 +76,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("用户不是医生角色，无法创建排班");
         }
 
+
         // 校验同一医生在同一日期和时段是否已有排班
         LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Schedule::getDoctorUserId, createDTO.getDoctorUserId())
@@ -88,7 +89,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
         Schedule schedule = new Schedule();
         schedule.setDoctorUserId(createDTO.getDoctorUserId());
-        schedule.setDepartmentId(createDTO.getDepartmentId());
         schedule.setScheduleDate(createDTO.getScheduleDate());
         schedule.setSlotType(createDTO.getSlotType());
         schedule.setTotalSlots(createDTO.getTotalSlots());
@@ -105,7 +105,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         ScheduleDTO.ScheduleListDTO result = new ScheduleDTO.ScheduleListDTO();
         result.setScheduleId(schedule.getScheduleId());
         result.setDoctorUserId(schedule.getDoctorUserId());
-        result.setDepartmentId(schedule.getDepartmentId());
         result.setScheduleDate(schedule.getScheduleDate());
         result.setSlotType(schedule.getSlotType());
         result.setTotalSlots(schedule.getTotalSlots());
@@ -121,12 +120,11 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
     @Override
     public Result<PageDTO<ScheduleDTO.ScheduleListDTO>> findAllSchedules(ScheduleDTO.ScheduleGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Schedule> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Schedule::getScheduleId, Schedule::getDoctorUserId, Schedule::getDepartmentId,
+        queryWrapper.select(Schedule::getScheduleId, Schedule::getDoctorUserId,
                         Schedule::getScheduleDate, Schedule::getSlotType, Schedule::getSlotPeriod,
                         Schedule::getTotalSlots, Schedule::getAvailableSlots, Schedule::getFee,
                         Schedule::getStatus, Schedule::getCreateTime)
                 .eq(requestDTO.getDoctorUserId() != null, Schedule::getDoctorUserId, requestDTO.getDoctorUserId())
-                .eq(requestDTO.getDepartmentId() != null, Schedule::getDepartmentId, requestDTO.getDepartmentId())
                 .ge(requestDTO.getScheduleStartDate() != null, Schedule::getScheduleDate, requestDTO.getScheduleStartDate()) 
                 .le(requestDTO.getScheduleEndDate() != null, Schedule::getScheduleDate, requestDTO.getScheduleEndDate())  
                 .eq(requestDTO.getSlotType() != null, Schedule::getSlotType, requestDTO.getSlotType())
@@ -153,7 +151,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         ScheduleDTO.ScheduleListDTO dto = new ScheduleDTO.ScheduleListDTO();
         dto.setScheduleId(schedule.getScheduleId());
         dto.setDoctorUserId(schedule.getDoctorUserId());
-        dto.setDepartmentId(schedule.getDepartmentId());
         dto.setScheduleDate(schedule.getScheduleDate());
         dto.setSlotType(schedule.getSlotType());
         dto.setSlotPeriod(schedule.getSlotPeriod());
@@ -214,14 +211,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     .ne(Schedule::getScheduleId, scheduleId); // 排除当前记录
             if (baseMapper.selectCount(wrapper) > 0) {
                 return Result.error("该医生在此日期和时段已有排班");
-            }
-        }
-
-        // 验证departmentId是否存在
-        if (updateDTO.getDepartmentId() != null) {
-            Department department = departmentMapper.selectById(updateDTO.getDepartmentId());
-            if (department == null || department.getIsDeleted() == 1) {
-                return Result.error("指定的科室不存在");
             }
         }
 
@@ -327,7 +316,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         for (Schedule sourceSchedule : sourceSchedules) {
             Schedule newSchedule = new Schedule();
             newSchedule.setDoctorUserId(sourceSchedule.getDoctorUserId());
-            newSchedule.setDepartmentId(sourceSchedule.getDepartmentId());
             newSchedule.setScheduleDate(targetDate);
             newSchedule.setSlotType(sourceSchedule.getSlotType());
             newSchedule.setSlotPeriod(sourceSchedule.getSlotPeriod());
