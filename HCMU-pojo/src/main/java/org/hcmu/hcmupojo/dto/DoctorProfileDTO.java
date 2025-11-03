@@ -16,7 +16,6 @@ public class DoctorProfileDTO {
         private Integer pageSize = 10;
         private Long departmentId; // 按科室筛选
         private String title; // 按职称筛选
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示

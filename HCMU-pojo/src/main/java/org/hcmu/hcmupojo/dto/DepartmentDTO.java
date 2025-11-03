@@ -17,8 +17,6 @@ public class DepartmentDTO {
         private String name; // 模糊查询科室名称
         @NotNull(message = "父科室名不能为空")
         private Long parentId; // 按父科室筛选
-
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示

@@ -28,7 +28,6 @@ public class ScheduleDTO {
         @Max(value = 12, message = "时间段取值范围为1-12")
         private Integer slotPeriod; // 按时间段筛选
         private Integer status; // 按排班状态筛选
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示

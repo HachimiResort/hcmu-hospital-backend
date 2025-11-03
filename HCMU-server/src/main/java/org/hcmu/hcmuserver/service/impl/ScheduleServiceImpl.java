@@ -102,7 +102,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                 .eq(requestDTO.getSlotType() != null, Schedule::getSlotType, requestDTO.getSlotType())
                 .eq(requestDTO.getSlotPeriod() != null, Schedule::getSlotPeriod, requestDTO.getSlotPeriod())
                 .eq(requestDTO.getStatus() != null, Schedule::getStatus, requestDTO.getStatus())
-                .eq(requestDTO.getIsDeleted() != null, Schedule::getIsDeleted, requestDTO.getIsDeleted())
+                .eq(Schedule::getIsDeleted, 0) // 默认只查询未删除的记录
                 .orderByDesc(Schedule::getCreateTime);
 
         IPage<ScheduleDTO.ScheduleListDTO> page = baseMapper.selectJoinPage(

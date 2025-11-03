@@ -82,12 +82,8 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
                 .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
                 .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
-                .eq(requestDTO.getIsDeleted() != null, PatientProfile::getIsDeleted, requestDTO.getIsDeleted())
+                .eq(PatientProfile::getIsDeleted, 0)
                 .orderByDesc(PatientProfile::getCreateTime);
-
-        if (requestDTO.getIsDeleted() == null) {
-            queryWrapper.eq(PatientProfile::getIsDeleted, 0); // 默认查询未删除
-        }
 
         IPage<PatientProfileDTO.PatientProfileListDTO> page = baseMapper.selectJoinPage(
                 new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),

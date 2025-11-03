@@ -97,12 +97,8 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                 .selectAs(Department::getName, "departmentName")
                 .eq(requestDTO.getDepartmentId() != null, DoctorProfile::getDepartmentId, requestDTO.getDepartmentId())
                 .like(requestDTO.getTitle() != null && !requestDTO.getTitle().isEmpty(), DoctorProfile::getTitle, requestDTO.getTitle())
-                .eq(requestDTO.getIsDeleted() != null, DoctorProfile::getIsDeleted, requestDTO.getIsDeleted())
+                .eq(DoctorProfile::getIsDeleted, 0) // 默认只查询未删除的记录
                 .orderByDesc(DoctorProfile::getCreateTime);
-
-        if (requestDTO.getIsDeleted() == null) {
-            queryWrapper.eq(DoctorProfile::getIsDeleted, 0); // 默认查询未删除
-        }
 
         IPage<DoctorProfileDTO.DoctorProfileListDTO> page = baseMapper.selectJoinPage(
                 new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),

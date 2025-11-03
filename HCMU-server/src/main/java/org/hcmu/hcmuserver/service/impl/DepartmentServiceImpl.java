@@ -77,7 +77,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                         Department::getDescription, Department::getLocation, Department::getCreateTime)
                 .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
-                .eq(requestDTO.getIsDeleted() != null, Department::getIsDeleted, requestDTO.getIsDeleted())
+                .eq(Department::getIsDeleted, 0) // 默认只查询未删除的记录
                 .orderByDesc(Department::getCreateTime);
 
         IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
