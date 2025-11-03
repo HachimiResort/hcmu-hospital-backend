@@ -24,6 +24,7 @@ import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
+import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,9 @@ import java.util.List;
 public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Schedule> implements ScheduleService {
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private UserMapper userMapper;
 
     @Autowired
@@ -46,6 +50,31 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
+
+        // 校验用户是否存在
+        User user = userService.getById(createDTO.getDoctorUserId());
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        Long userId = createDTO.getDoctorUserId();
+
+        // 是否为医生角色呢
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法创建排班");
+        }
 
         // 校验同一医生在同一日期和时段是否已有排班
         LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<>();
@@ -247,6 +276,12 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
     public Result<String> copySchedule(ScheduleDTO.ScheduleCopyDTO copyDTO) {
         Long doctorUserId = copyDTO.getDoctorUserId();
         LocalDate targetDate = copyDTO.getTargetDate();
+
+        // 校验用户是否存在
+        User user = userService.getById(copyDTO.getDoctorUserId());
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
         
         // 是否为医生角色
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();

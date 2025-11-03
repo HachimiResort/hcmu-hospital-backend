@@ -51,6 +51,25 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             return Result.error("用户不存在");
         }
 
+        Long userId = createDTO.getUserId();
+
+        // 是否为医生角色呢
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法创建医生档案");
+        }
+
         // 校验科室是否存在
         Department department = departmentService.getById(createDTO.getDepartmentId());
         if (department == null) {
