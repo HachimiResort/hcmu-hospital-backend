@@ -18,16 +18,17 @@ public class ScheduleDTO {
     public static class ScheduleGetRequestDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;
-        private Long doctorUserId; // 按医生ID筛选
-        private Long departmentId; // 按科室ID筛选
-        private LocalDate scheduleDate; // 按出诊日期筛选
+        private Long doctorUserId; 
+        private Long departmentId;
+        private LocalDate scheduleStartDate; // 查询起始日期
+        private LocalDate scheduleEndDate;   // 查询终止日期 
         @Min(value = 1, message = "号别取值范围为1-3")
         @Max(value = 3, message = "号别取值范围为1-3")
-        private Integer slotType; // 按号别筛选
+        private Integer slotType; 
         @Min(value = 1, message = "时间段取值范围为1-12")
         @Max(value = 12, message = "时间段取值范围为1-12")
-        private Integer slotPeriod; // 按时间段筛选
-        private Integer status; // 按排班状态筛选
+        private Integer slotPeriod; 
+        private Integer status; 
     }
 
     // 列表展示
