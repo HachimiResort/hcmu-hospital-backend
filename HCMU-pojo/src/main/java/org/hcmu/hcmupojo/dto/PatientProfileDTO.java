@@ -15,7 +15,6 @@ public class PatientProfileDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;
         private Integer identityType; // 按身份类型筛选
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示
