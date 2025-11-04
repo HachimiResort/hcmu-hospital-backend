@@ -1,5 +1,5 @@
 # 使用与你项目匹配的 Java 17 基础镜像
-FROM eclipse-temurin:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 # 设置工作目录
 WORKDIR /app
