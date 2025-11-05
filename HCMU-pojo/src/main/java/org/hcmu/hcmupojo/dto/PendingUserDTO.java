@@ -29,6 +29,11 @@ public class PendingUserDTO {
         private String email;
         private Long roleId;
         private String roleName;
+        private Integer identityType;
+        private String studentTeacherId;
+        private String departmentName;
+        private String title;
+        private String specialty;
 
         static public PendingUserListDTO convert(PendingUser pendingUser) {
             if (pendingUser == null) {
@@ -40,6 +45,12 @@ public class PendingUserDTO {
             dto.setName(pendingUser.getName());
             dto.setEmail(pendingUser.getEmail());
             dto.setRoleId(pendingUser.getRoleId());
+            dto.setIdentityType(pendingUser.getIdentityType());
+            dto.setStudentTeacherId(pendingUser.getStudentTeacherId());
+            dto.setDepartmentName(pendingUser.getDepartmentName());
+            dto.setTitle(pendingUser.getTitle());
+            dto.setSpecialty(pendingUser.getSpecialty());
+            
             return dto;
         }
 
@@ -59,6 +70,11 @@ public class PendingUserDTO {
         private String email;
         private Long roleId;
         private String roleName;
+        private Integer identityType;
+        private String studentTeacherId;
+        private String departmentName;
+        private String title;
+        private String specialty;
     }
 
 }

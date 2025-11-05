@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -174,15 +175,17 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
 
         RoleTypeEnum roleTypeEnum = RoleTypeEnum.getEnumByCode(roleType);
 
+        Map<String, Integer> departmentMap = new HashMap<String,Integer>();
+
         switch (roleTypeEnum) {
             case DOCTOR: // 医生角色（code=2）
                 departmentNameIndex = headerMap.getOrDefault("科室名称", headerMap.get("departmentName"));
-                titleIndex = headerMap.getOrDefault("科室名称", headerMap.get("departmentName"));
-                specialtyIndex = headerMap.getOrDefault("专业特长", headerMap.get("specialty"));
+                titleIndex = headerMap.getOrDefault("职称", headerMap.get("title"));
+                specialtyIndex = headerMap.getOrDefault("专业特长", headerMap.getOrDefault("特长", headerMap.get("specialty")));
                 break;
             case PATIENT: // 患者角色（code=3）
                 identityTypeIndex =  headerMap.getOrDefault("身份类型", headerMap.get("identityType"));
-                studentTeacherIdIndex = headerMap.getOrDefault("学号/工号", headerMap.get("studentTeacherId"));
+                studentTeacherIdIndex = headerMap.getOrDefault("学号", headerMap.getOrDefault("工号", headerMap.getOrDefault("学号/工号", headerMap.get("studentTeacherId"))));
                 break;
             case SYS: // 系统角色（code=1，修正枚举常量名）
                 break;
