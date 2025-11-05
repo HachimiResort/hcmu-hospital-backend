@@ -9,28 +9,26 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.PendingUserDTO;
 import org.hcmu.hcmupojo.entity.PendingUser;
 import org.hcmu.hcmupojo.entity.Role;
-import org.hcmu.hcmupojo.entity.User;
-import org.hcmu.hcmupojo.entity.relation.UserRole;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import org.hcmu.hcmuserver.mapper.user.PendingUserMapper;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
-import org.hcmu.hcmuserver.mapper.user.UserMapper;
-import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
+import org.hcmu.hcmuserver.service.DepartmentService;
 import org.hcmu.hcmuserver.service.PendingUserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,10 +38,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper, PendingUser> implements PendingUserService {
 
+    @Autowired
+    private RoleMapper roleMapper;
+    @Autowired
+    private DepartmentService departmentService;
+
     @Override
     public Result<PageDTO<PendingUserDTO.PendingUserListDTO>> findAllPendingUsers(PendingUserDTO.PendingUserGetRequestDTO requestDTO) {
         MPJLambdaWrapper<PendingUser> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId)
+        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId, PendingUser::getIdentityType, PendingUser::getStudentTeacherId, PendingUser::getDepartmentName, PendingUser::getTitle, PendingUser::getSpecialty)
                 .leftJoin(Role.class, Role::getRoleId, PendingUser::getRoleId)
                 .selectAs(Role::getName, "roleName")
                 .like(requestDTO.getUserName() != null, PendingUser::getUserName, requestDTO.getUserName())
@@ -56,7 +59,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
     @Override
     public Result<PendingUserDTO.PendingUserInfoDTO> findPendingUserById(Long id) {
         MPJLambdaWrapper<PendingUser> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId)
+        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId, PendingUser::getIdentityType, PendingUser::getStudentTeacherId, PendingUser::getDepartmentName, PendingUser::getTitle, PendingUser::getSpecialty)
                 .selectAs(Role::getName, "roleName")
                 .leftJoin(Role.class, Role::getRoleId, PendingUser::getRoleId)
                 .eq(PendingUser::getId, id);
@@ -109,6 +112,13 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
         String filename = file.getOriginalFilename();
         List<List<Object>> readAll;
 
+        Role role = roleMapper.selectById(roleId);
+        if (role == null) {
+            return Result.error("角色不存在");
+        }
+        Integer roleType = role.getType(); // 角色类型：1-系统角色，2-医生角色，3-患者角色
+
+
         try {
             // 1. 自动根据文件类型选择解析器
             if (filename != null && filename.toLowerCase().endsWith(".csv")) {
@@ -129,7 +139,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
             }
 
             // 2. 将解析后的数据交由统一的逻辑处理
-            return processParsedData(readAll, roleId);
+            return processParsedData(readAll, roleId, roleType);
 
         } catch (Exception e) {
             log.error("导入用户时发生未知异常", e);
@@ -140,7 +150,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
     /**
      * 统一处理解析后的数据（无论是来自Excel还是CSV）
      */
-    private Result<String> processParsedData(List<List<Object>> readAll, Long roleId) {
+    private Result<String> processParsedData(List<List<Object>> readAll, Long roleId, Integer roleType) {
         if (readAll.size() <= 1) {
             return Result.error("文件为空或只包含表头，无法导入");
         }
@@ -155,7 +165,34 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
         Integer userNameIndex = headerMap.getOrDefault("用户名", headerMap.get("username"));
         Integer nameIndex = headerMap.getOrDefault("姓名", headerMap.get("name"));
         Integer emailIndex = headerMap.getOrDefault("邮箱", headerMap.get("email"));
-        
+
+        Integer departmentNameIndex = null;
+        Integer titleIndex = null;
+        Integer specialtyIndex = null;
+        Integer identityTypeIndex = null;
+        Integer studentTeacherIdIndex = null;
+
+
+        RoleTypeEnum roleTypeEnum = RoleTypeEnum.getEnumByCode(roleType);
+
+        Map<String, Integer> departmentMap = new HashMap<String,Integer>();
+
+        switch (roleTypeEnum) {
+            case DOCTOR: // 医生角色（code=2）
+                departmentNameIndex = headerMap.getOrDefault("科室名称", headerMap.get("departmentName"));
+                titleIndex = headerMap.getOrDefault("职称", headerMap.get("title"));
+                specialtyIndex = headerMap.getOrDefault("专业特长", headerMap.getOrDefault("特长", headerMap.get("specialty")));
+                break;
+            case PATIENT: // 患者角色（code=3）
+                identityTypeIndex =  headerMap.getOrDefault("身份类型", headerMap.get("identityType"));
+                studentTeacherIdIndex = headerMap.getOrDefault("学号", headerMap.getOrDefault("工号", headerMap.getOrDefault("学号/工号", headerMap.get("studentTeacherId"))));
+                break;
+            case SYS: // 系统角色（code=1，修正枚举常量名）
+                break;
+            default:
+                return Result.error("不支持的角色类型：" + roleType);
+        }
+
         // --- 数据预处理与全量校验 ---
         List<PendingUser> pendingUsersToInsert = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
@@ -180,10 +217,44 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
                 errorMessages.add("第 " + rowNum + "行：邮箱格式不正确 (" + email + ")");
             }
 
+            PendingUser pendingUser = new PendingUser();
+            pendingUser.setUserName(userName);
+            pendingUser.setName(name);
+            pendingUser.setEmail(email);
+            pendingUser.setRoleId(roleId);
+
+
+            switch (roleTypeEnum) {
+                case DOCTOR:
+                    // 医生专属字段校验
+                    String departmentName = getCellValue(row, departmentNameIndex);
+                    String title = getCellValue(row, titleIndex);
+                    String specialty = getCellValue(row, specialtyIndex);
+                    if (departmentName.isEmpty()) errorMessages.add("第 " + rowNum + "行：科室名称不能为空");
+                    if (title.isEmpty()) errorMessages.add("第 " + rowNum + "行：职称不能为空");
+                    if (specialty.isEmpty()) errorMessages.add("第 " + rowNum + "行：专业特长不能为空");
+                    pendingUser.setDepartmentName(departmentName);
+                    pendingUser.setTitle(title);
+                    pendingUser.setSpecialty(specialty);
+                    break;
+                case PATIENT:
+                    // 患者专属字段校验
+                    String identityType = getCellValue(row, identityTypeIndex);
+                    String studentTeacherId = getCellValue(row, studentTeacherIdIndex);
+                    if (identityType.isEmpty()) errorMessages.add("第 " + rowNum + "行：身份类型不能为空");
+                    if (studentTeacherId.isEmpty()) errorMessages.add("第 " + rowNum + "行：学号/工号不能为空");
+                    pendingUser.setIdentityType(identityType.isEmpty() ? null : Integer.parseInt(identityType));
+                    pendingUser.setStudentTeacherId(studentTeacherId);
+                    break;
+                case SYS:
+                    // 系统角色无专属字段，无需校验
+                    break;
+            }
+
+
             // 只有当本行目前没有错误时，才构建对象（为了后续的文件内查重）
             if (errorMessages.stream().noneMatch(e -> e.startsWith("第 " + rowNum + "行"))) {
-                 pendingUsersToInsert.add(PendingUser.builder()
-                        .userName(userName).name(name).email(email).roleId(roleId).build());
+                 pendingUsersToInsert.add(pendingUser);
             }
         }
         

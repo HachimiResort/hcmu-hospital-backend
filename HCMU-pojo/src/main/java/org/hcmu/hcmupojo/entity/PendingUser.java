@@ -1,6 +1,7 @@
 package org.hcmu.hcmupojo.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -53,5 +54,14 @@ public class PendingUser implements Serializable {
 
     private Long roleId;
 
+    private Integer identityType; // 身份类型
+
+    private String studentTeacherId; // 学生/教师
+
+    private String departmentName; 
+
+    private String title; // 职称
+
+    private String specialty; // 擅长领域
 
 }
