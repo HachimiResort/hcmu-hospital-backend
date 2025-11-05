@@ -15,7 +15,6 @@ public class PatientProfileDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;
         private Integer identityType; // 按身份类型筛选
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示
@@ -24,6 +23,7 @@ public class PatientProfileDTO {
         private Long patientProfileId;
         private Long userId;
         private String userName; // 关联用户表的用户名
+        private String name;
         private Integer identityType;
         private String studentTeacherId;
         private String emergencyContact;
@@ -36,6 +36,7 @@ public class PatientProfileDTO {
         private Long patientProfileId;
         private Long userId;
         private String userName;
+        private String name;
         private Integer identityType;
         private String studentTeacherId;
         private String emergencyContact;

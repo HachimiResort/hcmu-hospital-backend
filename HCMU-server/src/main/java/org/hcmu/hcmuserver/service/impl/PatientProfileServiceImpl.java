@@ -17,6 +17,7 @@ import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
+import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.PatientProfileService;
 import org.hcmu.hcmuserver.service.UserService;
@@ -37,6 +38,9 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public Result<PatientProfileDTO.PatientProfileListDTO> createPatientProfile(PatientProfileDTO.PatientProfileCreateDTO createDTO) {
@@ -72,30 +76,30 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
     @Override
     public Result<PageDTO<PatientProfileDTO.PatientProfileListDTO>> getPatientProfiles(PatientProfileDTO.PatientProfileGetRequestDTO requestDTO) {
-        MPJLambdaWrapper<PatientProfile> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PatientProfile::getPatientProfileId,
-                        PatientProfile::getUserId,
-                        PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacherId,
-                        PatientProfile::getEmergencyContact,
-                        PatientProfile::getCreateTime)
-                .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
-                .selectAs(User::getUserName, "userName")
-                .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
-                .eq(requestDTO.getIsDeleted() != null, PatientProfile::getIsDeleted, requestDTO.getIsDeleted())
-                .orderByDesc(PatientProfile::getCreateTime);
+    MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+    queryWrapper.select(PatientProfile::getPatientProfileId,
+            PatientProfile::getUserId,
+            PatientProfile::getIdentityType,
+            PatientProfile::getStudentTeacherId,
+            PatientProfile::getEmergencyContact,
+            PatientProfile::getCreateTime)
+        .leftJoin(PatientProfile.class, PatientProfile::getUserId, User::getUserId)
+        .selectAs(User::getUserName, "userName")
+        .selectAs(User::getName, "name")
+        .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
+        .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+        .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
+        .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
+        .eq(PatientProfile::getIsDeleted, 0)
+        .orderByDesc(PatientProfile::getCreateTime);
 
-        if (requestDTO.getIsDeleted() == null) {
-            queryWrapper.eq(PatientProfile::getIsDeleted, 0); // 默认查询未删除
-        }
+    IPage<PatientProfileDTO.PatientProfileListDTO> page = userMapper.selectJoinPage(
+        new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
+        PatientProfileDTO.PatientProfileListDTO.class,
+        queryWrapper
+    );
 
-        IPage<PatientProfileDTO.PatientProfileListDTO> page = baseMapper.selectJoinPage(
-                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
-                PatientProfileDTO.PatientProfileListDTO.class,
-                queryWrapper
-        );
-
-        return Result.success(new PageDTO<>(page));
+    return Result.success(new PageDTO<>(page));
     }
 
     @Override
@@ -105,24 +109,28 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             return Result.error("用户不存在");
         }
 
-        // 查询患者档案详情
-        MPJLambdaWrapper<PatientProfile> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PatientProfile::getPatientProfileId,
-                        PatientProfile::getUserId,
-                        PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacherId,
-                        PatientProfile::getEmergencyContact,
-                        PatientProfile::getEmergencyContactPhone,
-                        PatientProfile::getMedicalHistory,
-                        PatientProfile::getAllergyHistory,
-                        PatientProfile::getCreateTime,
-                        PatientProfile::getUpdateTime)
-                .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
-                .selectAs(User::getUserName, "userName")
-                .eq(PatientProfile::getUserId, userId)
-                .eq(PatientProfile::getIsDeleted, 0);
+    // 查询患者档案详情（以 User 为主表）
+    MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+    queryWrapper.select(PatientProfile::getPatientProfileId,
+            PatientProfile::getUserId,
+            PatientProfile::getIdentityType,
+            PatientProfile::getStudentTeacherId,
+            PatientProfile::getEmergencyContact,
+            PatientProfile::getEmergencyContactPhone,
+            PatientProfile::getMedicalHistory,
+            PatientProfile::getAllergyHistory,
+            PatientProfile::getCreateTime,
+            PatientProfile::getUpdateTime)
+        .leftJoin(PatientProfile.class, PatientProfile::getUserId, User::getUserId)
+        .selectAs(User::getUserName, "userName")
+        .selectAs(User::getName, "name")
+        .eq(PatientProfile::getUserId, userId)
+        .eq(PatientProfile::getIsDeleted, 0);
 
-        PatientProfileDTO.PatientProfileDetailDTO detailDTO = baseMapper.selectJoinOne(PatientProfileDTO.PatientProfileDetailDTO.class, queryWrapper);
+    PatientProfileDTO.PatientProfileDetailDTO detailDTO = userMapper.selectJoinOne(
+        PatientProfileDTO.PatientProfileDetailDTO.class,
+        queryWrapper
+    );
 
         if (detailDTO == null) {
             // 创建默认档案
@@ -139,6 +147,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             detailDTO = new PatientProfileDTO.PatientProfileDetailDTO();
             BeanUtils.copyProperties(patientProfile, detailDTO);
             detailDTO.setUserName(user.getUserName());
+            detailDTO.setName(user.getName());
 
             return Result.success("患者档案已自动创建，请完善相关信息", detailDTO);
         }
@@ -252,23 +261,26 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
     @Override
     public Result<List<PatientProfileDTO.PatientProfileDetailDTO>> getAllPatients() {
-        MPJLambdaWrapper<PatientProfile> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PatientProfile::getPatientProfileId,
-                        PatientProfile::getUserId,
-                        PatientProfile::getIdentityType,
-                        PatientProfile::getStudentTeacherId,
-                        PatientProfile::getEmergencyContact,
-                        PatientProfile::getEmergencyContactPhone,
-                        PatientProfile::getMedicalHistory,
-                        PatientProfile::getAllergyHistory,
-                        PatientProfile::getCreateTime,
-                        PatientProfile::getUpdateTime)
-                .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
-                .selectAs(User::getUserName, "userName")
-                .eq(PatientProfile::getIsDeleted, 0)
-                .orderByDesc(PatientProfile::getCreateTime);
+    MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+    queryWrapper.select(PatientProfile::getPatientProfileId,
+            PatientProfile::getUserId,
+            PatientProfile::getIdentityType,
+            PatientProfile::getStudentTeacherId,
+            PatientProfile::getEmergencyContact,
+            PatientProfile::getEmergencyContactPhone,
+            PatientProfile::getMedicalHistory,
+            PatientProfile::getAllergyHistory,
+            PatientProfile::getCreateTime,
+            PatientProfile::getUpdateTime)
+        .leftJoin(PatientProfile.class, PatientProfile::getUserId, User::getUserId)
+        .selectAs(User::getUserName, "userName")
+        .eq(PatientProfile::getIsDeleted, 0)
+        .orderByDesc(PatientProfile::getCreateTime);
 
-        List<PatientProfileDTO.PatientProfileDetailDTO> patientProfiles = baseMapper.selectJoinList(PatientProfileDTO.PatientProfileDetailDTO.class, queryWrapper);
+    List<PatientProfileDTO.PatientProfileDetailDTO> patientProfiles = userMapper.selectJoinList(
+        PatientProfileDTO.PatientProfileDetailDTO.class,
+        queryWrapper
+    );
 
         return Result.success(patientProfiles);
     }

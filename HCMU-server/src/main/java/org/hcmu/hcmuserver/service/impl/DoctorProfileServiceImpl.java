@@ -18,6 +18,7 @@ import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.hcmu.hcmuserver.service.DoctorProfileService;
@@ -43,12 +44,34 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     @Autowired
     private UserRoleMapper userRoleMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public Result<DoctorProfileDTO.DoctorProfileListDTO> createDoctorProfile(DoctorProfileDTO.DoctorProfileCreateDTO createDTO) {
         // 校验用户是否存在
         User user = userService.getById(createDTO.getUserId());
         if (user == null) {
             return Result.error("用户不存在");
+        }
+
+        Long userId = createDTO.getUserId();
+
+        // 是否为医生角色呢
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法创建医生档案");
         }
 
         // 校验科室是否存在
@@ -84,33 +107,33 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
     @Override
     public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorProfiles(DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {
-        MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(DoctorProfile::getDoctorProfileId,
-                        DoctorProfile::getUserId,
-                        DoctorProfile::getDepartmentId,
-                        DoctorProfile::getTitle,
-                        DoctorProfile::getSpecialty,
-                        DoctorProfile::getCreateTime)
-                .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
-                .selectAs(User::getUserName, "userName")
-                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
-                .selectAs(Department::getName, "departmentName")
-                .eq(requestDTO.getDepartmentId() != null, DoctorProfile::getDepartmentId, requestDTO.getDepartmentId())
-                .like(requestDTO.getTitle() != null && !requestDTO.getTitle().isEmpty(), DoctorProfile::getTitle, requestDTO.getTitle())
-                .eq(requestDTO.getIsDeleted() != null, DoctorProfile::getIsDeleted, requestDTO.getIsDeleted())
-                .orderByDesc(DoctorProfile::getCreateTime);
+    MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+    queryWrapper.select(DoctorProfile::getDoctorProfileId,
+            DoctorProfile::getUserId,
+            DoctorProfile::getDepartmentId,
+            DoctorProfile::getTitle,
+            DoctorProfile::getSpecialty,
+            DoctorProfile::getCreateTime)
+        .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, User::getUserId)
+        .selectAs(User::getUserName, "userName")
+        .selectAs(User::getName, "name")
+        .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+        .selectAs(Department::getName, "departmentName")
+        .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
+        .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+        .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
+        .eq(requestDTO.getDepartmentId() != null, DoctorProfile::getDepartmentId, requestDTO.getDepartmentId())
+        .like(requestDTO.getTitle() != null && !requestDTO.getTitle().isEmpty(), DoctorProfile::getTitle, requestDTO.getTitle())
+        .eq(DoctorProfile::getIsDeleted, 0)
+        .orderByDesc(DoctorProfile::getCreateTime);
 
-        if (requestDTO.getIsDeleted() == null) {
-            queryWrapper.eq(DoctorProfile::getIsDeleted, 0); // 默认查询未删除
-        }
+    IPage<DoctorProfileDTO.DoctorProfileListDTO> page = userMapper.selectJoinPage(
+        new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
+        DoctorProfileDTO.DoctorProfileListDTO.class,
+        queryWrapper
+    );
 
-        IPage<DoctorProfileDTO.DoctorProfileListDTO> page = baseMapper.selectJoinPage(
-                new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
-                DoctorProfileDTO.DoctorProfileListDTO.class,
-                queryWrapper
-        );
-
-        return Result.success(new PageDTO<>(page));
+    return Result.success(new PageDTO<>(page));
     }
 
     /**
@@ -163,24 +186,25 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             baseMapper.insert(doctorProfile);
         }
 
-        // 查询医生档案详情
-        MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(DoctorProfile::getDoctorProfileId,
-                        DoctorProfile::getUserId,
-                        DoctorProfile::getDepartmentId,
-                        DoctorProfile::getTitle,
-                        DoctorProfile::getSpecialty,
-                        DoctorProfile::getBio,
-                        DoctorProfile::getCreateTime,
-                        DoctorProfile::getUpdateTime)
-                .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
-                .selectAs(User::getUserName, "userName")
-                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
-                .selectAs(Department::getName, "departmentName")
-                .eq(DoctorProfile::getUserId, userId)
-                .eq(DoctorProfile::getIsDeleted, 0);
+    // 查询医生档案详情
+    MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+    queryWrapper.select(DoctorProfile::getDoctorProfileId,
+            DoctorProfile::getUserId,
+            DoctorProfile::getDepartmentId,
+            DoctorProfile::getTitle,
+            DoctorProfile::getSpecialty,
+            DoctorProfile::getBio,
+            DoctorProfile::getCreateTime,
+            DoctorProfile::getUpdateTime)
+        .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, User::getUserId)
+        .selectAs(User::getUserName, "userName")
+        .selectAs(User::getName, "name")
+        .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+        .selectAs(Department::getName, "departmentName")
+        .eq(User::getUserId, userId)
+        .eq(DoctorProfile::getIsDeleted, 0);
 
-        DoctorProfileDTO.DoctorProfileDetailDTO detailDTO = baseMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
+    DoctorProfileDTO.DoctorProfileDetailDTO detailDTO = userMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
         if (detailDTO == null) {
             return Result.error("医生档案查询失败");
         }
@@ -277,16 +301,13 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     @Override
     public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctors() {
 
-        MPJLambdaWrapper<UserRole> doctorUsersWrapper = new MPJLambdaWrapper<>();
+        MPJLambdaWrapper<User> doctorUsersWrapper = new MPJLambdaWrapper<>();
         doctorUsersWrapper.select(User::getUserId, User::getUserName)
-                .leftJoin(User.class, User::getUserId, UserRole::getUserId)
+                .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0)
-                .eq(User::getIsDeleted, 0);
+                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode());
 
-        List<User> doctorUsers = userRoleMapper.selectJoinList(User.class, doctorUsersWrapper);
+        List<User> doctorUsers = userMapper.selectJoinList(User.class, doctorUsersWrapper);
         
         if (doctorUsers.isEmpty()) {
             return Result.success(List.of());
@@ -313,24 +334,24 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         baseMapper.insert(doctorProfile);
                     }
 
-                    // 查询医生档案详情（包含关联信息）
-                    MPJLambdaWrapper<DoctorProfile> queryWrapper = new MPJLambdaWrapper<>();
-                    queryWrapper.select(DoctorProfile::getDoctorProfileId,
-                                    DoctorProfile::getUserId,
-                                    DoctorProfile::getDepartmentId,
-                                    DoctorProfile::getTitle,
-                                    DoctorProfile::getSpecialty,
-                                    DoctorProfile::getBio,
-                                    DoctorProfile::getCreateTime,
-                                    DoctorProfile::getUpdateTime)
-                            .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
-                            .selectAs(User::getUserName, "userName")
-                            .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
-                            .selectAs(Department::getName, "departmentName")
-                            .eq(DoctorProfile::getUserId, user.getUserId())
-                            .eq(DoctorProfile::getIsDeleted, 0);
+            // 查询医生档案详情
+            MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
+            queryWrapper.select(DoctorProfile::getDoctorProfileId,
+                    DoctorProfile::getUserId,
+                    DoctorProfile::getDepartmentId,
+                    DoctorProfile::getTitle,
+                    DoctorProfile::getSpecialty,
+                    DoctorProfile::getBio,
+                    DoctorProfile::getCreateTime,
+                    DoctorProfile::getUpdateTime)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, User::getUserId)
+                .selectAs(User::getUserName, "userName")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(User::getUserId, user.getUserId())
+                .eq(DoctorProfile::getIsDeleted, 0);
 
-                    return baseMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
+            return userMapper.selectJoinOne(DoctorProfileDTO.DoctorProfileDetailDTO.class, queryWrapper);
                 })
                 .filter(profile -> profile != null) // 过滤掉null值
                 .collect(Collectors.toList());

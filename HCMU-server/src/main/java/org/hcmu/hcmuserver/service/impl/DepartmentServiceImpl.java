@@ -16,9 +16,11 @@ import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
     @Autowired
     private DoctorProfileMapper doctorProfileMapper;
+
+    @Autowired
+    private ScheduleMapper scheduleMapper;
 
     @Override
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(DepartmentDTO.DepartmentCreateDTO createDTO) {
@@ -72,7 +77,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                         Department::getDescription, Department::getLocation, Department::getCreateTime)
                 .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
-                .eq(requestDTO.getIsDeleted() != null, Department::getIsDeleted, requestDTO.getIsDeleted())
+                .eq(Department::getIsDeleted, 0)
+                .ne(Department::getDepartmentId, 0)
+                
                 .orderByDesc(Department::getCreateTime);
 
         IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
@@ -86,7 +93,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<DepartmentDTO.DepartmentListDTO> findDepartmentById(Long departmentId) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在");
         }
 
@@ -104,7 +111,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<String> updateDepartmentById(Long departmentId, DepartmentDTO.DepartmentUpdateDTO updateDTO) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在");
         }
 
@@ -125,6 +132,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
     @Override
     public Result<String> deleteDepartmentById(Long departmentId) {
+        if (departmentId == 0) {
+            return Result.error("科室不存在");
+        }
         Department department = baseMapper.selectById(departmentId);
         if (department == null) {
             return Result.error("科室不存在");
@@ -149,6 +159,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("该科室下存在医生档案，无法删除");
         }
 
+        // TODO: 检查是否存在相关排班记录
+
+
         baseMapper.deleteById(departmentId);
         return Result.success("删除成功");
     }
@@ -158,6 +171,10 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     public Result<String> batchDeleteDepartments(List<Long> departmentIds) {
         if (CollectionUtils.isEmpty(departmentIds)) {
             return Result.error("请选择需要删除的科室");
+        }
+
+        if (departmentIds.contains(0L)) {
+            return Result.error("不允许删除暂无部门");
         }
 
         // 校验科室是否存在
@@ -187,6 +204,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
             return Result.error("部分科室下存在医生档案，无法删除");
         }
 
+        // TODO: 检查是否存在相关排班记录
+
+
         baseMapper.deleteBatchIds(departmentIds);
 
         return Result.success("批量删除成功");
@@ -200,7 +220,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
         // 1. 校验科室是否存在（复用自身的baseMapper，无需再调用departmentService）
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在或已删除");
         }
 

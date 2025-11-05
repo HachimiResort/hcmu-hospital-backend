@@ -16,7 +16,6 @@ public class DoctorProfileDTO {
         private Integer pageSize = 10;
         private Long departmentId; // 按科室筛选
         private String title; // 按职称筛选
-        private Integer isDeleted; // 逻辑删除状态
     }
 
     // 列表展示
@@ -25,6 +24,7 @@ public class DoctorProfileDTO {
         private Long doctorProfileId;
         private Long userId;
         private String userName; // 关联用户表的用户名
+        private String name;
         private Long departmentId;
         private String departmentName; // 关联科室表的科室名称
         private String title;
@@ -38,6 +38,7 @@ public class DoctorProfileDTO {
         private Long doctorProfileId;
         private Long userId;
         private String userName;
+        private String name;
         private Long departmentId;
         private String departmentName;
         private String title;
