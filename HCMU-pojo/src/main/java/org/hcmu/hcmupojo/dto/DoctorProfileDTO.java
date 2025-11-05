@@ -24,6 +24,7 @@ public class DoctorProfileDTO {
         private Long doctorProfileId;
         private Long userId;
         private String userName; // 关联用户表的用户名
+        private String name;
         private Long departmentId;
         private String departmentName; // 关联科室表的科室名称
         private String title;
@@ -37,6 +38,7 @@ public class DoctorProfileDTO {
         private Long doctorProfileId;
         private Long userId;
         private String userName;
+        private String name;
         private Long departmentId;
         private String departmentName;
         private String title;

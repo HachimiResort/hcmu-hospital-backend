@@ -23,6 +23,7 @@ public class PatientProfileDTO {
         private Long patientProfileId;
         private Long userId;
         private String userName; // 关联用户表的用户名
+        private String name;
         private Integer identityType;
         private String studentTeacherId;
         private String emergencyContact;
@@ -35,6 +36,7 @@ public class PatientProfileDTO {
         private Long patientProfileId;
         private Long userId;
         private String userName;
+        private String name;
         private Integer identityType;
         private String studentTeacherId;
         private String emergencyContact;

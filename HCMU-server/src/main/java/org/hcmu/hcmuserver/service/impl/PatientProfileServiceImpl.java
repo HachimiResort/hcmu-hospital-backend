@@ -81,6 +81,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
                         PatientProfile::getCreateTime)
                 .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
+                .selectAs(User::getName, "name")
                 .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
                 .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
@@ -118,6 +119,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
                         PatientProfile::getUpdateTime)
                 .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
+                .selectAs(User::getName, "name")
                 .eq(PatientProfile::getUserId, userId)
                 .eq(PatientProfile::getIsDeleted, 0);
 
@@ -138,6 +140,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             detailDTO = new PatientProfileDTO.PatientProfileDetailDTO();
             BeanUtils.copyProperties(patientProfile, detailDTO);
             detailDTO.setUserName(user.getUserName());
+            detailDTO.setName(user.getName());
 
             return Result.success("患者档案已自动创建，请完善相关信息", detailDTO);
         }
