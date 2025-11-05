@@ -8,3 +8,5 @@
 .vscode/
 
 **/application-*.yml
+HCMU-pojo/src/main/java/org/hcmu/hcmupojo/dto/WaitlistDTO.java
+HCMU-pojo/src/main/java/org/hcmu/hcmupojo/entity/Waitlist.java
