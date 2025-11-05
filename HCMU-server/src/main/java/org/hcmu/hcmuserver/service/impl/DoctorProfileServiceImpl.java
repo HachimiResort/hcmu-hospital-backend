@@ -18,6 +18,7 @@ import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
 import org.hcmu.hcmuserver.service.DoctorProfileService;
@@ -42,6 +43,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public Result<DoctorProfileDTO.DoctorProfileListDTO> createDoctorProfile(DoctorProfileDTO.DoctorProfileCreateDTO createDTO) {
@@ -112,8 +116,12 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         DoctorProfile::getCreateTime)
                 .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
+                .selectAs(User::getName, "name")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
+                .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
                 .eq(requestDTO.getDepartmentId() != null, DoctorProfile::getDepartmentId, requestDTO.getDepartmentId())
                 .like(requestDTO.getTitle() != null && !requestDTO.getTitle().isEmpty(), DoctorProfile::getTitle, requestDTO.getTitle())
                 .eq(DoctorProfile::getIsDeleted, 0)
@@ -190,6 +198,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         DoctorProfile::getUpdateTime)
                 .leftJoin(User.class, User::getUserId, DoctorProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
+                .selectAs(User::getName, "name")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
                 .eq(DoctorProfile::getUserId, userId)
@@ -292,16 +301,13 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     @Override
     public Result<List<DoctorProfileDTO.DoctorProfileDetailDTO>> getAllDoctors() {
 
-        MPJLambdaWrapper<UserRole> doctorUsersWrapper = new MPJLambdaWrapper<>();
+        MPJLambdaWrapper<User> doctorUsersWrapper = new MPJLambdaWrapper<>();
         doctorUsersWrapper.select(User::getUserId, User::getUserName)
-                .leftJoin(User.class, User::getUserId, UserRole::getUserId)
+                .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0)
-                .eq(User::getIsDeleted, 0);
+                .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode());
 
-        List<User> doctorUsers = userRoleMapper.selectJoinList(User.class, doctorUsersWrapper);
+        List<User> doctorUsers = userMapper.selectJoinList(User.class, doctorUsersWrapper);
         
         if (doctorUsers.isEmpty()) {
             return Result.success(List.of());

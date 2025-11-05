@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.RedisEnum;
+import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.exception.ServiceException;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.utils.JwtUtil;
@@ -15,9 +16,15 @@ import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserLoginDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserRegisterDTO;
 import org.hcmu.hcmupojo.dto.UserDTO.UserEmailVerifyDTO;
+import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.PatientProfile;
 import org.hcmu.hcmupojo.entity.PendingUser;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
+import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
 import org.hcmu.hcmuserver.mapper.user.PendingUserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
@@ -61,6 +68,15 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
     @Autowired
     private PendingUserMapper pendingUserMapper;
+
+    @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
+
+    @Autowired
+    private PatientProfileMapper patientProfileMapper;
+
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Autowired
     private MailServiceImpl mailService;
@@ -191,8 +207,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
             roleId = role.getRoleId();
         } else {
             roleId = exactPendingUser.getRoleId();
-            // 删除待注册用户信息
-            pendingUserMapper.delete(exactPendingUserQueryWrapper);
+
         }
 
 
@@ -200,6 +215,51 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         User user = userRegister.toUser();
         baseMapper.insert(user);
   
+        if (!Objects.isNull(exactPendingUser)) {
+            Role role = roleMapper.selectById(roleId);
+            // 删除待注册用户信息
+            RoleTypeEnum roleTypeEnum = RoleTypeEnum.getEnumByCode(role.getType());
+
+            switch (roleTypeEnum) {
+                case DOCTOR:
+                    DoctorProfile doctorProfile = new DoctorProfile();
+                    doctorProfile.setUserId(user.getUserId());
+
+                    LambdaQueryWrapper<Department> departmentQueryWrapper = new LambdaQueryWrapper<>();
+                    departmentQueryWrapper.eq(Department::getName, exactPendingUser.getDepartmentName());
+                    Department department = departmentMapper.selectOne(departmentQueryWrapper);
+                    if (department == null) {
+                        department = new Department();
+                        department.setName(exactPendingUser.getDepartmentName());
+                        department.setLocation("未知");
+                        department.setDescription("由系统自动创建的科室");
+                        department.setParentId(0L);
+                        departmentMapper.insert(department);
+                        doctorProfile.setDepartmentId(department.getDepartmentId());
+                    } else {
+                        doctorProfile.setDepartmentId(department.getDepartmentId());
+                    }
+                    
+                    doctorProfile.setSpecialty(exactPendingUser.getSpecialty());
+                    doctorProfile.setTitle(exactPendingUser.getTitle());
+                    doctorProfileMapper.insert(doctorProfile);
+                    break;
+                case PATIENT:
+                    PatientProfile patientProfile = new PatientProfile();
+                    patientProfile.setUserId(user.getUserId());
+                    patientProfile.setIdentityType(exactPendingUser.getIdentityType());
+                    patientProfile.setStudentTeacherId(exactPendingUser.getStudentTeacherId());
+                    patientProfileMapper.insert(patientProfile);
+                    break;
+                case SYS:
+                    break;
+                
+
+            }
+
+            pendingUserMapper.delete(exactPendingUserQueryWrapper);
+        }
+        
 
         UserRole sysUserRole = new UserRole();
         sysUserRole.setUserId(user.getUserId());
