@@ -22,15 +22,11 @@ public class AppointmentController {
     private AppointmentService appointmentService;
 
     @AutoLog("查询预约列表")
-    @Operation(description = "分页查询预约列表", summary = "查询预约列表（CHECK_APPOINTMENT）")
-    @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
     @GetMapping("")
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>>getAppointments(@ModelAttribute AppointmentDTO.AppointmentGetRequsetDTO requestDTO) {
         return appointmentService.getAppointments(requestDTO);
     }
     @AutoLog("根据预约Id预约详情")
-    @Operation(description = "获取患者预约详情", summary = "获取预约详情（CHECK_APPOINTMENT）")
-    @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
     @GetMapping("/{appointmentId}")
     public Result<AppointmentDTO.AppointmentDetailDTO> getAppointmentById(@PathVariable Long appointmentId) {
         return appointmentService.getAppointmentById(appointmentId);
