@@ -78,6 +78,8 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                 .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
                 .eq(Department::getIsDeleted, 0)
+                .ne(Department::getDepartmentId, 0)
+                
                 .orderByDesc(Department::getCreateTime);
 
         IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
@@ -91,7 +93,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<DepartmentDTO.DepartmentListDTO> findDepartmentById(Long departmentId) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在");
         }
 
@@ -109,7 +111,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<String> updateDepartmentById(Long departmentId, DepartmentDTO.DepartmentUpdateDTO updateDTO) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在");
         }
 
@@ -130,6 +132,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
     @Override
     public Result<String> deleteDepartmentById(Long departmentId) {
+        if (departmentId == 0) {
+            return Result.error("科室不存在");
+        }
         Department department = baseMapper.selectById(departmentId);
         if (department == null) {
             return Result.error("科室不存在");
@@ -166,6 +171,10 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     public Result<String> batchDeleteDepartments(List<Long> departmentIds) {
         if (CollectionUtils.isEmpty(departmentIds)) {
             return Result.error("请选择需要删除的科室");
+        }
+
+        if (departmentIds.contains(0L)) {
+            return Result.error("不允许删除暂无部门");
         }
 
         // 校验科室是否存在
@@ -211,7 +220,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
 
         // 1. 校验科室是否存在（复用自身的baseMapper，无需再调用departmentService）
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1) {
+        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
             return Result.error("科室不存在或已删除");
         }
 

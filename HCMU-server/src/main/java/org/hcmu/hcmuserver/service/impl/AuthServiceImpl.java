@@ -147,7 +147,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
 
         userRegister.setPassword(passwordEncoder.encode(userRegister.getPassword()));
 
-        // TODO: 生成6位随机验证码
+
         String code = RandomUtil.randomNumbers(6);
         userRegister.setCode(code);
 
