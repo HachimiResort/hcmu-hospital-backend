@@ -217,6 +217,13 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
                 errorMessages.add("第 " + rowNum + "行：邮箱格式不正确 (" + email + ")");
             }
 
+            PendingUser pendingUser = new PendingUser();
+            pendingUser.setUserName(userName);
+            pendingUser.setName(name);
+            pendingUser.setEmail(email);
+            pendingUser.setRoleId(roleId);
+
+
             switch (roleTypeEnum) {
                 case DOCTOR:
                     // 医生专属字段校验
@@ -226,6 +233,9 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
                     if (departmentName.isEmpty()) errorMessages.add("第 " + rowNum + "行：科室名称不能为空");
                     if (title.isEmpty()) errorMessages.add("第 " + rowNum + "行：职称不能为空");
                     if (specialty.isEmpty()) errorMessages.add("第 " + rowNum + "行：专业特长不能为空");
+                    pendingUser.setDepartmentName(departmentName);
+                    pendingUser.setTitle(title);
+                    pendingUser.setSpecialty(specialty);
                     break;
                 case PATIENT:
                     // 患者专属字段校验
@@ -233,6 +243,8 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
                     String studentTeacherId = getCellValue(row, studentTeacherIdIndex);
                     if (identityType.isEmpty()) errorMessages.add("第 " + rowNum + "行：身份类型不能为空");
                     if (studentTeacherId.isEmpty()) errorMessages.add("第 " + rowNum + "行：学号/工号不能为空");
+                    pendingUser.setIdentityType(identityType.isEmpty() ? null : Integer.parseInt(identityType));
+                    pendingUser.setStudentTeacherId(studentTeacherId);
                     break;
                 case SYS:
                     // 系统角色无专属字段，无需校验
@@ -242,8 +254,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
 
             // 只有当本行目前没有错误时，才构建对象（为了后续的文件内查重）
             if (errorMessages.stream().noneMatch(e -> e.startsWith("第 " + rowNum + "行"))) {
-                 pendingUsersToInsert.add(PendingUser.builder()
-                        .userName(userName).name(name).email(email).roleId(roleId).build());
+                 pendingUsersToInsert.add(pendingUser);
             }
         }
         
