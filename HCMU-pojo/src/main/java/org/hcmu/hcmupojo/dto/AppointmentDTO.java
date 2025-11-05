@@ -2,6 +2,7 @@ package org.hcmu.hcmupojo.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class AppointmentDTO {
@@ -29,18 +30,20 @@ public class AppointmentDTO {
         private Long appointmentId;
         private String appointmentNo;
         private Long patientUserId;
-        private String patientUserName;
-        private Long doctorId;
-        private String doctorUserName;
-        private Long departmentId;
-        private String departmentName;
-        private LocalDateTime appointmentTime;
-        private String timeSlot;
+        private Long scheduleId;
+        private Integer visitNo;
         private Integer status;
-        private String symptoms;
-        private String remark;
+        private BigDecimal originalFee;
+        private BigDecimal actualFee;
+        private LocalDateTime paymentTime;
+        private LocalDateTime cancellationTime;
+        private String cancellationReason;
         private LocalDateTime createTime;
         private LocalDateTime updateTime;
+
+        // 关联字段
+        private String patientUserName;// 患者姓名
+        private String patientPhone;// 患者电话
     }
 
 }
