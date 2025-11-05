@@ -127,7 +127,10 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         .eq(PatientProfile::getUserId, userId)
         .eq(PatientProfile::getIsDeleted, 0);
 
-    PatientProfileDTO.PatientProfileDetailDTO detailDTO = baseMapper.selectJoinOne(PatientProfileDTO.PatientProfileDetailDTO.class, (MPJLambdaWrapper) queryWrapper);
+    PatientProfileDTO.PatientProfileDetailDTO detailDTO = userMapper.selectJoinOne(
+        PatientProfileDTO.PatientProfileDetailDTO.class,
+        queryWrapper
+    );
 
         if (detailDTO == null) {
             // 创建默认档案
