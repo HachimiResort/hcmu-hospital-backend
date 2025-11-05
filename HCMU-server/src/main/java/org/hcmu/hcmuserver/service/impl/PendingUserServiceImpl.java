@@ -46,7 +46,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
     @Override
     public Result<PageDTO<PendingUserDTO.PendingUserListDTO>> findAllPendingUsers(PendingUserDTO.PendingUserGetRequestDTO requestDTO) {
         MPJLambdaWrapper<PendingUser> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId)
+        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId, PendingUser::getIdentityType, PendingUser::getStudentTeacherId, PendingUser::getDepartmentName, PendingUser::getTitle, PendingUser::getSpecialty)
                 .leftJoin(Role.class, Role::getRoleId, PendingUser::getRoleId)
                 .selectAs(Role::getName, "roleName")
                 .like(requestDTO.getUserName() != null, PendingUser::getUserName, requestDTO.getUserName())
@@ -59,7 +59,7 @@ public class PendingUserServiceImpl extends MPJBaseServiceImpl<PendingUserMapper
     @Override
     public Result<PendingUserDTO.PendingUserInfoDTO> findPendingUserById(Long id) {
         MPJLambdaWrapper<PendingUser> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId)
+        queryWrapper.select(PendingUser::getId, PendingUser::getUserName, PendingUser::getName, PendingUser::getEmail, PendingUser::getRoleId, PendingUser::getIdentityType, PendingUser::getStudentTeacherId, PendingUser::getDepartmentName, PendingUser::getTitle, PendingUser::getSpecialty)
                 .selectAs(Role::getName, "roleName")
                 .leftJoin(Role.class, Role::getRoleId, PendingUser::getRoleId)
                 .eq(PendingUser::getId, id);
