@@ -243,13 +243,11 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .collect(Collectors.toList());
 
         // 逻辑删除这些用户
-        LambdaQueryWrapper<User> updateWrapper = new LambdaQueryWrapper<>();
-        updateWrapper.in(User::getUserId, validUserIds);
-        User updateUser = new User();
-        updateUser.setIsDeleted(1); // 假设逻辑删除字段为isDeleted
-        int updatedRows = baseMapper.update(updateUser, updateWrapper);
+        LambdaQueryWrapper<User> deleteWrapper = new LambdaQueryWrapper<>();
+        deleteWrapper.in(User::getUserId, validUserIds);
+        int deletedRows = baseMapper.delete(deleteWrapper);
 
-        return Result.success("成功删除 " + updatedRows + " 个用户");
+        return Result.success("成功删除 " + deletedRows + " 个用户");
     }
 
     @Override
@@ -272,10 +270,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         }
 
         // 逻辑删除用户
-        User updateUser = new User();
-        updateUser.setUserId(userId);
-        updateUser.setIsDeleted(1); // 假设逻辑删除字段为isDeleted
-        baseMapper.updateById(updateUser);
+        baseMapper.deleteById(userId);
 
         return Result.success("用户删除成功");
     }

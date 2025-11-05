@@ -95,7 +95,7 @@ public class UserController {
     @AutoLog("批量删除用户")
     @Operation(description = "批量删除用户（逻辑删除）", summary = "批量删除用户('DEL_USER')")
     @DeleteMapping("/batch")
-    @PreAuthorize("@ex.hasSysAuthority('DEL_USER')")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_MB')")
     public Result<String> batchDeleteUsers(@RequestBody List<Long> userIds) {
         return userService.batchDeleteUsers(userIds);
     }
@@ -103,7 +103,7 @@ public class UserController {
     @AutoLog("删除用户（逻辑删除）")
     @Operation(description = "删除用户（逻辑删除）", summary = "删除用户('DEL_USER')")
     @DeleteMapping("/{userId}")
-    @PreAuthorize("@ex.hasSysAuthority('DEL_USER')")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_MB')")
     public Result<String> deleteUser(@PathVariable Long userId) {
         return userService.deleteUserById(userId);
     }
