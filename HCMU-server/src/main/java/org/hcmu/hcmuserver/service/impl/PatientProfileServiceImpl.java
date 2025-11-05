@@ -81,6 +81,9 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
                         PatientProfile::getCreateTime)
                 .leftJoin(User.class, User::getUserId, PatientProfile::getUserId)
                 .selectAs(User::getUserName, "userName")
+                .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
                 .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
                 .eq(PatientProfile::getIsDeleted, 0)
                 .orderByDesc(PatientProfile::getCreateTime);
