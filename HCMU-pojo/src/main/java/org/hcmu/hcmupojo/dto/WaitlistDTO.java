@@ -31,7 +31,6 @@ public class WaitlistDTO {
         // 关联字段
         private String patientUserName;    // 患者姓名
         private String patientPhone;       // 患者电话
-        private String scheduleInfo;       // 排班信息
     }
 
     // 详情返回 DTO
