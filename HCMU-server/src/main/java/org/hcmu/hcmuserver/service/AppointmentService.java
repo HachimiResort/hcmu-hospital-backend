@@ -8,7 +8,9 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import java.util.List;
 
 public interface AppointmentService{
-    Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequsetDTO appointmentGetRequsetDTO);
+    Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO appointmentGetRequsetDTO);
 
     public Result<AppointmentDTO.AppointmentDetailDTO> getAppointmentById(Long appointmentId);//根据id查找
+
+    public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentsByPatientUserId(Long userId);//根据患者用户id查找
 }

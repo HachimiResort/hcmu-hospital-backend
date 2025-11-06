@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public class AppointmentDTO {
     @Data
-    public static class AppointmentGetRequsetDTO {
+    public static class AppointmentGetRequestDTO {
         private Long scheduleId;//按排班号查询
         private Long patientUserId;//按患者id查询
         private Long pageNum = 1L;

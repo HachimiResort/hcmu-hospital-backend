@@ -1,6 +1,7 @@
 package org.hcmu.hcmuserver.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
@@ -13,10 +14,7 @@ import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PatientProfileDTO;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.PageDTO;
-import org.hcmu.hcmupojo.entity.Appointment;
-import org.hcmu.hcmupojo.entity.PatientProfile;
-import org.hcmu.hcmupojo.entity.Role;
-import org.hcmu.hcmupojo.entity.User;
+import org.hcmu.hcmupojo.entity.*;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
@@ -30,6 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -39,7 +38,7 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
     private UserService userService;
 
     @Override
-    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequsetDTO requestDTO) {
+    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.select(Appointment::getAppointmentId,
                         Appointment::getAppointmentNo,
@@ -50,9 +49,9 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
                         Appointment::getCreateTime)
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
-                .eq(requestDTO.getScheduleId() != null,
+                .eq(ObjectUtils.isNotEmpty(requestDTO.getScheduleId()),
                         Appointment::getScheduleId, requestDTO.getScheduleId())
-                .eq(requestDTO.getPatientUserId() != null,
+                .eq(ObjectUtils.isNotEmpty(requestDTO.getPatientUserId()),
                         Appointment::getPatientUserId, requestDTO.getPatientUserId())
                 .eq(requestDTO.getIsDeleted() != null,
                         Appointment::getIsDeleted, requestDTO.getIsDeleted())
@@ -111,6 +110,50 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
         }
 
         return Result.success(detailDTO);
+    }
+
+    @Override
+    public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentsByPatientUserId(
+            Long patientUserId) {
+
+        User user = userService.getById(patientUserId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 构建查询条件
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Appointment::getAppointmentId,
+                        Appointment::getAppointmentNo,
+                        Appointment::getPatientUserId,
+                        Appointment::getScheduleId,
+                        Appointment::getVisitNo,
+                        Appointment::getStatus,
+                        Appointment::getOriginalFee,
+                        Appointment::getActualFee,
+                        Appointment::getPaymentTime,
+                        Appointment::getCancellationTime,
+                        Appointment::getCancellationReason,
+                        Appointment::getCreateTime,
+                        Appointment::getUpdateTime)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .eq(Appointment::getIsDeleted, 0)
+                .orderByDesc(Appointment::getCreateTime);
+
+        // 执行分页查询
+        IPage<AppointmentDTO.AppointmentDetailDTO> page = baseMapper.selectJoinPage(
+                new Page<>(1, 20),
+                AppointmentDTO.AppointmentDetailDTO.class,
+                queryWrapper
+        );
+
+        if (page.getRecords().isEmpty()) {
+            return Result.success("该用户暂无预约记录", new PageDTO<>(page));
+        }
+
+        return Result.success(new PageDTO<>(page));
     }
 
 }

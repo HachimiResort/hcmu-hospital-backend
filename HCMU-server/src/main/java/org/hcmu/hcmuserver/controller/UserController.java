@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.RoleDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
+import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +31,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AppointmentService appointmentService;
 
     // TODO: 开放获取所有成员的权限
     // 获取所有用户的信息
@@ -106,5 +111,13 @@ public class UserController {
     @PreAuthorize("@ex.hasSysAuthority('DEL_MB')")
     public Result<String> deleteUser(@PathVariable Long userId) {
         return userService.deleteUserById(userId);
+    }
+
+    @AutoLog("根据用户id查找预约")
+    @Operation(description = "根据用户id查找预约", summary = "根据用户id查找预约('CHECK_APPOINTMENT')")
+    @GetMapping("/{userId}/appointment")
+    //@PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
+    public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentByPatientId(@PathVariable Long userId){
+        return appointmentService.getAppointmentsByPatientUserId(userId);
     }
 }

@@ -1,6 +1,7 @@
 package org.hcmu.hcmuserver.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -31,9 +32,12 @@ public class WaitlistSeviceImpl extends MPJBaseServiceImpl<WaitlistMapper, Waitl
                 .leftJoin(User.class, User::getUserId, Waitlist::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getPhone, "patientPhone")
-                .eq(requestDTO.getPatientUserId() != null, Waitlist::getPatientUserId, requestDTO.getPatientUserId())
-                .eq(requestDTO.getScheduleId() != null, Waitlist::getScheduleId, requestDTO.getScheduleId())
-                .eq(requestDTO.getStatus() != null, Waitlist::getStatus, requestDTO.getStatus())
+                .eq(ObjectUtils.isNotEmpty(requestDTO.getPatientUserId()),
+                        Waitlist::getPatientUserId, requestDTO.getPatientUserId())
+                .eq(ObjectUtils.isNotEmpty(requestDTO.getScheduleId()),
+                        Waitlist::getScheduleId, requestDTO.getScheduleId())
+                .eq(ObjectUtils.isNotEmpty(requestDTO.getStatus()),
+                        Waitlist::getStatus, requestDTO.getStatus())
                 .eq(requestDTO.getIsDeleted() != null, Waitlist::getIsDeleted, requestDTO.getIsDeleted())
                 .orderByDesc(Waitlist::getCreateTime);
 
