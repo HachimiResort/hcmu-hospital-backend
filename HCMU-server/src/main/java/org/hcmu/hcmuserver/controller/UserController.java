@@ -116,7 +116,7 @@ public class UserController {
     @AutoLog("根据用户id查找预约")
     @Operation(description = "根据用户id查找预约", summary = "根据用户id查找预约('CHECK_APPOINTMENT')")
     @GetMapping("/{userId}/appointment")
-    //@PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
     public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentByPatientId(@PathVariable Long userId){
         return appointmentService.getAppointmentsByPatientUserId(userId);
     }
