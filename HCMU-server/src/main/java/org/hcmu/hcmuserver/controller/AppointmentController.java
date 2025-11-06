@@ -32,7 +32,7 @@ public class AppointmentController {
     }
     @AutoLog("根据预约Id预约详情")
     @GetMapping("/{appointmentId}")
-    public Result<AppointmentDTO.AppointmentDetailDTO> getAppointmentById(@PathVariable Long appointmentId) {
+    public Result<AppointmentDTO.AppointmentListDTO> getAppointmentById(@PathVariable Long appointmentId) {
         return appointmentService.getAppointmentById(appointmentId);
     }
 

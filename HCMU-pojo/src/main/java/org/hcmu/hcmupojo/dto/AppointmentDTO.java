@@ -23,16 +23,6 @@ public class AppointmentDTO {
         private Long scheduleId;
         private Integer visitNo;
         private Integer status;
-        private LocalDateTime creatTime;
-    }
-    @Data
-    public static class AppointmentDetailDTO {
-        private Long appointmentId;
-        private String appointmentNo;
-        private Long patientUserId;
-        private Long scheduleId;
-        private Integer visitNo;
-        private Integer status;
         private BigDecimal originalFee;
         private BigDecimal actualFee;
         private LocalDateTime paymentTime;
@@ -45,5 +35,6 @@ public class AppointmentDTO {
         private String patientUserName;// 患者姓名
         private String patientPhone;// 患者电话
     }
+
 
 }

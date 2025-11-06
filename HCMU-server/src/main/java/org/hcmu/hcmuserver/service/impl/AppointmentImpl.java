@@ -40,15 +40,11 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Appointment::getAppointmentId,
-                        Appointment::getAppointmentNo,
-                        Appointment::getPatientUserId,
-                        Appointment::getScheduleId,
-                        Appointment::getVisitNo,
-                        Appointment::getStatus,
-                        Appointment::getCreateTime)
+        queryWrapper.selectAll()
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
                 .eq(ObjectUtils.isNotEmpty(requestDTO.getScheduleId()),
                         Appointment::getScheduleId, requestDTO.getScheduleId())
                 .eq(ObjectUtils.isNotEmpty(requestDTO.getPatientUserId()),
@@ -73,35 +69,24 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
     }
 
     @Override
-    public Result<AppointmentDTO.AppointmentDetailDTO> getAppointmentById(Long appointmentId) {
+    public Result<AppointmentDTO.AppointmentListDTO> getAppointmentById(Long appointmentId) {
         if (appointmentId == null || appointmentId <= 0) {
             return Result.error("预约ID不能为空");
         }
 
         // 构建查询条件
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Appointment::getAppointmentId,
-                        Appointment::getAppointmentNo,
-                        Appointment::getPatientUserId,
-                        Appointment::getScheduleId,
-                        Appointment::getVisitNo,
-                        Appointment::getStatus,
-                        Appointment::getOriginalFee,
-                        Appointment::getActualFee,
-                        Appointment::getPaymentTime,
-                        Appointment::getCancellationTime,
-                        Appointment::getCancellationReason,
-                        Appointment::getCreateTime,
-                        Appointment::getUpdateTime)
+        queryWrapper.selectAll()
                 // 关联用户表获取患者信息
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
                 .eq(Appointment::getAppointmentId, appointmentId)
                 .eq(Appointment::getIsDeleted, 0);  // 只查询未删除的记录
 
-        AppointmentDTO.AppointmentDetailDTO detailDTO = baseMapper.selectJoinOne(
-                AppointmentDTO.AppointmentDetailDTO.class,
+        AppointmentDTO.AppointmentListDTO detailDTO = baseMapper.selectJoinOne(
+                AppointmentDTO.AppointmentListDTO.class,
                 queryWrapper
         );
 
@@ -113,7 +98,7 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
     }
 
     @Override
-    public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentsByPatientUserId(
+    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentsByPatientUserId(
             Long patientUserId) {
 
         User user = userService.getById(patientUserId);
@@ -123,29 +108,19 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
 
         // 构建查询条件
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Appointment::getAppointmentId,
-                        Appointment::getAppointmentNo,
-                        Appointment::getPatientUserId,
-                        Appointment::getScheduleId,
-                        Appointment::getVisitNo,
-                        Appointment::getStatus,
-                        Appointment::getOriginalFee,
-                        Appointment::getActualFee,
-                        Appointment::getPaymentTime,
-                        Appointment::getCancellationTime,
-                        Appointment::getCancellationReason,
-                        Appointment::getCreateTime,
-                        Appointment::getUpdateTime)
+        queryWrapper.selectAll()
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
                 .eq(Appointment::getPatientUserId, patientUserId)
                 .eq(Appointment::getIsDeleted, 0)
                 .orderByDesc(Appointment::getCreateTime);
 
         // 执行分页查询
-        IPage<AppointmentDTO.AppointmentDetailDTO> page = baseMapper.selectJoinPage(
+        IPage<AppointmentDTO.AppointmentListDTO> page = baseMapper.selectJoinPage(
                 new Page<>(1, 20),
-                AppointmentDTO.AppointmentDetailDTO.class,
+                AppointmentDTO.AppointmentListDTO.class,
                 queryWrapper
         );
 

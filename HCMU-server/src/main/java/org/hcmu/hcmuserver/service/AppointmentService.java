@@ -10,7 +10,7 @@ import java.util.List;
 public interface AppointmentService{
     Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO appointmentGetRequsetDTO);
 
-    public Result<AppointmentDTO.AppointmentDetailDTO> getAppointmentById(Long appointmentId);//根据id查找
+    public Result<AppointmentDTO.AppointmentListDTO> getAppointmentById(Long appointmentId);//根据id查找
 
-    public Result<PageDTO<AppointmentDTO.AppointmentDetailDTO>> getAppointmentsByPatientUserId(Long userId);//根据患者用户id查找
+    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentsByPatientUserId(Long userId);//根据患者用户id查找
 }
