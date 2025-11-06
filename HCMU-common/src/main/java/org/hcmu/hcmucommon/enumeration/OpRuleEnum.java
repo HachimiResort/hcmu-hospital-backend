@@ -28,6 +28,8 @@ public enum OpRuleEnum {
         OpRuleType.BOOKING,
         "booking.max_per_day_global",
         3,
+        0,
+        20,
         "单用户全院每日挂号上限（默认 3 次）"
     ),
 
@@ -40,6 +42,8 @@ public enum OpRuleEnum {
         OpRuleType.BOOKING,
         "booking.max_per_day_per_dept",
         2,
+        0,
+        10,
         "单用户同科室每日挂号上限（默认 2 次）"
     ),
 
@@ -52,6 +56,8 @@ public enum OpRuleEnum {
         OpRuleType.BOOKING,
         "booking.max_future_days",
         7,
+        0,
+        30,
         "可预约未来天数上限（默认 7 天）"
     ),
 
@@ -64,6 +70,8 @@ public enum OpRuleEnum {
         OpRuleType.BOOKING,
         "booking.min_hours_before_booking_end",
         2,
+        0,
+        72,
         "就诊前停止预约/改约的时间（默认 2 小时）"
     ),
 
@@ -76,6 +84,8 @@ public enum OpRuleEnum {
         105,
         OpRuleType.BOOKING,
         "booking.limit_same_timeslot",
+        1,
+        0,
         1,
         "是否限制同一时段多重预约（1=限制，默认 1）"
     ),
@@ -90,6 +100,8 @@ public enum OpRuleEnum {
         OpRuleType.CANCEL,
         "cancel.free_cancel_hours",
         24,
+        0,
+        168,
         "免费退号时限（默认就诊前 24 小时及以上）"
     ),
 
@@ -102,6 +114,8 @@ public enum OpRuleEnum {
         OpRuleType.CANCEL,
         "cancel.forbid_cancel_hours",
         2,
+        0,
+        168,
         "禁止退号时限（默认就诊前 2 小时内不可退）"
     ),
 
@@ -114,6 +128,8 @@ public enum OpRuleEnum {
         OpRuleType.CANCEL,
         "cancel.no_show_limit",
         3,
+        0,
+        10,
         "爽约次数阈值（默认 3 次）"
     ),
 
@@ -125,6 +141,8 @@ public enum OpRuleEnum {
         OpRuleType.CANCEL,
         "cancel.no_show_punish_days",
         7,
+        0,
+        30,
         "爽约后限制挂号天数（默认 7 天）"
     ),
 
@@ -135,6 +153,8 @@ public enum OpRuleEnum {
         205,
         OpRuleType.CANCEL,
         "cancel.need_reason",
+        1,
+        0,
         1,
         "取消预约是否需要填写原因（默认 true）"
     ),
@@ -149,6 +169,8 @@ public enum OpRuleEnum {
         OpRuleType.WAITING_LIST,
         "waitlist.max_queue_length",
         20,
+        0,
+        100,
         "单号源候补队列长度上限（默认 20 人）"
     ),
 
@@ -161,6 +183,8 @@ public enum OpRuleEnum {
         OpRuleType.WAITING_LIST,
         "waitlist.lock_minutes",
         15,
+        0,
+        120,
         "候补中签锁号时间（默认 15 分钟）"
     ),
 
@@ -175,6 +199,8 @@ public enum OpRuleEnum {
         OpRuleType.PUNISH,
         "punish.blacklist_days",
         7,
+        0,
+        60,
         "黑名单限制挂号天数（默认 7 天）"
     ),
 
@@ -187,6 +213,8 @@ public enum OpRuleEnum {
         OpRuleType.PUNISH,
         "punish.no_show_threshold",
         3,
+        0,
+        10,
         "黑名单爽约次数阈值（默认 3 次）"
     ),
 
@@ -200,6 +228,8 @@ public enum OpRuleEnum {
         OpRuleType.EXTRA,
         "extra.max_extra_per_day",
         5,
+        0,
+        30,
         "单医生单日加号上限（默认 5 个）"
     ),
 
@@ -212,6 +242,8 @@ public enum OpRuleEnum {
         OpRuleType.EXTRA,
         "extra.need_reason",
         1,
+        0,
+        1,
         "加号是否需要填写原因（默认 true）"
     );
 
@@ -223,13 +255,27 @@ public enum OpRuleEnum {
     private final String key;
     private final Integer defaultValue;
     private final String description;
+    private final Integer minValue;
+    private final Integer maxValue;
 
-    OpRuleEnum(Integer code, OpRuleType type, String key, Integer defaultValue, String description) {
+    OpRuleEnum(Integer code, OpRuleType type, String key, Integer defaultValue, Integer minValue, Integer maxValue, String description) {
         this.code = code;
         this.type = type;
         this.key = key;
         this.defaultValue = defaultValue;
         this.description = description;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+    }
+
+    public static OpRuleEnum getByCode(Integer code) {
+        if (code == null) {
+            return null;
+        }
+        return Arrays.stream(OpRuleEnum.values())
+                .filter(rule -> rule.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
 
     public Integer getCode() {
@@ -255,6 +301,14 @@ public enum OpRuleEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public Integer getMinValue() {
+        return minValue;
+    }
+
+    public Integer getMaxValue() {
+        return maxValue;
     }
 
 
