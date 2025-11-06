@@ -59,7 +59,11 @@ public enum PermissionEnum {
     ADD_SCHEDULE(22, "addSchedule"),
     ALT_SCHEDULE(23, "altSchedule"),
     DEL_SCHEDULE(24, "delSchedule"),
-    CHECK_SCHEDULE(25, "checkSchedule");
+    CHECK_SCHEDULE(25, "checkSchedule"),
+    /*
+     *预约记录管理
+     */
+    CHECK_APPOINTMENT(26,"checkAppointment");
     PermissionEnum(Integer code, String name) {
         this.code = code;
         this.name = name;

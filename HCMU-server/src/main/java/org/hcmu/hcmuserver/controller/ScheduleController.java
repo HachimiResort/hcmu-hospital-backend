@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmuserver.service.ScheduleService;
@@ -80,7 +81,11 @@ public class ScheduleController {
     public Result<String> copySchedule(@RequestBody @Valid ScheduleDTO.ScheduleCopyDTO copyDTO) {
         return scheduleService.copySchedule(copyDTO);
     }
-
-
-
+    
+    @AutoLog("预约排班号源")
+    @Operation(description = "预约排班", summary = "预约排班")
+    @PostMapping("/{scheduleId}/appoint")
+    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(@PathVariable Long scheduleId) {
+        return scheduleService.appointSchedule(scheduleId);
+    }
 }

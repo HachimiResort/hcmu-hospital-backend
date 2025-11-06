@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.RoleDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
+import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -107,4 +109,5 @@ public class UserController {
     public Result<String> deleteUser(@PathVariable Long userId) {
         return userService.deleteUserById(userId);
     }
+
 }
