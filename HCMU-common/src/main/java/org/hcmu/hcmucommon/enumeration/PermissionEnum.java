@@ -63,7 +63,13 @@ public enum PermissionEnum {
     /*
      *预约记录管理
      */
-    CHECK_APPOINTMENT(26,"checkAppointment");
+    CHECK_APPOINTMENT(26,"checkAppointment"),
+
+    /*
+     * 挂号规则管理
+     */
+    CHECK_RULE(27,"checkRule"),
+    UPDATE_RULE(28,"updateRule"),;
     PermissionEnum(Integer code, String name) {
         this.code = code;
         this.name = name;
