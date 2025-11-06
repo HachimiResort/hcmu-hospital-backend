@@ -32,7 +32,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appointment> implements AppointmentService {
+public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper, Appointment> implements AppointmentService {
 
     @Autowired
     private UserService userService;
@@ -40,7 +40,7 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.selectAll()
+        queryWrapper.selectAll(Appointment.class)
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
@@ -76,7 +76,7 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
 
         // 构建查询条件
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.selectAll()
+        queryWrapper.selectAll(Appointment.class)
                 // 关联用户表获取患者信息
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
@@ -108,7 +108,7 @@ public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appoi
 
         // 构建查询条件
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.selectAll()
+        queryWrapper.selectAll(Appointment.class)
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")

@@ -6,7 +6,9 @@ import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.PatientProfileDTO;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
+import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.PatientProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +25,9 @@ public class PatientProfileController {
 
     @Autowired
     private PatientProfileService patientProfileService;
+
+    @Autowired
+    private AppointmentService appointmentService;
 
     @Deprecated
     @AutoLog("创建患者档案（已废弃）")
@@ -89,5 +94,14 @@ public class PatientProfileController {
     @PreAuthorize("@ex.hasSysAuthority('DEL_PATIENT')")
     public Result<String> batchDeletePatientProfiles(@RequestBody List<Long> patientProfileIds) {
         return patientProfileService.batchDeletePatientProfiles(patientProfileIds);
+    }
+
+    @AutoLog("根据用户id查找预约")
+    @Operation(description = "根据用户id查找预约", summary = "根据用户id查找预约('CHECK_APPOINTMENT')")
+    @GetMapping("/{userId}/appointments")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT') || @ex.isSelf(#userId)")
+    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentByPatientId(@PathVariable Long userId, @ModelAttribute AppointmentDTO.AppointmentGetRequestDTO appointmentGetRequestDTO) {
+        appointmentGetRequestDTO.setPatientUserId(userId);
+        return appointmentService.getAppointments(appointmentGetRequestDTO);
     }
 }

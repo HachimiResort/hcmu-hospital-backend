@@ -34,6 +34,7 @@ public class AppointmentDTO {
         // 关联字段
         private String patientUserName;// 患者姓名
         private String patientPhone;// 患者电话
+        private String patientName;// 患者真实姓名
     }
 
 
