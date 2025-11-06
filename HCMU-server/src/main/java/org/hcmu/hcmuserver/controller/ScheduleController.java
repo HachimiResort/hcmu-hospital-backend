@@ -84,7 +84,7 @@ public class ScheduleController {
     
     @AutoLog("预约排班号源")
     @Operation(description = "预约排班", summary = "预约排班")
-    @GetMapping("/{scheduleId}/appoint")
+    @PostMapping("/{scheduleId}/appoint")
     public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(@PathVariable Long scheduleId) {
         return scheduleService.appointSchedule(scheduleId);
     }

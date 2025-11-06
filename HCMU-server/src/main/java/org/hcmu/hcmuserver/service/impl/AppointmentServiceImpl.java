@@ -32,7 +32,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class AppointmentImpl extends MPJBaseServiceImpl<AppointmentMapper, Appointment> implements AppointmentService {
+public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper, Appointment> implements AppointmentService {
 
     @Autowired
     private UserService userService;

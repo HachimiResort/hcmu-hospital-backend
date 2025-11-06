@@ -32,9 +32,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private AppointmentService appointmentService;
-
     // TODO: 开放获取所有成员的权限
     // 获取所有用户的信息
     @AutoLog("获取所有用户的信息")
@@ -113,12 +110,4 @@ public class UserController {
         return userService.deleteUserById(userId);
     }
 
-    @AutoLog("根据用户id查找预约")
-    @Operation(description = "根据用户id查找预约", summary = "根据用户id查找预约('CHECK_APPOINTMENT')")
-    @GetMapping("/{userId}/appointment")
-    @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT') || @ex.isSelf(#userId)")
-    public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentByPatientId(@PathVariable Long userId, @ModelAttribute AppointmentDTO.AppointmentGetRequestDTO appointmentGetRequestDTO) {
-        appointmentGetRequestDTO.setPatientUserId(userId);
-        return appointmentService.getAppointments(appointmentGetRequestDTO);
-    }
 }
