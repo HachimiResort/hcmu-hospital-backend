@@ -1,8 +1,8 @@
 package org.hcmu.hcmuserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.github.yulichang.base.MPJBaseServiceImpl;
@@ -14,23 +14,32 @@ import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
+import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
+import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -47,6 +56,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private AppointmentMapper appointmentMapper;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -331,5 +343,70 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         }
 
         return Result.success("成功复制 " + sourceSchedules.size() + " 条排班记录到 " + targetDate);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId) {
+        Schedule schedule = baseMapper.selectById(scheduleId);
+        if (schedule.getStatus() != null && !Integer.valueOf(1).equals(schedule.getStatus())) {
+            return Result.error("当前排班暂不可预约");
+        }
+
+        Integer availableSlots = schedule.getAvailableSlots();
+        if (availableSlots == null || availableSlots <= 0) {
+            return Result.error("该排班号源已满");
+        }
+
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long patientUserId = loginUser.getUser().getUserId();
+
+        // 校验患者角色
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, patientUserId);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null || !RoleTypeEnum.PATIENT.getCode().equals(userRole.getType())) {
+            return Result.error("当前用户不是患者角色，无法预约");
+        }
+
+        // 防止重复预约
+        LambdaQueryWrapper<Appointment> duplicateWrapper = new LambdaQueryWrapper<>();
+        duplicateWrapper.eq(Appointment::getScheduleId, scheduleId)
+                .eq(Appointment::getPatientUserId, patientUserId);
+        if (appointmentMapper.selectCount(duplicateWrapper) > 0) {
+            return Result.error("请勿重复预约该排班");
+        }
+
+    
+
+        if (availableSlots < 1) {
+            return Result.error("该排班号源已满");
+        }
+        Appointment appointment = new Appointment();
+        appointment.setAppointmentNo(generateAppointmentNo(scheduleId));
+        appointment.setPatientUserId(patientUserId);
+        appointment.setScheduleId(scheduleId);
+        appointment.setVisitNo(-1);
+        appointment.setStatus(1);
+        appointment.setOriginalFee(schedule.getFee());
+        appointment.setActualFee(schedule.getFee());
+        appointmentMapper.insert(appointment);
+        schedule.setAvailableSlots(Math.max(availableSlots - 1, 0));
+
+        baseMapper.updateById(schedule);
+
+        AppointmentDTO.AppointmentListDTO dto = new AppointmentDTO.AppointmentListDTO();
+        BeanUtils.copyProperties(appointment, dto);
+        dto.setPatientUserName(loginUser.getUser().getName());
+        dto.setPatientPhone(loginUser.getUser().getPhone());
+        return Result.success("预约成功", dto);
+    }
+
+    private String generateAppointmentNo(Long scheduleId) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        return "AP" + scheduleId + timestamp + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
     }
 }
