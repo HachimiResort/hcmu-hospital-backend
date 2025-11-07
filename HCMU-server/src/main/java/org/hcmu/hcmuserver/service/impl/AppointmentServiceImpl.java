@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
+import org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO;
 import org.hcmu.hcmupojo.dto.PatientProfileDTO;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.PageDTO;
@@ -131,4 +132,11 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         return Result.success(new PageDTO<>(page));
     }
 
+    @Override
+    public Result<AppointmentListDTO> cancelAppointment(Long appointmentId, String reason) {
+        
+        return null;
+    }
+
+    
 }

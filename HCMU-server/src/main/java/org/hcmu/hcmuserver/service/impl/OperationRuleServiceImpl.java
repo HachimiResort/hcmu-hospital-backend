@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 
+import io.swagger.v3.oas.models.security.SecurityScheme.In;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO;
+import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.entity.OperationRule;
 import org.hcmu.hcmuserver.mapper.operationrule.OperationRuleMapper;
 import org.hcmu.hcmuserver.service.OperationRuleService;
@@ -92,6 +94,37 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
         OperationRule refreshed = baseMapper.selectOne(queryWrapper);
 
         return Result.success(OperationRuleDTO.RuleListDTO.convert(refreshed));
+    }
+
+    @Override
+    public RuleInfo getRuleValueByCode(OpRuleEnum opRuleEnum) {
+        if (opRuleEnum == null) {
+            return null;
+        }
+
+        MPJLambdaWrapper<OperationRule> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.eq(OperationRule::getCode, opRuleEnum.getCode())
+            .last("limit 1");
+
+        OperationRule existing = baseMapper.selectOne(queryWrapper);
+        if (existing != null) {
+            return new RuleInfo() {{
+                setValue(existing.getValue());
+                setEnabled(existing.getEnabled());
+            }};
+        } else {
+            Integer code = opRuleEnum.getCode();
+            baseMapper.insert(new OperationRule() {{
+                setCode(code);
+                setName(opRuleEnum.name());
+                setValue(opRuleEnum.getDefaultValue());
+                setEnabled(1);
+            }});
+            return new RuleInfo() {{
+                setValue(opRuleEnum.getDefaultValue());
+                setEnabled(1);
+            }};
+        }
     }
 
 }
