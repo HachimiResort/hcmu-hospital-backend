@@ -364,6 +364,19 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("当前排班暂不可预约");
         }
 
+        // 提前天数限制
+        RuleInfo futureRuleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_FUTURE_DAYS);
+        if (futureRuleInfo != null && futureRuleInfo.getEnabled() == 1) {
+            Integer maxFutureDays = futureRuleInfo.getValue();
+            LocalDate maxFutureDate = LocalDate.now().plusDays(maxFutureDays);
+
+            if (schedule.getScheduleDate().isAfter(maxFutureDate)) {
+                return Result.error("该排班日期超过可预约的最大提前天数（" + maxFutureDays + "天）");
+            }
+
+            log.info("检查排班日期 {} 是否在允许范围内，最大可预约日期: {}",
+                     schedule.getScheduleDate(), maxFutureDate);
+        }
         Integer availableSlots = schedule.getAvailableSlots();
         if (availableSlots == null || availableSlots <= 0) {
             return Result.error("该排班号源已满");
