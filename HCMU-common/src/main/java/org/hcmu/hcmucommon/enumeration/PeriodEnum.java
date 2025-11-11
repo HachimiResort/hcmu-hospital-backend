@@ -9,19 +9,19 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
  */
 public enum PeriodEnum {
 
-    MORNING1(1,"上午8:00-8:30"),
-    MORNING2(2,"上午8:30-9:00"),
-    MORNING3(3,"上午9:00-9:30"),
-    MORNING4(4,"上午9:30-10:00"),
-    MORNING5(5,"上午10:00-10:30"),
-    MORNING6(6,"上午10:30-11:00"),
+    MORNING1(1,"上午 8:00-8:30"),
+    MORNING2(2,"上午 8:30-9:00"),
+    MORNING3(3,"上午 9:00-9:30"),
+    MORNING4(4,"上午 9:30-10:00"),
+    MORNING5(5,"上午 10:00-10:30"),
+    MORNING6(6,"上午 10:30-11:00"),
 
-    AFTERNOON1(7,"下午13:30-14:00"),
-    AFTERNOON2(8,"下午14:00-14:30"),
-    AFTERNOON3(9,"下午14:30-15:00"),
-    AFTERNOON4(10,"下午15:00-15:30"),
-    AFTERNOON5(11,"下午15:30-16:00"),
-    AFTERNOON6(12,"下午16:00-16:30");
+    AFTERNOON1(7,"下午 13:30-14:00"),
+    AFTERNOON2(8,"下午 14:00-14:30"),
+    AFTERNOON3(9,"下午 14:30-15:00"),
+    AFTERNOON4(10,"下午 15:00-15:30"),
+    AFTERNOON5(11,"下午 15:30-16:00"),
+    AFTERNOON6(12,"下午 16:00-16:30");
     @EnumValue
     private Integer code;
 

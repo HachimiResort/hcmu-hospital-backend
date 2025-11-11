@@ -62,7 +62,7 @@ public enum OpRuleEnum {
     ),
 
     /**
-     * 就诊前多少小时停止新预约/改约
+     * 就诊前多少小时停止新预约
      * 防止太临近就诊还在变动号源
      */
     BOOKING_MIN_HOURS_BEFORE_BOOKING_END(

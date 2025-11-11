@@ -9,10 +9,10 @@ import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 
+import org.hcmu.hcmucommon.enumeration.PeriodEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
-
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -377,6 +378,28 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             log.info("检查排班日期 {} 是否在允许范围内，最大可预约日期: {}",
                      schedule.getScheduleDate(), maxFutureDate);
         }
+
+        // 就诊前多少小时停止预约
+        RuleInfo minHoursRule = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MIN_HOURS_BEFORE_BOOKING_END);
+        if (minHoursRule != null && minHoursRule.getEnabled() == 1) {
+            Integer minHours = minHoursRule.getValue();
+            PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+            if (periodEnum != null) {
+                String timeRange = periodEnum.getDesc().split(" ")[1]; 
+                String startTimeStr = timeRange.split("-")[0]; 
+                LocalTime startTime = LocalTime.parse(startTimeStr);
+
+                LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
+                log.info("当前时间: {}, 排班时间: {}, 预约截止时间: {}", LocalDateTime.now(), scheduleDateTime, scheduleDateTime.minusHours(minHours));
+                LocalDateTime bookingEndTime = scheduleDateTime.minusHours(minHours);
+
+                if (LocalDateTime.now().isAfter(bookingEndTime)) {
+                    return Result.error("该排班已停止预约，请在就诊开始前 " + minHours + " 小时完成预约");
+                }
+            }
+        }
+
+
         Integer availableSlots = schedule.getAvailableSlots();
         if (availableSlots == null || availableSlots <= 0) {
             return Result.error("该排班号源已满");
