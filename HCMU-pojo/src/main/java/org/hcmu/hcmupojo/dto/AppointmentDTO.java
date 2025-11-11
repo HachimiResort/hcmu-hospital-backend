@@ -1,6 +1,5 @@
 package org.hcmu.hcmupojo.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -9,8 +8,8 @@ import java.time.LocalDateTime;
 public class AppointmentDTO {
     @Data
     public static class AppointmentGetRequestDTO {
-        private Long scheduleId;//按排班号查询
-        private Long patientUserId;//按患者id查询
+        private Long scheduleId;
+        private Long patientUserId;
         private Long pageNum = 1L;
         private Long pageSize = 20L;
         private Integer isDeleted;
@@ -40,8 +39,7 @@ public class AppointmentDTO {
 
     @Data
     public static class AppointmentCancelDTO {
-        @NotBlank(message = "取消原因不能为空")
-        private String reason;
+        private String reason;  // 取消原因
     }
 
 }

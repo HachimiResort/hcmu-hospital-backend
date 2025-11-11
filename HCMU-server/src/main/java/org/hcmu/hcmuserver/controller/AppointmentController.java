@@ -44,7 +44,7 @@ public class AppointmentController {
     @PutMapping("/{appointmentId}/cancel")
     public Result<AppointmentDTO.AppointmentListDTO> cancelAppointment(
             @PathVariable Long appointmentId,
-            @RequestBody @Valid AppointmentDTO.AppointmentCancelDTO cancelDTO) {
+            @RequestBody AppointmentDTO.AppointmentCancelDTO cancelDTO) {
         return appointmentService.cancelAppointment(appointmentId, cancelDTO.getReason());
     }
 

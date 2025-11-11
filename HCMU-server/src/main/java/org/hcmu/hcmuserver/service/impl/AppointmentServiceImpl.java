@@ -158,6 +158,14 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
             return Result.error("当前预约状态不允许取消");
         }
 
+        // 是否需要填写取消原因
+        RuleInfo needReasonRule = operationRuleService.getRuleValueByCode(OpRuleEnum.CANCEL_NEED_REASON);
+        if (needReasonRule != null && needReasonRule.getEnabled() == 1 && needReasonRule.getValue() == 1) {
+            if (reason == null || reason.trim().isEmpty()) {
+                return Result.error("取消预约需要填写原因");
+            }
+        }
+
         Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         if (schedule == null) {
             return Result.error("关联的排班信息不存在");
