@@ -1,5 +1,6 @@
 package org.hcmu.hcmupojo.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -37,5 +38,10 @@ public class AppointmentDTO {
         private String patientName;// 患者真实姓名
     }
 
+    @Data
+    public static class AppointmentCancelDTO {
+        @NotBlank(message = "取消原因不能为空")
+        private String reason;
+    }
 
 }

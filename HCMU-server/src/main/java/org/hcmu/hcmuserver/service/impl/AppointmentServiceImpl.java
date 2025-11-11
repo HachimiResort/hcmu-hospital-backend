@@ -8,10 +8,13 @@ import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
+import org.hcmu.hcmucommon.enumeration.PeriodEnum;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO;
+import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.dto.PatientProfileDTO;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.PageDTO;
@@ -19,15 +22,20 @@ import org.hcmu.hcmupojo.entity.*;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
+import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.AppointmentService;
+import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.hcmu.hcmuserver.service.PatientProfileService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +45,12 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ScheduleMapper scheduleMapper;
+
+    @Autowired
+    private OperationRuleService operationRuleService;
 
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
@@ -133,9 +147,61 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result<AppointmentListDTO> cancelAppointment(Long appointmentId, String reason) {
-        
-        return null;
+        Appointment appointment = baseMapper.selectById(appointmentId);
+        if (appointment == null || appointment.getIsDeleted() == 1) {
+            return Result.error("预约记录不存在");
+        }
+
+        if (appointment.getStatus() == null || appointment.getStatus() == 3 || appointment.getStatus() == 4 || appointment.getStatus() == 5 || appointment.getStatus() == 6) {
+            return Result.error("当前预约状态不允许取消");
+        }
+
+        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        if (schedule == null) {
+            return Result.error("关联的排班信息不存在");
+        }
+
+        // 禁止取消时限规则
+        RuleInfo forbidCancelRule = operationRuleService.getRuleValueByCode(
+            OpRuleEnum.CANCEL_FORBID_CANCEL_HOURS
+        );
+
+        if (forbidCancelRule != null && forbidCancelRule.getEnabled() == 1) {
+            Integer forbidHours = forbidCancelRule.getValue();
+
+
+            PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+            if (periodEnum != null) {
+                String startTimeStr = periodEnum.getDesc().split("-")[0];
+                LocalTime startTime = LocalTime.parse(startTimeStr);
+                LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
+
+                LocalDateTime forbidCancelTime = scheduleDateTime.minusHours(forbidHours);
+
+                log.info("预约ID {} - 就诊时间: {}, 禁止取消截止时间: {}, 当前时间: {}",
+                         appointmentId, scheduleDateTime, forbidCancelTime, LocalDateTime.now());
+
+                // 是否在禁止取消时限内
+                if (LocalDateTime.now().isAfter(forbidCancelTime)) {
+                    return Result.error("就诊前 " + forbidHours + " 小时内不允许取消预约");
+                }
+            }
+        }
+
+        appointment.setStatus(5);  // 状态改为已取消
+        appointment.setCancellationTime(LocalDateTime.now());
+        appointment.setCancellationReason(reason);
+        baseMapper.updateById(appointment);
+
+        // 恢复号源
+        schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
+        scheduleMapper.updateById(schedule);
+
+        AppointmentListDTO dto = new AppointmentListDTO();
+        BeanUtils.copyProperties(appointment, dto);
+        return Result.success("取消预约成功", dto);
     }
 
     

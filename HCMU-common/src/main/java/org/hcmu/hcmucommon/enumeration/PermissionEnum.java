@@ -65,6 +65,7 @@ public enum PermissionEnum {
      */
     CHECK_APPOINTMENT(26,"checkAppointment"),
 
+
     /*
      * 运营规则管理
      */
