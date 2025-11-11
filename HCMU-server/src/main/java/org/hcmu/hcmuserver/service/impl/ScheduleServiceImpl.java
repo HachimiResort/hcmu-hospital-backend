@@ -106,9 +106,11 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         wrapper.eq(Schedule::getDoctorUserId, createDTO.getDoctorUserId())
                 .eq(Schedule::getScheduleDate, createDTO.getScheduleDate())
                 .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod())
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("该医生在此日期和时段已有排班");
+        
         }
 
         Schedule schedule = new Schedule();
@@ -232,6 +234,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     .eq(Schedule::getScheduleDate, scheduleDate)
                     .eq(Schedule::getSlotType, slotType)
                     .eq(Schedule::getIsDeleted, 0)
+                    .eq(Schedule::getStatus, 1)
                     .ne(Schedule::getScheduleId, scheduleId); // 排除当前记录
             if (baseMapper.selectCount(wrapper) > 0) {
                 return Result.error("该医生在此日期和时段已有排班");
@@ -317,7 +320,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         LambdaQueryWrapper<Schedule> targetDateWrapper = new LambdaQueryWrapper<>();
         targetDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
                 .eq(Schedule::getScheduleDate, targetDate)
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         
         Long existingScheduleCount = baseMapper.selectCount(targetDateWrapper);
         if (existingScheduleCount > 0) {
@@ -329,7 +333,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         LambdaQueryWrapper<Schedule> sourceDateWrapper = new LambdaQueryWrapper<>();
         sourceDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
                 .eq(Schedule::getScheduleDate, sourceDate)
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         
         List<Schedule> sourceSchedules = baseMapper.selectList(sourceDateWrapper);
         if (sourceSchedules.isEmpty()) {
@@ -416,6 +421,47 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null || !RoleTypeEnum.PATIENT.getCode().equals(userRole.getType())) {
             return Result.error("当前用户不是患者角色，无法预约");
+        }
+
+        // 爽约限制挂号检查
+        RuleInfo noShowPunishRule = operationRuleService.getRuleValueByCode(OpRuleEnum.CANCEL_NO_SHOW_PUNISH_DAYS);
+        if (noShowPunishRule != null && noShowPunishRule.getEnabled() == 1) {
+            Integer punishDays = noShowPunishRule.getValue();
+
+            // 查询用户的爽约记录（status=6）
+            MPJLambdaWrapper<Appointment> noShowWrapper = new MPJLambdaWrapper<>();
+            noShowWrapper
+                .selectAll(Appointment.class)
+                .selectAs(Schedule::getScheduleDate, Appointment::getScheduleId)
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .eq(Appointment::getStatus, 6)
+                .eq(Appointment::getIsDeleted, 0)
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1)
+                .orderByDesc(Schedule::getScheduleDate);
+
+            List<Appointment> noShowAppointments = appointmentMapper.selectJoinList(Appointment.class, noShowWrapper);
+
+            if (!noShowAppointments.isEmpty()) {
+                LocalDate currentDate = LocalDate.now();
+
+                for (Appointment noShowAppointment : noShowAppointments) {
+                    // 获取爽约的排班信息
+                    Schedule noShowSchedule = baseMapper.selectById(noShowAppointment.getScheduleId());
+                    if (noShowSchedule != null) {
+                        LocalDate noShowDate = noShowSchedule.getScheduleDate();
+                        LocalDate punishmentEndDate = noShowDate.plusDays(punishDays);
+
+                        // 当前日期在惩罚期内
+                        if (currentDate.isBefore(punishmentEndDate)) {
+                            log.info("用户ID {} 因爽约被限制挂号，爽约日期: {}, 惩罚结束日期: {}",
+                                     patientUserId, noShowDate, punishmentEndDate);
+                            return Result.error("您因爽约记录被限制挂号，限制至 " + punishmentEndDate + "，请届时再试");
+                        }
+                    }
+                }
+            }
         }
 
         // 防止重复预约
