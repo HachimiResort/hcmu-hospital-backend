@@ -385,8 +385,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             Integer minHours = minHoursRule.getValue();
             PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
             if (periodEnum != null) {
-                String timeRange = periodEnum.getDesc().split(" ")[1]; 
-                String startTimeStr = timeRange.split("-")[0]; 
+                String startTimeStr = periodEnum.getDesc().split("-")[0]; 
                 LocalTime startTime = LocalTime.parse(startTimeStr);
 
                 LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
