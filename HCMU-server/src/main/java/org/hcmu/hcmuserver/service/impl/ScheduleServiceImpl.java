@@ -22,6 +22,7 @@ import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
@@ -29,6 +30,7 @@ import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
@@ -65,6 +67,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private OperationRuleService operationRuleService;
+
+    @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -410,6 +415,43 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             }
         }
 
+        // 单日单科室挂号次数限制
+        RuleInfo deptRuleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_PER_DEPT);
+        if (deptRuleInfo != null && deptRuleInfo.getEnabled() == 1) {
+            Integer maxBookingsPerDept = deptRuleInfo.getValue();
+
+            // 当前科室ID
+            LambdaQueryWrapper<DoctorProfile> profileWrapper = new LambdaQueryWrapper<>();
+            profileWrapper.eq(DoctorProfile::getUserId, schedule.getDoctorUserId())
+                    .last("limit 1");
+            DoctorProfile doctorProfile = doctorProfileMapper.selectOne(profileWrapper);
+
+            if (doctorProfile != null && doctorProfile.getDepartmentId() != null) {
+                Long departmentId = doctorProfile.getDepartmentId();
+                LocalDate today = LocalDate.now();
+                log.info("检查用户ID {} 在日期 {} 对科室 {} 的挂号次数，上限为 {}",
+                         patientUserId, today, departmentId, maxBookingsPerDept);
+
+
+                MPJLambdaWrapper<Appointment> deptCountWrapper = new MPJLambdaWrapper<>();
+                deptCountWrapper
+                    .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                    .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                    .eq(Appointment::getPatientUserId, patientUserId)
+                    .eq(Schedule::getScheduleDate, today)
+                    .eq(DoctorProfile::getDepartmentId, departmentId)
+                    .eq(Appointment::getStatus, 1);
+
+
+                Long todayDeptBookingCount = appointmentMapper.selectJoinCount(deptCountWrapper);
+                log.info("用户ID {} 今日在科室 {} 已挂号次数: {}",
+                         patientUserId, departmentId, todayDeptBookingCount);
+
+                if (todayDeptBookingCount >= maxBookingsPerDept) {
+                    return Result.error("您今日在该科室的挂号次数已达上限（" + maxBookingsPerDept + "次）");
+                }
+            }
+        }
 
         if (availableSlots < 1) {
             return Result.error("该排班号源已满");
