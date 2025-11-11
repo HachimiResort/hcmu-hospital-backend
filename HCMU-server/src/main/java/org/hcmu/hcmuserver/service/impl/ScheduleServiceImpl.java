@@ -11,10 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
+import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
+import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.Role;
@@ -29,6 +31,7 @@ import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
+import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,6 +62,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private AppointmentMapper appointmentMapper;
+
+    @Autowired
+    private OperationRuleService operationRuleService;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -380,7 +386,30 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("请勿重复预约该排班");
         }
 
-    
+        // 单日挂号次数限制
+        RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_GLOBAL);
+        if (ruleInfo != null && ruleInfo.getEnabled() == 1) {
+            Integer maxBookingsPerDay = ruleInfo.getValue();
+
+            LocalDate today = LocalDate.now();
+            log.info("检查用户ID {} 在日期 {} 的挂号次数，上限为 {}", patientUserId, today, maxBookingsPerDay);
+
+            MPJLambdaWrapper<Appointment> dailyCountWrapper = new MPJLambdaWrapper<>();
+            dailyCountWrapper
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .eq(Schedule::getScheduleDate, today)
+                .eq(Appointment::getStatus, 1);
+
+
+            Long todayBookingCount = appointmentMapper.selectJoinCount(dailyCountWrapper);
+            log.info("用户ID {} 今日已挂号次数: {}", patientUserId, todayBookingCount);
+
+            if (todayBookingCount >= maxBookingsPerDay) {
+                return Result.error("您今日的挂号次数已达上限（" + maxBookingsPerDay + "次）");
+            }
+        }
+
 
         if (availableSlots < 1) {
             return Result.error("该排班号源已满");
