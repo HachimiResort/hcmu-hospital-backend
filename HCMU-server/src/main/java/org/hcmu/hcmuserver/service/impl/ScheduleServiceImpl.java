@@ -427,6 +427,20 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("请勿重复预约该排班");
         }
 
+        // 是否能同一时段多重预约限制
+        RuleInfo sameTimeSlotRule = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_LIMIT_SAME_TIMESLOT);
+        if (sameTimeSlotRule != null && sameTimeSlotRule.getEnabled() == 1 && sameTimeSlotRule.getValue() == 1) {
+            MPJLambdaWrapper<Appointment> wrapper = new MPJLambdaWrapper<Appointment>()
+                    .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                    .eq(Appointment::getPatientUserId, patientUserId)
+                    .eq(Schedule::getScheduleDate, schedule.getScheduleDate())
+                    .eq(Schedule::getSlotPeriod, schedule.getSlotPeriod());
+            Long count = appointmentMapper.selectJoinCount(wrapper);
+            if (count > 0) {
+                return Result.error("您在该时间段已有预约，请勿重复预约");
+            }
+        }
+
         // 单日挂号次数限制
         RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_GLOBAL);
         if (ruleInfo != null && ruleInfo.getEnabled() == 1) {
