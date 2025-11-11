@@ -11,11 +11,16 @@ import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
+import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.OperationRule;
+import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.operationrule.OperationRuleMapper;
 import org.hcmu.hcmuserver.service.OperationRuleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +31,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMapper, OperationRule> implements OperationRuleService {
+
+    @Autowired
+    private AppointmentMapper appointmentMapper;
 
     @Override
     public Result<List<OperationRuleDTO.RuleListDTO>> getAllRules() {
@@ -59,6 +67,12 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
             }
             if (max != null && request.getValue() > max) {
                 return Result.error("配置值不能大于 " + max);
+            }
+
+            // 校验规则数据约束
+            Result<Void> validationResult = validateRuleChange(ruleDefinition, request.getValue());
+            if (validationResult.getCode() != 200) {
+                return Result.error(validationResult.getMsg());
             }
         }
 
@@ -125,6 +139,74 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
                 setEnabled(1);
             }};
         }
+    }
+
+    @Override
+    public Result<Void> validateRuleChange(OpRuleEnum ruleEnum, Integer newValue) {
+        if (ruleEnum == null || newValue == null) {
+            return Result.success(null);
+        }
+
+        // 根据不同的规则类型进行不同的校验
+        switch (ruleEnum) {
+            case BOOKING_MAX_PER_DAY_GLOBAL:
+                return validateBookingMaxPerDayGlobal(newValue);
+            case BOOKING_MAX_PER_DAY_PER_DEPT:
+                return validateBookingMaxPerDayPerDept(newValue);
+            // 可以继续添加其他规则的校验逻辑
+            default:
+                // 其他规则暂不校验
+                return Result.success(null);
+        }
+    }
+
+    /**
+     * 校验 101 规则修改
+     * 检查是否存在某个用户在某一天的预约数超过新值
+     */
+    private Result<Void> validateBookingMaxPerDayGlobal(Integer newValue) {
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Appointment::getPatientUserId)
+        .select("t1.schedule_date")
+        .select("COUNT(*) AS cnt")
+        .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+        .eq(Appointment::getIsDeleted, 0)
+        .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
+        .last("GROUP BY t.patient_user_id, t1.schedule_date HAVING COUNT(*) > " + newValue + " LIMIT 1");
+
+        List<Map<String, Object>> results = appointmentMapper.selectJoinMaps(queryWrapper);
+
+        if (results != null && !results.isEmpty()) {
+            return Result.error("存在用户在某天的预约数量超过了新设定的值（" + newValue + "），无法修改此规则");
+        }
+
+        return Result.success(null);
+    }
+
+    /**
+     * 校验 102 规则修改
+     * 检查是否存在某个用户在某一天某个科室的预约数超过新值
+     */
+    private Result<Void> validateBookingMaxPerDayPerDept(Integer newValue) {
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Appointment::getPatientUserId)
+        .select("t1.schedule_date")
+        .select("doctor_profile.department_id")
+        .select("COUNT(*) AS cnt")
+        .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+        .leftJoin("doctor_profile ON doctor_profile.user_id = t1.doctor_user_id")
+        .eq(Appointment::getIsDeleted, 0)
+        .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
+        .last("GROUP BY t.patient_user_id, t1.schedule_date, doctor_profile.department_id HAVING COUNT(*) > " + newValue + " LIMIT 1");
+
+        List<Map<String, Object>> results = appointmentMapper.selectJoinMaps(queryWrapper);
+
+        if (results != null && !results.isEmpty()) {
+            return Result.error("存在用户在某天某科室的预约数量超过了新设定的值（" + newValue + "），无法修改此规则");
+        }
+
+        return Result.success(null);
     }
 
 }

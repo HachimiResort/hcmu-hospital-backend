@@ -490,23 +490,23 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_GLOBAL);
         if (ruleInfo != null && ruleInfo.getEnabled() == 1) {
             Integer maxBookingsPerDay = ruleInfo.getValue();
+            LocalDate scheduleDate = schedule.getScheduleDate();
 
-            LocalDate today = LocalDate.now();
-            log.info("检查用户ID {} 在日期 {} 的挂号次数，上限为 {}", patientUserId, today, maxBookingsPerDay);
+            log.info("检查用户ID {} 在日期 {} 的挂号次数，上限为 {}", patientUserId, scheduleDate, maxBookingsPerDay);
 
             MPJLambdaWrapper<Appointment> dailyCountWrapper = new MPJLambdaWrapper<>();
             dailyCountWrapper
                 .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
                 .eq(Appointment::getPatientUserId, patientUserId)
-                .eq(Schedule::getScheduleDate, today)
+                .eq(Schedule::getScheduleDate, scheduleDate)
                 .eq(Appointment::getStatus, 1);
 
 
-            Long todayBookingCount = appointmentMapper.selectJoinCount(dailyCountWrapper);
-            log.info("用户ID {} 今日已挂号次数: {}", patientUserId, todayBookingCount);
+            Long bookingCountOnDate = appointmentMapper.selectJoinCount(dailyCountWrapper);
+            log.info("用户ID {} 在 {} 已挂号次数: {}", patientUserId, scheduleDate, bookingCountOnDate);
 
-            if (todayBookingCount >= maxBookingsPerDay) {
-                return Result.error("您今日的挂号次数已达上限（" + maxBookingsPerDay + "次）");
+            if (bookingCountOnDate >= maxBookingsPerDay) {
+                return Result.error("您在 " + scheduleDate + " 的挂号次数已达上限（" + maxBookingsPerDay + "次）");
             }
         }
 
@@ -523,9 +523,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
             if (doctorProfile != null && doctorProfile.getDepartmentId() != null) {
                 Long departmentId = doctorProfile.getDepartmentId();
-                LocalDate today = LocalDate.now();
+                LocalDate scheduleDate = schedule.getScheduleDate();
                 log.info("检查用户ID {} 在日期 {} 对科室 {} 的挂号次数，上限为 {}",
-                         patientUserId, today, departmentId, maxBookingsPerDept);
+                         patientUserId, scheduleDate, departmentId, maxBookingsPerDept);
 
 
                 MPJLambdaWrapper<Appointment> deptCountWrapper = new MPJLambdaWrapper<>();
@@ -533,17 +533,17 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
                     .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
                     .eq(Appointment::getPatientUserId, patientUserId)
-                    .eq(Schedule::getScheduleDate, today)
+                    .eq(Schedule::getScheduleDate, scheduleDate)
                     .eq(DoctorProfile::getDepartmentId, departmentId)
                     .eq(Appointment::getStatus, 1);
 
 
-                Long todayDeptBookingCount = appointmentMapper.selectJoinCount(deptCountWrapper);
-                log.info("用户ID {} 今日在科室 {} 已挂号次数: {}",
-                         patientUserId, departmentId, todayDeptBookingCount);
+                Long deptBookingCountOnDate = appointmentMapper.selectJoinCount(deptCountWrapper);
+                log.info("用户ID {} 在 {} 对科室 {} 已挂号次数: {}",
+                         patientUserId, scheduleDate, departmentId, deptBookingCountOnDate);
 
-                if (todayDeptBookingCount >= maxBookingsPerDept) {
-                    return Result.error("您今日在该科室的挂号次数已达上限（" + maxBookingsPerDept + "次）");
+                if (deptBookingCountOnDate >= maxBookingsPerDept) {
+                    return Result.error("您在 " + scheduleDate + " 对该科室的挂号次数已达上限（" + maxBookingsPerDept + "次）");
                 }
             }
         }
