@@ -153,6 +153,8 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
                 return validateBookingMaxPerDayGlobal(newValue);
             case BOOKING_MAX_PER_DAY_PER_DEPT:
                 return validateBookingMaxPerDayPerDept(newValue);
+            case BOOKING_MAX_FUTURE_DAYS:
+                return validateBookingMaxFutureDays(newValue);
             // 可以继续添加其他规则的校验逻辑
             default:
                 // 其他规则暂不校验
@@ -204,6 +206,31 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
 
         if (results != null && !results.isEmpty()) {
             return Result.error("存在用户在某天某科室的预约数量超过了新设定的值（" + newValue + "），无法修改此规则");
+        }
+
+        return Result.success(null);
+    }
+
+    /**
+     * 校验 103 规则修改
+     * 检查是否存在预约的排班日期晚于 今天 + newValue 天
+     */
+    private Result<Void> validateBookingMaxFutureDays(Integer newValue) {
+        LocalDate threshold = LocalDate.now().plusDays(newValue);
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Appointment::getPatientUserId)
+            .select("t1.schedule_date")
+            .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+            .eq(Appointment::getIsDeleted, 0)
+            .in(Appointment::getStatus, Arrays.asList(1, 2))
+            .gt(Schedule::getScheduleDate, threshold)
+            .last("LIMIT 1");
+
+        List<Map<String, Object>> results = appointmentMapper.selectJoinMaps(queryWrapper);
+
+        if (results != null && !results.isEmpty()) {
+            return Result.error("存在预约日期晚于今天+" + newValue + "天的记录，无法修改此规则");
         }
 
         return Result.success(null);
