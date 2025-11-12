@@ -155,6 +155,8 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
                 return validateBookingMaxPerDayPerDept(newValue);
             case BOOKING_MAX_FUTURE_DAYS:
                 return validateBookingMaxFutureDays(newValue);
+            case BOOKING_LIMIT_SAME_TIMESLOT:
+                return validateBookingLimitSameTimeslot(newValue);
             // 可以继续添加其他规则的校验逻辑
             default:
                 // 其他规则暂不校验
@@ -231,6 +233,40 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
 
         if (results != null && !results.isEmpty()) {
             return Result.error("存在预约日期晚于今天+" + newValue + "天的记录，无法修改此规则");
+        }
+
+        return Result.success(null);
+    }
+
+    /**
+     * 104无需额外约束
+     */
+
+
+
+    /**
+     * 校验 105 规则修改
+     * 是否存在同一时间多个预约
+     */
+    private Result<Void> validateBookingLimitSameTimeslot(Integer newValue) {
+        if (newValue == null || newValue == 0) {
+            return Result.success(null);
+        }
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Appointment::getPatientUserId)
+            .select("t1.schedule_date")
+            .select("t1.slot_period")
+            .select("COUNT(*) AS cnt")
+            .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+            .eq(Appointment::getIsDeleted, 0)
+            .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
+            .last("GROUP BY t.patient_user_id, t1.schedule_date, t1.slot_period HAVING COUNT(*) > 1 LIMIT 1");
+
+        List<Map<String, Object>> results = appointmentMapper.selectJoinMaps(queryWrapper);
+
+        if (results != null && !results.isEmpty()) {
+            return Result.error("存在用户在一天有同一时间段有超过1个有效预约, 无法修改此规则");
         }
 
         return Result.success(null);
