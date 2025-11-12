@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "挂号预约接口", description = "预约相关接口")
 @RestController
-@RequestMapping("Appointment")
+@RequestMapping("appointments")
 @Validated
 public class AppointmentController {
 
