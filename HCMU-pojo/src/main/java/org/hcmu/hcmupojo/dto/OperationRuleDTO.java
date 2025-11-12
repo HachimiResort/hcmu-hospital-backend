@@ -67,4 +67,10 @@ public class OperationRuleDTO {
             }
         }
     }
+
+    @Data
+    public static class RuleInfo {
+        private Integer value;
+        private Integer enabled;
+    }
 }

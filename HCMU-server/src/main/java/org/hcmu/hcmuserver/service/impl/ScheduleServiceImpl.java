@@ -9,17 +9,20 @@ import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 
+import org.hcmu.hcmucommon.enumeration.PeriodEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
-
+import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
+import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
@@ -27,8 +30,10 @@ import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
+import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +65,12 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private AppointmentMapper appointmentMapper;
+
+    @Autowired
+    private OperationRuleService operationRuleService;
+
+    @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -94,9 +106,11 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         wrapper.eq(Schedule::getDoctorUserId, createDTO.getDoctorUserId())
                 .eq(Schedule::getScheduleDate, createDTO.getScheduleDate())
                 .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod())
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("该医生在此日期和时段已有排班");
+        
         }
 
         Schedule schedule = new Schedule();
@@ -220,6 +234,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     .eq(Schedule::getScheduleDate, scheduleDate)
                     .eq(Schedule::getSlotType, slotType)
                     .eq(Schedule::getIsDeleted, 0)
+                    .eq(Schedule::getStatus, 1)
                     .ne(Schedule::getScheduleId, scheduleId); // 排除当前记录
             if (baseMapper.selectCount(wrapper) > 0) {
                 return Result.error("该医生在此日期和时段已有排班");
@@ -305,7 +320,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         LambdaQueryWrapper<Schedule> targetDateWrapper = new LambdaQueryWrapper<>();
         targetDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
                 .eq(Schedule::getScheduleDate, targetDate)
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         
         Long existingScheduleCount = baseMapper.selectCount(targetDateWrapper);
         if (existingScheduleCount > 0) {
@@ -317,7 +333,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         LambdaQueryWrapper<Schedule> sourceDateWrapper = new LambdaQueryWrapper<>();
         sourceDateWrapper.eq(Schedule::getDoctorUserId, doctorUserId)
                 .eq(Schedule::getScheduleDate, sourceDate)
-                .eq(Schedule::getIsDeleted, 0);
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1);
         
         List<Schedule> sourceSchedules = baseMapper.selectList(sourceDateWrapper);
         if (sourceSchedules.isEmpty()) {
@@ -353,6 +370,40 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("当前排班暂不可预约");
         }
 
+        // 提前天数限制
+        RuleInfo futureRuleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_FUTURE_DAYS);
+        if (futureRuleInfo != null && futureRuleInfo.getEnabled() == 1) {
+            Integer maxFutureDays = futureRuleInfo.getValue();
+            LocalDate maxFutureDate = LocalDate.now().plusDays(maxFutureDays);
+
+            if (schedule.getScheduleDate().isAfter(maxFutureDate)) {
+                return Result.error("该排班日期超过可预约的最大提前天数（" + maxFutureDays + "天）");
+            }
+
+            log.info("检查排班日期 {} 是否在允许范围内，最大可预约日期: {}",
+                     schedule.getScheduleDate(), maxFutureDate);
+        }
+
+        // 就诊前多少小时停止预约
+        RuleInfo minHoursRule = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MIN_HOURS_BEFORE_BOOKING_END);
+        if (minHoursRule != null && minHoursRule.getEnabled() == 1) {
+            Integer minHours = minHoursRule.getValue();
+            PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+            if (periodEnum != null) {
+                String startTimeStr = periodEnum.getDesc().split("-")[0]; 
+                LocalTime startTime = LocalTime.parse(startTimeStr);
+
+                LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
+                log.info("当前时间: {}, 排班时间: {}, 预约截止时间: {}", LocalDateTime.now(), scheduleDateTime, scheduleDateTime.minusHours(minHours));
+                LocalDateTime bookingEndTime = scheduleDateTime.minusHours(minHours);
+
+                if (LocalDateTime.now().isAfter(bookingEndTime)) {
+                    return Result.error("该排班已停止预约，请在就诊开始前 " + minHours + " 小时完成预约");
+                }
+            }
+        }
+
+
         Integer availableSlots = schedule.getAvailableSlots();
         if (availableSlots == null || availableSlots <= 0) {
             return Result.error("该排班号源已满");
@@ -372,6 +423,47 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("当前用户不是患者角色，无法预约");
         }
 
+        // 爽约限制挂号检查
+        RuleInfo noShowPunishRule = operationRuleService.getRuleValueByCode(OpRuleEnum.CANCEL_NO_SHOW_PUNISH_DAYS);
+        if (noShowPunishRule != null && noShowPunishRule.getEnabled() == 1) {
+            Integer punishDays = noShowPunishRule.getValue();
+
+            // 查询用户的爽约记录（status=6）
+            MPJLambdaWrapper<Appointment> noShowWrapper = new MPJLambdaWrapper<>();
+            noShowWrapper
+                .selectAll(Appointment.class)
+                .selectAs(Schedule::getScheduleDate, Appointment::getScheduleId)
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .eq(Appointment::getStatus, 6)
+                .eq(Appointment::getIsDeleted, 0)
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1)
+                .orderByDesc(Schedule::getScheduleDate);
+
+            List<Appointment> noShowAppointments = appointmentMapper.selectJoinList(Appointment.class, noShowWrapper);
+
+            if (!noShowAppointments.isEmpty()) {
+                LocalDate currentDate = LocalDate.now();
+
+                for (Appointment noShowAppointment : noShowAppointments) {
+                    // 获取爽约的排班信息
+                    Schedule noShowSchedule = baseMapper.selectById(noShowAppointment.getScheduleId());
+                    if (noShowSchedule != null) {
+                        LocalDate noShowDate = noShowSchedule.getScheduleDate();
+                        LocalDate punishmentEndDate = noShowDate.plusDays(punishDays);
+
+                        // 当前日期在惩罚期内
+                        if (currentDate.isBefore(punishmentEndDate)) {
+                            log.info("用户ID {} 因爽约被限制挂号，爽约日期: {}, 惩罚结束日期: {}",
+                                     patientUserId, noShowDate, punishmentEndDate);
+                            return Result.error("您因爽约记录被限制挂号，限制至 " + punishmentEndDate + "，请届时再试");
+                        }
+                    }
+                }
+            }
+        }
+
         // 防止重复预约
         LambdaQueryWrapper<Appointment> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Appointment::getScheduleId, scheduleId)
@@ -380,7 +472,81 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             return Result.error("请勿重复预约该排班");
         }
 
-    
+        // 是否能同一时段多重预约限制
+        RuleInfo sameTimeSlotRule = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_LIMIT_SAME_TIMESLOT);
+        if (sameTimeSlotRule != null && sameTimeSlotRule.getEnabled() == 1 && sameTimeSlotRule.getValue() == 1) {
+            MPJLambdaWrapper<Appointment> wrapper = new MPJLambdaWrapper<Appointment>()
+                    .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                    .eq(Appointment::getPatientUserId, patientUserId)
+                    .eq(Schedule::getScheduleDate, schedule.getScheduleDate())
+                    .eq(Schedule::getSlotPeriod, schedule.getSlotPeriod());
+            Long count = appointmentMapper.selectJoinCount(wrapper);
+            if (count > 0) {
+                return Result.error("您在该时间段已有预约，请勿重复预约");
+            }
+        }
+
+        // 单日挂号次数限制
+        RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_GLOBAL);
+        if (ruleInfo != null && ruleInfo.getEnabled() == 1) {
+            Integer maxBookingsPerDay = ruleInfo.getValue();
+            LocalDate scheduleDate = schedule.getScheduleDate();
+
+            log.info("检查用户ID {} 在日期 {} 的挂号次数，上限为 {}", patientUserId, scheduleDate, maxBookingsPerDay);
+
+            MPJLambdaWrapper<Appointment> dailyCountWrapper = new MPJLambdaWrapper<>();
+            dailyCountWrapper
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .eq(Schedule::getScheduleDate, scheduleDate)
+                .eq(Appointment::getStatus, 1);
+
+
+            Long bookingCountOnDate = appointmentMapper.selectJoinCount(dailyCountWrapper);
+            log.info("用户ID {} 在 {} 已挂号次数: {}", patientUserId, scheduleDate, bookingCountOnDate);
+
+            if (bookingCountOnDate >= maxBookingsPerDay) {
+                return Result.error("您在 " + scheduleDate + " 的挂号次数已达上限（" + maxBookingsPerDay + "次）");
+            }
+        }
+
+        // 单日单科室挂号次数限制
+        RuleInfo deptRuleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PER_DAY_PER_DEPT);
+        if (deptRuleInfo != null && deptRuleInfo.getEnabled() == 1) {
+            Integer maxBookingsPerDept = deptRuleInfo.getValue();
+
+            // 当前科室ID
+            LambdaQueryWrapper<DoctorProfile> profileWrapper = new LambdaQueryWrapper<>();
+            profileWrapper.eq(DoctorProfile::getUserId, schedule.getDoctorUserId())
+                    .last("limit 1");
+            DoctorProfile doctorProfile = doctorProfileMapper.selectOne(profileWrapper);
+
+            if (doctorProfile != null && doctorProfile.getDepartmentId() != null) {
+                Long departmentId = doctorProfile.getDepartmentId();
+                LocalDate scheduleDate = schedule.getScheduleDate();
+                log.info("检查用户ID {} 在日期 {} 对科室 {} 的挂号次数，上限为 {}",
+                         patientUserId, scheduleDate, departmentId, maxBookingsPerDept);
+
+
+                MPJLambdaWrapper<Appointment> deptCountWrapper = new MPJLambdaWrapper<>();
+                deptCountWrapper
+                    .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                    .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                    .eq(Appointment::getPatientUserId, patientUserId)
+                    .eq(Schedule::getScheduleDate, scheduleDate)
+                    .eq(DoctorProfile::getDepartmentId, departmentId)
+                    .eq(Appointment::getStatus, 1);
+
+
+                Long deptBookingCountOnDate = appointmentMapper.selectJoinCount(deptCountWrapper);
+                log.info("用户ID {} 在 {} 对科室 {} 已挂号次数: {}",
+                         patientUserId, scheduleDate, departmentId, deptBookingCountOnDate);
+
+                if (deptBookingCountOnDate >= maxBookingsPerDept) {
+                    return Result.error("您在 " + scheduleDate + " 对该科室的挂号次数已达上限（" + maxBookingsPerDept + "次）");
+                }
+            }
+        }
 
         if (availableSlots < 1) {
             return Result.error("该排班号源已满");

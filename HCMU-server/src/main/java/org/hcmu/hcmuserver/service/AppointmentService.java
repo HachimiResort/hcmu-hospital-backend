@@ -13,4 +13,6 @@ public interface AppointmentService{
     public Result<AppointmentDTO.AppointmentListDTO> getAppointmentById(Long appointmentId);//根据id查找
 
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentsByPatientUserId(Long userId);//根据患者用户id查找
+
+    public Result<AppointmentDTO.AppointmentListDTO> cancelAppointment(Long appointmentId, String reason);//取消预约
 }
