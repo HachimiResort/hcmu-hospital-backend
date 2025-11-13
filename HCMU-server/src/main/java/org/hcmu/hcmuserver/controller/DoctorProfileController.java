@@ -66,6 +66,13 @@ public class DoctorProfileController {
         return doctorProfileService.updateDoctorProfileByUserId(userId, updateDTO);
     }
 
+    @AutoLog("医生更新自己的档案")
+    @Operation(description = "医生更新自己的档案信息", summary = "医生更新自己的档案")
+    @PutMapping("/self")
+    public Result<String> updateSelfDoctorProfile(@RequestBody @Valid DoctorProfileDTO.DoctorProfileUpdateSelfDTO updateDTO) {
+        return doctorProfileService.updateSelfDoctorProfile(updateDTO);
+    }
+
     @Deprecated
     @AutoLog("删除医生档案（逻辑删除）")
     @Operation(description = "删除医生档案", summary = "删除医生档案('DEL_DOCTOR')")

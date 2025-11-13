@@ -10,6 +10,7 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
@@ -25,6 +26,7 @@ import org.hcmu.hcmuserver.service.DoctorProfileService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -275,6 +277,35 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         baseMapper.updateById(doctorProfile);
         log.info("更新医生档案成功: {}", doctorProfile.getDoctorProfileId());
         return Result.success("更新成功");
+    }
+
+    @Override
+    public Result<String> updateSelfDoctorProfile(DoctorProfileDTO.DoctorProfileUpdateSelfDTO updateDTO) {
+        // 获取当前用户
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = loginUser.getUser().getUserId();
+        // 看看是不是医生
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId);
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null || !RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("当前用户不是医生角色，无法更新医生档案");
+        }
+
+        // 看看有没有医生档案
+        LambdaQueryWrapper<DoctorProfile> doctorProfileWrapper = new LambdaQueryWrapper<>();
+        doctorProfileWrapper.eq(DoctorProfile::getUserId, userId);
+        DoctorProfile doctorProfile = baseMapper.selectOne(doctorProfileWrapper);
+        if (doctorProfile == null) {
+            return Result.error("医生档案不存在，无法更新");
+        } else {
+            updateDTO.updateDoctorProfile(doctorProfile);
+            baseMapper.updateById(doctorProfile);
+            log.info("医生用户{}更新自己的医生档案成功: {}", userId, doctorProfile.getDoctorProfileId());
+            return Result.success("更新成功");
+        }
     }
 
     @Override
