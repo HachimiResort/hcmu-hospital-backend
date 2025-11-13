@@ -72,6 +72,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
     @Autowired
     private DoctorProfileMapper doctorProfileMapper;
 
+    @Autowired
+    private org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper patientProfileMapper;
+
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
 
@@ -552,14 +555,40 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         if (availableSlots < 1) {
             return Result.error("该排班号源已满");
         }
+
+
+        LambdaQueryWrapper<org.hcmu.hcmupojo.entity.PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
+        patientProfileWrapper.eq(org.hcmu.hcmupojo.entity.PatientProfile::getUserId, patientUserId)
+                .eq(org.hcmu.hcmupojo.entity.PatientProfile::getIsDeleted, 0)
+                .last("limit 1");
+        org.hcmu.hcmupojo.entity.PatientProfile patientProfile = patientProfileMapper.selectOne(patientProfileWrapper);
+
+        java.math.BigDecimal originalFee = schedule.getFee();
+        java.math.BigDecimal actualFee = originalFee;
+
+        if (patientProfile != null && patientProfile.getIdentityType() != null) {
+            Integer identityType = patientProfile.getIdentityType();
+            if (identityType == 1) {
+                // 学生10%
+                actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
+                log.info("患者ID {} 为学生身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
+            } else if (identityType == 2) {
+                // 教职工5%
+                actualFee = originalFee.multiply(new java.math.BigDecimal("0.05"));
+                log.info("患者ID {} 为教职工身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
+            } else {
+                return Result.error("身份类型不合法");
+            }
+        }
+
         Appointment appointment = new Appointment();
         appointment.setAppointmentNo(generateAppointmentNo(scheduleId));
         appointment.setPatientUserId(patientUserId);
         appointment.setScheduleId(scheduleId);
         appointment.setVisitNo(-1);
         appointment.setStatus(1);
-        appointment.setOriginalFee(schedule.getFee());
-        appointment.setActualFee(schedule.getFee());
+        appointment.setOriginalFee(originalFee);
+        appointment.setActualFee(actualFee);
         appointmentMapper.insert(appointment);
         schedule.setAvailableSlots(Math.max(availableSlots - 1, 0));
 
