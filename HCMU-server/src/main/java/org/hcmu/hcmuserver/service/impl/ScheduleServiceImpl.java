@@ -570,12 +570,12 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
             Integer identityType = patientProfile.getIdentityType();
             if (identityType == 1) {
                 // 学生10%
-                actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
-                log.info("患者ID {} 为学生身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
+                actualFee = originalFee.multiply(new java.math.BigDecimal("0.05"));
+                // log.info("患者ID {} 为学生身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else if (identityType == 2) {
                 // 教职工5%
-                actualFee = originalFee.multiply(new java.math.BigDecimal("0.05"));
-                log.info("患者ID {} 为教职工身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
+                actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
+                // log.info("患者ID {} 为教职工身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else {
                 return Result.error("身份类型不合法");
             }
