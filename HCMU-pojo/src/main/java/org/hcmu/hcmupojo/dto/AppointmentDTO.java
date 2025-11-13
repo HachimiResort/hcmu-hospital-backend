@@ -31,10 +31,22 @@ public class AppointmentDTO {
         private LocalDateTime createTime;
         private LocalDateTime updateTime;
 
-        // 关联字段
+        // 关联字段 - 患者信息
         private String patientUserName;// 患者姓名
         private String patientPhone;// 患者电话
         private String patientName;// 患者真实姓名
+
+        // 关联字段 - 排班信息
+        private java.time.LocalDate scheduleDate;// 出诊日期
+        private Integer slotType;// 号别
+        private Integer slotPeriod;// 时间段
+
+        // 关联字段 - 医生信息
+        private String doctorName;// 医生姓名
+        private String doctorTitle;// 医生职称
+
+        // 关联字段 - 科室信息
+        private String departmentName;// 科室名称
     }
 
     @Data

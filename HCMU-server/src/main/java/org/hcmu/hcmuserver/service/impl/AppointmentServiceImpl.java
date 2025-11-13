@@ -2,7 +2,6 @@ package org.hcmu.hcmuserver.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
@@ -10,34 +9,24 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmucommon.enumeration.PeriodEnum;
-import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
-import org.hcmu.hcmupojo.dto.PatientProfileDTO;
-import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.*;
-import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
-import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
-import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
-import org.hcmu.hcmuserver.service.PatientProfileService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -56,10 +45,25 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.selectAll(Appointment.class)
+                // 关联患者用户表
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
+                // 关联排班表
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                // 关联医生用户表（通过排班表的doctor_user_id）
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                // 关联医生档案表（获取职称）
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                // 关联科室表（通过医生档案表的department_id）
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
                 .eq(ObjectUtils.isNotEmpty(requestDTO.getScheduleId()),
                         Appointment::getScheduleId, requestDTO.getScheduleId())
                 .eq(ObjectUtils.isNotEmpty(requestDTO.getPatientUserId()),
@@ -92,11 +96,25 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         // 构建查询条件
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.selectAll(Appointment.class)
-                // 关联用户表获取患者信息
+                // 关联患者用户表
                 .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
+                // 关联排班表
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                // 关联医生用户表（通过排班表的doctor_user_id）
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                // 关联医生档案表（获取职称）
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                // 关联科室表（通过医生档案表的department_id）
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
                 .eq(Appointment::getAppointmentId, appointmentId)
                 .eq(Appointment::getIsDeleted, 0);  // 只查询未删除的记录
 
