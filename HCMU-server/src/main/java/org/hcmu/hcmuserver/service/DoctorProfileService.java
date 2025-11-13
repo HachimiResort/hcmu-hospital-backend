@@ -22,6 +22,8 @@ public interface DoctorProfileService {
     // 根据用户ID更新医生档案
     Result<String> updateDoctorProfileByUserId(Long userId, DoctorProfileDTO.DoctorProfileUpdateDTO updateDTO);
 
+    Result<String> updateSelfDoctorProfile(DoctorProfileDTO.DoctorProfileUpdateSelfDTO updateDTO);
+
     // 逻辑删除医生档案
     Result<String> deleteDoctorProfile(Long doctorProfileId);
 
