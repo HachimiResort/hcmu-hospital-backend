@@ -479,7 +479,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
                     .eq(Appointment::getPatientUserId, patientUserId)
                     .eq(Schedule::getScheduleDate, schedule.getScheduleDate())
-                    .eq(Schedule::getSlotPeriod, schedule.getSlotPeriod());
+                    .eq(Schedule::getSlotPeriod, schedule.getSlotPeriod())
+                    .eq(Appointment::getStatus, 1);
             Long count = appointmentMapper.selectJoinCount(wrapper);
             if (count > 0) {
                 return Result.error("您在该时间段已有预约，请勿重复预约");
