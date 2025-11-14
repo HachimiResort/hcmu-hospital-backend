@@ -54,4 +54,10 @@ public class AppointmentDTO {
         private String reason;  // 取消原因
     }
 
+    @Data
+    public static class AppointmentPayDTO {
+
+    }
+
+
 }

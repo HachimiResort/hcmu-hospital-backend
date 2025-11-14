@@ -48,4 +48,13 @@ public class AppointmentController {
         return appointmentService.cancelAppointment(appointmentId, cancelDTO.getReason());
     }
 
+    @AutoLog("支付预约")
+    @Operation(description = "支付预约", summary = "支付预约")
+    @PutMapping("/{appointmentId}/pay")
+    public Result<AppointmentDTO.AppointmentListDTO> payAppointment(
+            @PathVariable Long appointmentId) {
+        return appointmentService.payAppointment(appointmentId);
+    }
+
+
 }
