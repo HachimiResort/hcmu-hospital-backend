@@ -14,7 +14,7 @@ import java.util.List;
  * </p>
  *
  * @author Jiasheng Wang
- * @since 2024-03-20
+ * @since 2025-11-14
  */
 
 public interface UserService extends MPJBaseService<User> {

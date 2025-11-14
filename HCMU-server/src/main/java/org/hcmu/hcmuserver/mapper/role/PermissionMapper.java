@@ -9,8 +9,8 @@ import org.hcmu.hcmupojo.entity.Permission;
  * <p>
  *  PermissionMapper 接口
  * </p>
- * @author ZhiChao Li
- * @since 2024-03-22
+ * @author Kyy008
+ * @since 2025-11-14
  */
 @Mapper
 public interface PermissionMapper extends MPJBaseMapper<Permission> {

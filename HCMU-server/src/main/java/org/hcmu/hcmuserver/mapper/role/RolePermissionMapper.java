@@ -9,8 +9,8 @@ import org.hcmu.hcmupojo.entity.relation.RolePermission;
  *  RolePermMapper 接口
  * </p>
  *
- * @author Zhichao Li
- * @since 2024-03-22
+ * @author Kyy008
+ * @since 2025-11-14
  */
 
 @Mapper

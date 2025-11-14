@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
  * </p>
  *
  * @author Generated
- * @since 2024-10-31
+ * @since 2025-11-14
  */
 public interface PendingUserService extends MPJBaseService<PendingUser> {
 

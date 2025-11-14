@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 日志控制器
  * @author JiaSheng Wang
- * @since 2024/5/15
+ * @since 2025-11-14
  */
 @Tag(name = "日志接口", description = "日志相关接口")
 @RestController

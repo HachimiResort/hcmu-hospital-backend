@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 待注册用户控制器
  * @Author Generated
- * @Date 2024-10-31
+ * @Date 2025-11-14
  */
 @Tag(name = "待注册用户接口", description = "待注册用户相关接口")
 @RestController

@@ -48,7 +48,7 @@ public class PatientProfileController {
 
     @AutoLog("通过用户Id获取患者档案")
     @Operation(description = "获取患者档案详情", summary = "获取患者档案详情(‘CHECK_PATIENT’)")
-    @PreAuthorize("@ex.hasSysAuthority('CHECK_PATIENT')")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_PATIENT') || @ex.isSelf(#userId)")
     @GetMapping("/{userId}")
     public Result<PatientProfileDTO.PatientProfileDetailDTO> getPatientProfileByUserId(@PathVariable Long userId) {
         return patientProfileService.getPatientProfileByUserId(userId);

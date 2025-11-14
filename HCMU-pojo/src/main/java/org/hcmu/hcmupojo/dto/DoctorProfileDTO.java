@@ -85,6 +85,17 @@ public class DoctorProfileDTO {
     }
 
     @Data
+    public static class DoctorProfileUpdateSelfDTO {
+        private String specialty;
+        private String bio;
+        public void updateDoctorProfile(DoctorProfile doctorProfile) {
+            if (specialty != null && !specialty.trim().isEmpty()) doctorProfile.setSpecialty(specialty);
+            if (bio != null && !bio.trim().isEmpty()) doctorProfile.setBio(bio);
+            doctorProfile.setUpdateTime(LocalDateTime.now());
+        }
+    }
+
+    @Data
     public static class DoctorByDeptRequestDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;

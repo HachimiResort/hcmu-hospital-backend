@@ -225,8 +225,31 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
         scheduleMapper.updateById(schedule);
 
-        AppointmentListDTO dto = new AppointmentListDTO();
-        BeanUtils.copyProperties(appointment, dto);
+        // 查询完整的预约信息（包含关联的患者、排班、医生、科室信息）
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointmentId);
+
+        AppointmentListDTO dto = baseMapper.selectJoinOne(
+                AppointmentListDTO.class,
+                queryWrapper
+        );
+
         return Result.success("取消预约成功", dto);
     }
 

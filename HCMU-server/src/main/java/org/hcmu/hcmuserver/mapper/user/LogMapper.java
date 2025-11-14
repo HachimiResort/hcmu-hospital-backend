@@ -10,7 +10,7 @@ import org.hcmu.hcmupojo.entity.Log;
  * </p>
  *
  * @author Jiasheng Wang
- * @since 2024-03-20
+ * @since 2025-11-14
  */
 @Mapper
 public interface LogMapper extends MPJBaseMapper<Log> {
