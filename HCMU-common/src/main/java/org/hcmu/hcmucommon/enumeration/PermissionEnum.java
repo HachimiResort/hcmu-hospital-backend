@@ -70,7 +70,14 @@ public enum PermissionEnum {
      * 运营规则管理
      */
     CHECK_RULE(27, "checkRule"),
-    ALT_RULE(28, "altRule");
+    ALT_RULE(28, "altRule"),
+
+
+    /*
+     * 医生页面
+     */
+    DOCTOR_WORK_PAGE(62, "doctorWorkPage");
+
     PermissionEnum(Integer code, String name) {
         this.code = code;
         this.name = name;
