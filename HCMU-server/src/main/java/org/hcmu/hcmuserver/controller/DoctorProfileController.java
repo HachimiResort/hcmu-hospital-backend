@@ -52,7 +52,7 @@ public class DoctorProfileController {
 
     @AutoLog("通过用户Id获取医生档案")
     @Operation(description = "获取医生档案详情", summary = "获取医生档案详情(‘CHECK_DOCTOR’)")
-    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR')")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR') || @ex.isSelf(#userId)")
     @GetMapping("/{userId}")
     public Result<DoctorProfileDTO.DoctorProfileDetailDTO> getDoctorProfileByUserId(@PathVariable Long userId) {
         return doctorProfileService.getDoctorProfileByUserId(userId);
