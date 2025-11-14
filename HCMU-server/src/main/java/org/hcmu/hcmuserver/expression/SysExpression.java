@@ -18,8 +18,8 @@ import java.util.List;
  * 自定义权限验证表达式
  * </p>
  * 
- * @author ZhiChao Li
- * @since 2024-03-22
+ * @author Kyy008
+ * @since 2025-11-14
  */
 @Component("ex")
 @Slf4j
