@@ -33,6 +33,7 @@
 		<knife4j>4.4.0</knife4j>
 		<jjwt>0.12.3</jjwt>
 		<mysql.connector>8.0.33</mysql.connector>
+		<aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
 	</properties>
 
 	<dependencyManagement>
@@ -129,6 +130,12 @@
 				<artifactId>lombok</artifactId>
 				<version>${lombok}</version>
 				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.aliyun.oss</groupId>
+				<artifactId>aliyun-sdk-oss</artifactId>
+				<version>${aliyun.sdk.oss}</version>
 			</dependency>
 
 		</dependencies>

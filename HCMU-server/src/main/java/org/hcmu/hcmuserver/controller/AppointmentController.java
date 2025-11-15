@@ -32,6 +32,7 @@ public class AppointmentController {
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>>getAppointments(@ModelAttribute AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         return appointmentService.getAppointments(requestDTO);
     }
+
     @AutoLog("根据预约Id预约详情")
     @GetMapping("/{appointmentId}")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
