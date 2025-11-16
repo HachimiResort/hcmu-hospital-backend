@@ -186,11 +186,29 @@ public class MailServiceImpl implements MailService {
     }
 
     @Override
-    public void sendVerifyCoed(String subject, String code, String toWho){
+    public void sendVerifyCode(String subject, String code, String toWho){
         //邮件的内容
         String content = "您的验证码是：" + code + "，请在5分钟内进行验证。";
         //发送邮件
         sendSimpleTextMailActual(subject, content, new String[]{toWho}, null, null, null);
+    }
+
+    @Override
+    public void sendNotification(String subject, String content, String toWho) {
+        //发送邮件给单个收件人
+        sendSimpleTextMailActual(subject, content, new String[]{toWho}, null, null, null);
+    }
+
+    @Override
+    public void sendNotification(String subject, String content, String[] toWho) {
+        //发送邮件给多个收件人
+        sendSimpleTextMailActual(subject, content, toWho, null, null, null);
+    }
+
+    @Override
+    public void sendNotification(String subject, String content, String[] toWho, String[] ccPeoples, String[] bccPeoples) {
+        //发送邮件（支持抄送和密送）
+        sendSimpleTextMailActual(subject, content, toWho, ccPeoples, bccPeoples, null);
     }
 
 }

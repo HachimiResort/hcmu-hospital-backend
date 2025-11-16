@@ -193,7 +193,7 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         // 将验证码存入redis
         redisCache.setCacheObject(RedisEnum.REBIND.getDesc() + email, code, 5, TimeUnit.MINUTES);
         // 发送邮件
-        mailService.sendVerifyCoed("绑定邮箱验证码", code, email);
+        mailService.sendVerifyCode("绑定邮箱验证码", code, email);
 
         return Result.success("验证码发送成功!");
     }

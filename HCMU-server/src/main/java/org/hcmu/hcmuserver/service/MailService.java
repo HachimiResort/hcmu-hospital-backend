@@ -54,10 +54,36 @@ public interface MailService {
 
     /**
      * 发送验证码
+     * @param subject  主题
      * @param code     验证码
      * @param toWho    需要发送的人
      */
-    void sendVerifyCoed(String subject, String code, String toWho);
+    void sendVerifyCode(String subject, String code, String toWho);
 
+    /**
+     * 发送自定义通知消息
+     * @param subject  邮件主题
+     * @param content  邮件内容
+     * @param toWho    需要发送的人
+     */
+    void sendNotification(String subject, String content, String toWho);
+
+    /**
+     * 发送自定义通知消息（支持多个收件人）
+     * @param subject  邮件主题
+     * @param content  邮件内容
+     * @param toWho    需要发送的人（多个）
+     */
+    void sendNotification(String subject, String content, String[] toWho);
+
+    /**
+     * 发送自定义通知消息（支持抄送、密送）
+     * @param subject    邮件主题
+     * @param content    邮件内容
+     * @param toWho      需要发送的人
+     * @param ccPeoples  需要抄送的人
+     * @param bccPeoples 需要密送的人
+     */
+    void sendNotification(String subject, String content, String[] toWho, String[] ccPeoples, String[] bccPeoples);
 
 }
