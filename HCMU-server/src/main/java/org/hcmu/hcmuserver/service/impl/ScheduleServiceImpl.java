@@ -34,6 +34,7 @@ import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
+import org.hcmu.hcmuserver.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -74,6 +75,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper patientProfileMapper;
+
+    @Autowired
+    private MailService mailService;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -598,6 +602,55 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
         BeanUtils.copyProperties(appointment, dto);
         dto.setPatientUserName(loginUser.getUser().getName());
         dto.setPatientPhone(loginUser.getUser().getPhone());
+
+        // 发送预约成功邮件通知
+        String userEmail = loginUser.getUser().getEmail();
+        if (userEmail != null && !userEmail.isEmpty()) {
+            try {
+                User doctorUser = userMapper.selectById(schedule.getDoctorUserId());
+                String doctorName = doctorUser != null ? doctorUser.getName() : "医生";
+
+                String departmentName = "";
+                LambdaQueryWrapper<DoctorProfile> profileWrapper = new LambdaQueryWrapper<>();
+                profileWrapper.eq(DoctorProfile::getUserId, schedule.getDoctorUserId())
+                        .last("limit 1");
+                DoctorProfile doctorProfile = doctorProfileMapper.selectOne(profileWrapper);
+                if (doctorProfile != null && doctorProfile.getDepartmentId() != null) {
+                    Department department = departmentMapper.selectById(doctorProfile.getDepartmentId());
+                    if (department != null) {
+                        departmentName = department.getName();
+                    }
+                }
+
+                String periodDesc = "";
+                PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+                if (periodEnum != null) {
+                    periodDesc = periodEnum.getDesc();
+                }
+
+                String subject = "预约成功通知";
+                StringBuilder content = new StringBuilder();
+                content.append("尊敬的 ").append(loginUser.getUser().getName()).append("，您好！\n\n");
+                content.append("您的预约已成功！\n\n");
+                content.append("预约信息如下：\n");
+                content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+                content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+                content.append("就诊时段：").append(periodDesc).append("\n");
+                if (!departmentName.isEmpty()) {
+                    content.append("科室：").append(departmentName).append("\n");
+                }
+                content.append("医生：").append(doctorName).append("\n");
+                content.append("挂号费：¥").append(actualFee).append("\n");
+                content.append("\n请您准时就诊，如有问题请及时联系医院。\n");
+                content.append("\n祝您早日康复！");
+
+                mailService.sendNotification(subject, content.toString(), userEmail);
+                log.info("预约成功邮件已发送至: {}", userEmail);
+            } catch (Exception e) {
+                log.error("发送预约成功邮件失败: {}", e.getMessage());
+            }
+        }
+
         return Result.success("预约成功", dto);
     }
 
