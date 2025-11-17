@@ -708,4 +708,56 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
         return Result.success(scheduleList);
     }
+
+    @Override
+    public Result<List<ScheduleDTO.SchedulePatientDTO>> getSchedulePatients(Long doctorUserId, Long scheduleId) {
+
+        User doctor = userMapper.selectById(doctorUserId);
+        if (doctor == null || doctor.getIsDeleted() == 1) {
+            return Result.error("医生用户不存在");
+        }
+
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, doctorUserId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色");
+        }
+
+        Schedule schedule = baseMapper.selectById(scheduleId);
+        if (schedule == null || schedule.getIsDeleted() == 1) {
+            return Result.error("排班不存在");
+        }
+
+        if (!schedule.getDoctorUserId().equals(doctorUserId)) {
+            return Result.error("该排班不属于该医生");
+        }
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAs(User::getUserId, ScheduleDTO.SchedulePatientDTO::getUserId)
+                .selectAs(User::getUserName, ScheduleDTO.SchedulePatientDTO::getUserName)
+                .selectAs(User::getName, ScheduleDTO.SchedulePatientDTO::getName)
+                .selectAs(User::getSex, ScheduleDTO.SchedulePatientDTO::getSex)
+                .selectAs(User::getEmail, ScheduleDTO.SchedulePatientDTO::getEmail)
+                .selectAs(User::getPhone, ScheduleDTO.SchedulePatientDTO::getPhone)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .eq(Appointment::getScheduleId, scheduleId)
+                .ne(Appointment::getStatus, 0);
+
+
+        List<ScheduleDTO.SchedulePatientDTO> patientList = appointmentMapper.selectJoinList(
+                ScheduleDTO.SchedulePatientDTO.class,
+                queryWrapper);
+
+        return Result.success(patientList);
+    }
 }
