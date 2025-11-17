@@ -98,10 +98,11 @@ public class DoctorProfileController {
 
     @AutoLog("查询医生名下的排班")
     @Operation(description = "查询医生名下的排班列表", summary = "查询医生名下的排班")
-    @GetMapping("/{userId}/schedule")
+    @GetMapping("/{userId}/schedules")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR') || @ex.isSelf(#userId)")
-    public Result<List<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(@PathVariable Long userId) {
-        return scheduleService.getDoctorSchedules(userId);
+    public Result<PageDTO<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(@PathVariable Long userId, @ModelAttribute ScheduleDTO.ScheduleGetRequestDTO requestDTO) {
+        requestDTO.setDoctorUserId(userId);
+        return scheduleService.findAllSchedules(requestDTO);
     }
 
 
