@@ -90,4 +90,6 @@ public class DoctorProfileController {
     public Result<String> batchDeleteDoctorProfiles(@RequestBody List<Long> doctorProfileIds) {
         return doctorProfileService.batchDeleteDoctorProfiles(doctorProfileIds);
     }
+
+
 }
