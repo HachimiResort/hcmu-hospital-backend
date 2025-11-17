@@ -36,7 +36,6 @@ import org.hcmu.hcmuserver.service.UserService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.hcmu.hcmuserver.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -666,5 +665,47 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
     private String generateAppointmentNo(Long scheduleId) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
         return "AP" + scheduleId + timestamp + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+    }
+
+    @Override
+    public Result<List<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(Long doctorUserId) {
+        // 校验医生是否存在
+        User user = userMapper.selectById(doctorUserId);
+        if (user == null || user.getIsDeleted() == 1) {
+            return Result.error("医生用户不存在");
+        }
+
+        // 校验是否为医生角色
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, doctorUserId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色");
+        }
+
+        MPJLambdaWrapper<Schedule> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Schedule::getScheduleId, Schedule::getDoctorUserId,
+                        Schedule::getScheduleDate, Schedule::getSlotType, Schedule::getSlotPeriod,
+                        Schedule::getTotalSlots, Schedule::getAvailableSlots, Schedule::getFee,
+                        Schedule::getStatus, Schedule::getCreateTime)
+                .eq(Schedule::getDoctorUserId, doctorUserId)
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1)
+                .orderByDesc(Schedule::getCreateTime);
+
+        List<ScheduleDTO.ScheduleListDTO> scheduleList = baseMapper.selectJoinList(
+                ScheduleDTO.ScheduleListDTO.class,
+                queryWrapper);
+
+        return Result.success(scheduleList);
     }
 }
