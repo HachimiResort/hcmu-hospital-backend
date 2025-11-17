@@ -171,7 +171,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         redisUtil.setCacheObject(RedisEnum.REGISTER.getDesc() + userRegister.getEmail(), userRegister, 5, TimeUnit.MINUTES);
 
 
-        mailService.sendVerifyCoed("注册邮箱验证", code, userRegister.getEmail());
+        mailService.sendVerifyCode("注册邮箱验证", code, userRegister.getEmail());
 
         return Result.success("验证码发送成功!");
     }

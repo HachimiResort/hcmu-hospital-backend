@@ -12,8 +12,6 @@ spring:
       max-lifetime: 60000
       minimum-idle: 5
 
-
-
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

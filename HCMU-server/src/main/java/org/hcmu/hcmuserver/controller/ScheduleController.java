@@ -36,6 +36,7 @@ public class ScheduleController {
     @AutoLog("获取所有排班")
     @Operation(description = "获取所有排班", summary = "获取所有排班")
     @GetMapping("")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_SCHEDULE')")
     public Result<PageDTO<ScheduleDTO.ScheduleListDTO>> getAllSchedules(@ModelAttribute ScheduleDTO.ScheduleGetRequestDTO requestDTO) {
         return scheduleService.findAllSchedules(requestDTO);
     }
@@ -43,6 +44,7 @@ public class ScheduleController {
     @AutoLog("获取排班详情")
     @Operation(description = "获取排班详情", summary = "获取排班详情")
     @GetMapping("/{scheduleId}")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_SCHEDULE')")
     public Result<ScheduleDTO.ScheduleListDTO> getScheduleById(@PathVariable Long scheduleId) {
         return scheduleService.findScheduleById(scheduleId);
     }

@@ -7,7 +7,9 @@ import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
+import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmuserver.service.DoctorProfileService;
+import org.hcmu.hcmuserver.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +25,9 @@ public class DoctorProfileController {
 
     @Autowired
     private DoctorProfileService doctorProfileService;
+
+    @Autowired
+    private ScheduleService scheduleService;
 
     @Deprecated
     @AutoLog("创建医生档案（已废弃）")
@@ -90,4 +95,15 @@ public class DoctorProfileController {
     public Result<String> batchDeleteDoctorProfiles(@RequestBody List<Long> doctorProfileIds) {
         return doctorProfileService.batchDeleteDoctorProfiles(doctorProfileIds);
     }
+
+    @AutoLog("查询医生名下的排班")
+    @Operation(description = "查询医生名下的排班列表", summary = "查询医生名下的排班")
+    @GetMapping("/{userId}/schedules")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR') || @ex.isSelf(#userId)")
+    public Result<PageDTO<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(@PathVariable Long userId, @ModelAttribute ScheduleDTO.ScheduleGetRequestDTO requestDTO) {
+        requestDTO.setDoctorUserId(userId);
+        return scheduleService.findAllSchedules(requestDTO);
+    }
+
+
 }

@@ -34,8 +34,8 @@ import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
+import org.hcmu.hcmuserver.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,6 +74,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
     @Autowired
     private org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper patientProfileMapper;
+
+    @Autowired
+    private MailService mailService;
 
     @Override
     public Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO) {
@@ -594,15 +597,115 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
 
         baseMapper.updateById(schedule);
 
-        AppointmentDTO.AppointmentListDTO dto = new AppointmentDTO.AppointmentListDTO();
-        BeanUtils.copyProperties(appointment, dto);
-        dto.setPatientUserName(loginUser.getUser().getName());
-        dto.setPatientPhone(loginUser.getUser().getPhone());
+        // 查询完整的预约信息（包含关联的患者、排班、医生、科室信息）
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointment.getAppointmentId());
+
+        AppointmentDTO.AppointmentListDTO dto = appointmentMapper.selectJoinOne(
+                AppointmentDTO.AppointmentListDTO.class,
+                queryWrapper
+        );
+
+        // 发送预约成功邮件通知
+        String userEmail = loginUser.getUser().getEmail();
+        if (userEmail != null && !userEmail.isEmpty()) {
+            try {
+                // 获取时段信息
+                String periodDesc = "";
+                PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+                if (periodEnum != null) {
+                    periodDesc = periodEnum.getDesc();
+                }
+
+                // 构建邮件内容
+                String subject = "预约成功通知";
+                StringBuilder content = new StringBuilder();
+                content.append("尊敬的 ").append(loginUser.getUser().getName()).append("，您好！\n\n");
+                content.append("您的预约已成功！\n\n");
+                content.append("预约信息如下：\n");
+                content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+                content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+                content.append("就诊时段：").append(periodDesc).append("\n");
+                if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+                    content.append("科室：").append(dto.getDepartmentName()).append("\n");
+                }
+                if (dto.getDoctorName() != null) {
+                    content.append("医生：").append(dto.getDoctorName()).append("\n");
+                }
+                content.append("挂号费：¥").append(actualFee).append("\n");
+                content.append("\n请您准时就诊，如有问题请及时联系医院。\n");
+                content.append("\n祝您早日康复！");
+
+                mailService.sendNotification(subject, content.toString(), userEmail);
+                log.info("预约成功邮件已发送至: {}", userEmail);
+            } catch (Exception e) {
+                // 邮件发送失败不影响预约流程
+                log.error("发送预约成功邮件失败: {}", e.getMessage());
+            }
+        }
+
         return Result.success("预约成功", dto);
     }
 
     private String generateAppointmentNo(Long scheduleId) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
         return "AP" + scheduleId + timestamp + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+    }
+
+    @Override
+    public Result<List<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(Long doctorUserId) {
+        // 校验医生是否存在
+        User user = userMapper.selectById(doctorUserId);
+        if (user == null || user.getIsDeleted() == 1) {
+            return Result.error("医生用户不存在");
+        }
+
+        // 校验是否为医生角色
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, doctorUserId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色");
+        }
+
+        MPJLambdaWrapper<Schedule> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.select(Schedule::getScheduleId, Schedule::getDoctorUserId,
+                        Schedule::getScheduleDate, Schedule::getSlotType, Schedule::getSlotPeriod,
+                        Schedule::getTotalSlots, Schedule::getAvailableSlots, Schedule::getFee,
+                        Schedule::getStatus, Schedule::getCreateTime)
+                .eq(Schedule::getDoctorUserId, doctorUserId)
+                .eq(Schedule::getIsDeleted, 0)
+                .eq(Schedule::getStatus, 1)
+                .orderByDesc(Schedule::getCreateTime);
+
+        List<ScheduleDTO.ScheduleListDTO> scheduleList = baseMapper.selectJoinList(
+                ScheduleDTO.ScheduleListDTO.class,
+                queryWrapper);
+
+        return Result.success(scheduleList);
     }
 }

@@ -32,6 +32,7 @@ public class AppointmentController {
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>>getAppointments(@ModelAttribute AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
         return appointmentService.getAppointments(requestDTO);
     }
+
     @AutoLog("根据预约Id预约详情")
     @GetMapping("/{appointmentId}")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_APPOINTMENT')")
@@ -47,5 +48,14 @@ public class AppointmentController {
             @RequestBody AppointmentDTO.AppointmentCancelDTO cancelDTO) {
         return appointmentService.cancelAppointment(appointmentId, cancelDTO.getReason());
     }
+
+    @AutoLog("支付预约")
+    @Operation(description = "支付预约", summary = "支付预约")
+    @PutMapping("/{appointmentId}/pay")
+    public Result<AppointmentDTO.AppointmentListDTO> payAppointment(
+            @PathVariable Long appointmentId) {
+        return appointmentService.payAppointment(appointmentId);
+    }
+
 
 }
