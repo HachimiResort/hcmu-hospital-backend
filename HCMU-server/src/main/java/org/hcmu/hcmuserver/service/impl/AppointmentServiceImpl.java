@@ -61,6 +61,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 // 关联医生档案表（获取职称）
                 .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 // 关联科室表（通过医生档案表的department_id）
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
@@ -112,6 +113,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 // 关联医生档案表（获取职称）
                 .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 // 关联科室表（通过医生档案表的department_id）
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
@@ -242,6 +244,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .select("doctor_user.name as doctorName")
                 .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
                 .eq(Appointment::getAppointmentId, appointmentId);
@@ -286,6 +289,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .select("doctor_user.name as doctorName")
                 .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
                 .eq(Appointment::getAppointmentId, appointmentId);
@@ -298,7 +302,132 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         return Result.success("支付成功", dto);
     }
 
+    @Override
+    public Result<AppointmentListDTO> callAppointment(Long appointmentId) {
+        Appointment appointment = baseMapper.selectById(appointmentId);
+        if (appointment == null) {
+            return Result.error("预约记录不存在");
+        }
 
+        // 当且仅当 status = 2 合法
+        if (appointment.getStatus() == null || appointment.getStatus() != 2) {
+            return Result.error("该预约不可支付,当前状态为: " + appointment.getStatus());
+        }
 
-    
+        appointment.setStatus(3);
+        appointment.setPaymentTime(LocalDateTime.now());
+        baseMapper.updateById(appointment);
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointmentId);
+
+        AppointmentListDTO dto = baseMapper.selectJoinOne(
+                AppointmentListDTO.class,
+                queryWrapper
+        );
+
+        return Result.success("呼唤成功", dto);
+    }
+
+    @Override
+    public Result<AppointmentListDTO> completeAppointment(Long appointmentId) {
+        Appointment appointment = baseMapper.selectById(appointmentId);
+        if (appointment == null) {
+            return Result.error("预约记录不存在");
+        }
+
+        // 当且仅当 status = 3 合法
+        if (appointment.getStatus() == null || appointment.getStatus() != 3) {
+            return Result.error("该预约不可支付,当前状态为: " + appointment.getStatus());
+        }
+
+        appointment.setStatus(4);
+        appointment.setPaymentTime(LocalDateTime.now());
+        baseMapper.updateById(appointment);
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointmentId);
+
+        AppointmentListDTO dto = baseMapper.selectJoinOne(
+                AppointmentListDTO.class,
+                queryWrapper
+        );
+
+        return Result.success("完成成功", dto);
+    }
+
+    @Override
+    public Result<AppointmentListDTO> noShowAppointment(Long appointmentId) {
+        Appointment appointment = baseMapper.selectById(appointmentId);
+        if (appointment == null) {
+            return Result.error("预约记录不存在");
+        }
+
+        if (appointment.getStatus() == null || appointment.getStatus() != 3) {
+            return Result.error("该预约不可支付,当前状态为: " + appointment.getStatus());
+        }
+
+        appointment.setStatus(6);
+        appointment.setPaymentTime(LocalDateTime.now());
+        baseMapper.updateById(appointment);
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(Schedule::getScheduleDate, "scheduleDate")
+                .selectAs(Schedule::getSlotType, "slotType")
+                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointmentId);
+
+        AppointmentListDTO dto = baseMapper.selectJoinOne(
+                AppointmentListDTO.class,
+                queryWrapper
+        );
+
+        return Result.success("取缔成功", dto);
+    }
+   
 }

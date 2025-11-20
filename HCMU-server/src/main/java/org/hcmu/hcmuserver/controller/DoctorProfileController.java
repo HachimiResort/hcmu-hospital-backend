@@ -105,5 +105,15 @@ public class DoctorProfileController {
         return scheduleService.findAllSchedules(requestDTO);
     }
 
+    @AutoLog("查询医生排班下的患者")
+    @Operation(description = "查询医生排班下的患者列表", summary = "查询医生排班下的患者")
+    @GetMapping("/{userId}/schedules/{scheduleId}/patients")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DOCTOR') || @ex.isSelf(#userId)")
+    public Result<List<ScheduleDTO.SchedulePatientDTO>> getSchedulePatients(
+            @PathVariable Long userId,
+            @PathVariable Long scheduleId) {
+        return scheduleService.getSchedulePatients(userId, scheduleId);
+    }
+
 
 }

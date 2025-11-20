@@ -124,4 +124,15 @@ public class ScheduleDTO {
         @NotNull(message = "目标日期不能为空")
         private LocalDate targetDate;
     }
+
+    // 排班患者信息DTO
+    @Data
+    public static class SchedulePatientDTO {
+        private Long userId;
+        private String userName;
+        private String name;
+        private String sex;
+        private String email;
+        private String phone;
+    }
 }

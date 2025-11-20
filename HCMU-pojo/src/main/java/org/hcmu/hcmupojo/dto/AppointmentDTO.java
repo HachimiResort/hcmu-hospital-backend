@@ -44,6 +44,7 @@ public class AppointmentDTO {
         // 关联字段 - 医生信息
         private String doctorName;// 医生姓名
         private String doctorTitle;// 医生职称
+        private String doctorUserId;// 医生用户ID
 
         // 关联字段 - 科室信息
         private String departmentName;// 科室名称

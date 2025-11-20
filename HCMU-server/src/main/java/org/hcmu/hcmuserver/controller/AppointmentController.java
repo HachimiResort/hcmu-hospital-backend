@@ -57,5 +57,28 @@ public class AppointmentController {
         return appointmentService.payAppointment(appointmentId);
     }
 
+    @AutoLog("传呼预约")
+    @Operation(description = "传呼预约", summary = "传呼预约")
+    @PutMapping("/{appointmentId}/call")
+    public Result<AppointmentDTO.AppointmentListDTO> callAppointment(
+            @PathVariable Long appointmentId) {
+        return appointmentService.callAppointment(appointmentId);
+    }
+
+    @AutoLog("完成就诊")
+    @Operation(description = "完成就诊", summary = "完成就诊")
+    @PutMapping("/{appointmentId}/complete")
+    public Result<AppointmentDTO.AppointmentListDTO> completeAppointment(
+            @PathVariable Long appointmentId) {
+        return appointmentService.completeAppointment(appointmentId);
+    }
+
+    @AutoLog("未到诊")
+    @Operation(description = "未到诊", summary = "未到诊")
+    @PutMapping("/{appointmentId}/no-show")
+    public Result<AppointmentDTO.AppointmentListDTO> noShowAppointment(
+            @PathVariable Long appointmentId) {
+        return appointmentService.noShowAppointment(appointmentId);
+    }
 
 }

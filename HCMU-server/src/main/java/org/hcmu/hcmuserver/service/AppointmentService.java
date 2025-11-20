@@ -17,4 +17,11 @@ public interface AppointmentService{
     public Result<AppointmentDTO.AppointmentListDTO> payAppointment(Long appointmentId);
 
     public Result<AppointmentDTO.AppointmentListDTO> cancelAppointment(Long appointmentId, String reason);//取消预约
+    
+    public Result<AppointmentDTO.AppointmentListDTO> callAppointment(Long appointmentId); // 呼唤预约
+
+    public Result<AppointmentDTO.AppointmentListDTO> completeAppointment(Long appointmentId); // 完成就诊
+
+    public Result<AppointmentDTO.AppointmentListDTO> noShowAppointment(Long appointmentId); // 未到诊
+ 
 }
