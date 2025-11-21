@@ -155,7 +155,7 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
         MPJLambdaWrapper<Schedule> wrapper = new MPJLambdaWrapper<>();
         wrapper.select(Schedule::getScheduleId, Schedule::getTemplateId, Schedule::getSlotType,
                         Schedule::getTotalSlots, Schedule::getSlotPeriod, Schedule::getFee,
-                        Schedule::getCreateTime, Schedule::getUpdateTime)
+                        Schedule::getCreateTime, Schedule::getUpdateTime, Schedule::getWeekday)
                 .eq(Schedule::getTemplateId, templateId)
                 .eq(requestDTO.getSlotType() != null, Schedule::getSlotType, requestDTO.getSlotType())
                 .eq(requestDTO.getSlotPeriod() != null, Schedule::getSlotPeriod, requestDTO.getSlotPeriod())

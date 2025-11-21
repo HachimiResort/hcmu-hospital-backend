@@ -12,13 +12,20 @@ import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.LoginUser;
 import org.hcmu.hcmupojo.dto.DoctorProfileDTO;
+import org.hcmu.hcmupojo.dto.DoctorProfileDTO.DoctorScheduleImportDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmupojo.entity.Role;
+import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.ScheduleTemplate;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
+import org.hcmu.hcmuserver.mapper.scheduletemplate.ScheduleTemplateMapper;
+import org.hcmu.hcmuserver.mapper.scheduletemplate.TemplateScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.DepartmentService;
@@ -29,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +56,15 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private ScheduleMapper scheduleMapper;
+
+    @Autowired
+    private TemplateScheduleMapper templateScheduleMapper;
+
+    @Autowired
+    private ScheduleTemplateMapper scheduleTemplateMapper;
 
     @Override
     public Result<DoctorProfileDTO.DoctorProfileListDTO> createDoctorProfile(DoctorProfileDTO.DoctorProfileCreateDTO createDTO) {
@@ -403,5 +420,11 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         } else {
             return Result.error("批量删除失败");
         }
+    }
+
+    @Override
+    public Result<String> importSchedulesFromTemplate(Long userId, DoctorScheduleImportDTO importDTO) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'importSchedulesFromTemplate'");
     }
 }
