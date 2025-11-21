@@ -101,4 +101,12 @@ public class DoctorProfileDTO {
         private Integer pageSize = 10;
 
     }
+
+    @Data
+    public static class DoctorScheduleImportDTO {
+        @NotNull(message = "排班周内的日期不能为空")
+        private java.time.LocalDate scheduleDate;
+        @NotNull(message = "模板ID不能为空")
+        private Long templateId;
+    }
 }

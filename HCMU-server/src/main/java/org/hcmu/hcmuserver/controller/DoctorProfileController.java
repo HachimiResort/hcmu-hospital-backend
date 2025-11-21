@@ -115,5 +115,14 @@ public class DoctorProfileController {
         return scheduleService.getSchedulePatients(userId, scheduleId);
     }
 
+    @AutoLog("基于模板导入医生周排班")
+    @Operation(description = "指定日期所在周从模板导入七天排班", summary = "导入医生周排班('ADD_SCHEDULE')")
+    @PostMapping("/{userId}/schedules")
+    @PreAuthorize("@ex.hasSysAuthority('ADD_SCHEDULE')")
+    public Result<String> importSchedulesFromTemplate(@PathVariable Long userId,
+                                                      @RequestBody @Valid DoctorProfileDTO.DoctorScheduleImportDTO importDTO) {
+        return doctorProfileService.importSchedulesFromTemplate(userId, importDTO);
+    }
+
 
 }

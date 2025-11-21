@@ -29,4 +29,7 @@ public interface DoctorProfileService {
 
     // 批量删除医生档案
     Result<String> batchDeleteDoctorProfiles(List<Long> doctorProfileIds);
+
+    // 根据模板为医生导入一周排班
+    Result<String> importSchedulesFromTemplate(Long userId, DoctorProfileDTO.DoctorScheduleImportDTO importDTO);
 }

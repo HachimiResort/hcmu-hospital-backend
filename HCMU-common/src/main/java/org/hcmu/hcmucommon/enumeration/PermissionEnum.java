@@ -81,7 +81,16 @@ public enum PermissionEnum {
     /*
      * 医生页面
      */
-    DOCTOR_WORK_PAGE(62, "doctorWorkPage");
+    DOCTOR_WORK_PAGE(62, "doctorWorkPage"),
+
+    /*
+     * 排班模板管理
+     */
+    TEMPLATE_MG_PAGE(34, "templateMGPage"),
+    ADD_TEMPLATE(35, "addtemplate"),
+    ALT_TEMPLATE(36, "alttemplate"),
+    DEL_TEMPLATE(37, "deltemplate"),
+    CHECK_TEMPLATE(38, "checktemplate");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
