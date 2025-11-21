@@ -27,6 +27,8 @@ public class AppointmentDTO {
         private BigDecimal actualFee;
         private LocalDateTime paymentTime;
         private LocalDateTime cancellationTime;
+        private LocalDateTime callingTime;
+        private LocalDateTime completionTime;
         private String cancellationReason;
         private LocalDateTime createTime;
         private LocalDateTime updateTime;

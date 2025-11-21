@@ -46,6 +46,10 @@ public class Appointment {
     @TableField("cancellation_reason")
     private String cancellationReason; // 取消原因
 
+
+    private LocalDateTime callingTime;
+    private LocalDateTime completionTime;
+
     @TableField("is_deleted")
     private Integer isDeleted; // 逻辑删除
 

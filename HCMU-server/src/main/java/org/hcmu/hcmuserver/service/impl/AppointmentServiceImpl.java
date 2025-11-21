@@ -18,6 +18,7 @@ import org.hcmu.hcmupojo.entity.*;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.service.AppointmentService;
+import org.hcmu.hcmuserver.service.MailService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.hcmu.hcmuserver.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +41,9 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
     @Autowired
     private OperationRuleService operationRuleService;
+
+    @Autowired
+    private MailService mailService;
 
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
@@ -73,10 +77,6 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                         Appointment::getIsDeleted, requestDTO.getIsDeleted())
                 .orderByDesc(Appointment::getCreateTime);
 
-        // 默认查询未删除的记录
-        if (requestDTO.getIsDeleted() == null) {
-            queryWrapper.eq(Appointment::getIsDeleted, 0);
-        }
 
         // 执行分页查询
         IPage<AppointmentDTO.AppointmentListDTO> page = baseMapper.selectJoinPage(
@@ -254,6 +254,38 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 queryWrapper
         );
 
+
+        User user = userService.getById(appointment.getPatientUserId());
+        String userEmail = user.getEmail();
+
+        // 获取时段信息
+        String periodDesc = "";
+        PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+        if (periodEnum != null) {
+            periodDesc = periodEnum.getDesc();
+        }
+    
+        String subject = "挂号取消通知";
+        StringBuilder content = new StringBuilder();
+        content.append("尊敬的 ").append(user.getName()).append("，您好！\n\n");
+        content.append("您的预约已成功取消。\n");
+        content.append("预约信息如下：\n");
+        content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+        content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+        content.append("就诊时段：").append(periodDesc).append("\n");
+        if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+            content.append("科室：").append(dto.getDepartmentName()).append("\n");
+        }
+        if (dto.getDoctorName() != null) {
+            content.append("医生：").append(dto.getDoctorName()).append("\n");
+        }
+        content.append("挂号费：¥").append(dto.getActualFee()).append("\n");
+        content.append("\n如有任何疑问，请随时联系我们的客服团队。\n");
+
+        mailService.sendNotification(subject, content.toString(), userEmail);
+        log.info("预约取消邮件已发送至: {}", userEmail);
+
+
         return Result.success("取消预约成功", dto);
     }
 
@@ -299,6 +331,41 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 queryWrapper
         );
 
+
+
+        User user = userService.getById(appointment.getPatientUserId());
+        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        String userEmail = user.getEmail();
+
+        // 获取时段信息
+        String periodDesc = "";
+        PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+        if (periodEnum != null) {
+            periodDesc = periodEnum.getDesc();
+        }
+    
+        String subject = "挂号支付成功通知";
+        StringBuilder content = new StringBuilder();
+        content.append("尊敬的 ").append(user.getName()).append("，您好！\n\n");
+        content.append("您的预约已成功支付。\n");
+        content.append("预约信息如下：\n");
+        content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+        content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+        content.append("就诊时段：").append(periodDesc).append("\n");
+        if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+            content.append("科室：").append(dto.getDepartmentName()).append("\n");
+        }
+        if (dto.getDoctorName() != null) {
+            content.append("医生：").append(dto.getDoctorName()).append("\n");
+        }
+        content.append("挂号费：¥").append(dto.getActualFee()).append("\n");
+        content.append("\n请您准时就诊，如有问题请及时联系医院。\n");
+        content.append("\n祝您早日康复！");
+
+        mailService.sendNotification(subject, content.toString(), userEmail);
+        log.info("预约支付邮件已发送至: {}", userEmail);
+
+
         return Result.success("支付成功", dto);
     }
 
@@ -315,7 +382,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         }
 
         appointment.setStatus(3);
-        appointment.setPaymentTime(LocalDateTime.now());
+        appointment.setCallingTime(LocalDateTime.now());
         baseMapper.updateById(appointment);
 
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
@@ -341,6 +408,41 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 AppointmentListDTO.class,
                 queryWrapper
         );
+
+
+        User user = userService.getById(appointment.getPatientUserId());
+        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        String userEmail = user.getEmail();
+
+        // 获取时段信息
+        String periodDesc = "";
+        PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+        if (periodEnum != null) {
+            periodDesc = periodEnum.getDesc();
+        }
+    
+        String subject = "呼唤就诊通知";
+        StringBuilder content = new StringBuilder();
+        content.append("尊敬的 ").append(user.getName()).append("，您好！\n\n");
+        content.append("现在是您的就诊时间，请前往相应科室就诊。\n");
+        content.append("挂号信息如下：\n");
+        content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+        content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+        content.append("就诊时段：").append(periodDesc).append("\n");
+        if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+            content.append("科室：").append(dto.getDepartmentName()).append("\n");
+        }
+        if (dto.getDoctorName() != null) {
+            content.append("医生：").append(dto.getDoctorName()).append("\n");
+        }
+        content.append("挂号费：¥").append(dto.getActualFee()).append("\n");
+        content.append("\n感谢您选择我们的医院服务，期待您的下次就诊。\n");
+        content.append("\n祝您早日康复！");
+
+        mailService.sendNotification(subject, content.toString(), userEmail);
+        log.info("就诊完成邮件已发送至: {}", userEmail);
+
+        
 
         return Result.success("呼唤成功", dto);
     }
@@ -358,7 +460,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         }
 
         appointment.setStatus(4);
-        appointment.setPaymentTime(LocalDateTime.now());
+        appointment.setCompletionTime(LocalDateTime.now());
         baseMapper.updateById(appointment);
 
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
@@ -384,6 +486,41 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 AppointmentListDTO.class,
                 queryWrapper
         );
+
+
+
+        User user = userService.getById(appointment.getPatientUserId());
+        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        String userEmail = user.getEmail();
+
+        // 获取时段信息
+        String periodDesc = "";
+        PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+        if (periodEnum != null) {
+            periodDesc = periodEnum.getDesc();
+        }
+    
+        String subject = "就诊完成通知";
+        StringBuilder content = new StringBuilder();
+        content.append("尊敬的 ").append(user.getName()).append("，您好！\n\n");
+        content.append("您的就诊已完成。\n");
+        content.append("挂号信息如下：\n");
+        content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+        content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+        content.append("就诊时段：").append(periodDesc).append("\n");
+        if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+            content.append("科室：").append(dto.getDepartmentName()).append("\n");
+        }
+        if (dto.getDoctorName() != null) {
+            content.append("医生：").append(dto.getDoctorName()).append("\n");
+        }
+        content.append("挂号费：¥").append(dto.getActualFee()).append("\n");
+        content.append("\n感谢您选择我们的医院服务，期待您的下次就诊。\n");
+        content.append("\n祝您早日康复！");
+
+        mailService.sendNotification(subject, content.toString(), userEmail);
+        log.info("就诊完成邮件已发送至: {}", userEmail);
+
 
         return Result.success("完成成功", dto);
     }
@@ -400,7 +537,6 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         }
 
         appointment.setStatus(6);
-        appointment.setPaymentTime(LocalDateTime.now());
         baseMapper.updateById(appointment);
 
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
@@ -426,6 +562,41 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 AppointmentListDTO.class,
                 queryWrapper
         );
+        
+
+
+
+        User user = userService.getById(appointment.getPatientUserId());
+        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        String userEmail = user.getEmail();
+
+        // 获取时段信息
+        String periodDesc = "";
+        PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+        if (periodEnum != null) {
+            periodDesc = periodEnum.getDesc();
+        }
+    
+        String subject = "挂号未到通知";
+        StringBuilder content = new StringBuilder();
+        content.append("尊敬的 ").append(user.getName()).append("，您好！\n\n");
+        content.append("您的预约未到诊。\n");
+        content.append("预约信息如下：\n");
+        content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
+        content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+        content.append("就诊时段：").append(periodDesc).append("\n");
+        if (dto.getDepartmentName() != null && !dto.getDepartmentName().isEmpty()) {
+            content.append("科室：").append(dto.getDepartmentName()).append("\n");
+        }
+        if (dto.getDoctorName() != null) {
+            content.append("医生：").append(dto.getDoctorName()).append("\n");
+        }
+        content.append("挂号费：¥").append(dto.getActualFee()).append("\n");
+        content.append("\n根据医院规定，未到诊的预约将视为放弃挂号资格。且此次挂号费用不予退还。\n");
+
+        mailService.sendNotification(subject, content.toString(), userEmail);
+        log.info("预约支付邮件已发送至: {}", userEmail);
+
 
         return Result.success("取缔成功", dto);
     }
