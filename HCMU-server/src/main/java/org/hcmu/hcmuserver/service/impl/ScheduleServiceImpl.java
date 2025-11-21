@@ -163,7 +163,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 .eq(requestDTO.getSlotPeriod() != null, DoctorSchedule::getSlotPeriod, requestDTO.getSlotPeriod())
                 .eq(requestDTO.getStatus() != null, DoctorSchedule::getStatus, requestDTO.getStatus())
                 .eq(DoctorSchedule::getIsDeleted, 0) 
-                .orderByDesc(DoctorSchedule::getCreateTime);
+                .orderByAsc(DoctorSchedule::getSlotType);
 
         IPage<ScheduleDTO.ScheduleListDTO> page = baseMapper.selectJoinPage(
                 new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
