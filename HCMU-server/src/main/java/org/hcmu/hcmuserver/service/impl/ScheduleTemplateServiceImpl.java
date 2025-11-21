@@ -119,7 +119,8 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
 
         LambdaQueryWrapper<Schedule> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Schedule::getTemplateId, templateId)
-                .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod());
+                .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod())
+                .eq(Schedule::getWeekday, createDTO.getWeekday());
         if (templateScheduleMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("该模板在该时间段已存在排班");
         }
