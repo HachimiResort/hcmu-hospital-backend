@@ -648,7 +648,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Sche
                     content.append("医生：").append(dto.getDoctorName()).append("\n");
                 }
                 content.append("挂号费：¥").append(actualFee).append("\n");
-                content.append("\n请您准时就诊，如有问题请及时联系医院。\n");
+                content.append("\n请您准时付款，如有问题请及时联系医院。\n");
                 content.append("\n祝您早日康复！");
 
                 mailService.sendNotification(subject, content.toString(), userEmail);
