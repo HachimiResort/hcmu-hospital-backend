@@ -40,37 +40,42 @@ public enum PermissionEnum {
     /*
      *医生档案管理
      */
-    ADD_DOCTOR(14, "addDoctor"),
-    ALT_DOCTOR(15, "altDoctor"),
-    DEL_DOCTOR(16, "delDoctor"),
+    DOCTOR_MG_PAGE(14, "doctorMGPage"),
+    ADD_DOCTOR(15, "addDoctor"),
+    ALT_DOCTOR(16, "altDoctor"),
     CHECK_DOCTOR(17, "checkDoctor"),
 
     /*
      * 患者档案管理
      */
-    ADD_PATIENT(18, "addPatient"),
-    ALT_PATIENT(19, "altPatient"),
-    DEL_PATIENT(20, "delPatient"),
+    PATIENT_MG_PAGE(18, "patientMGPage"),
+    ADD_PATIENT(19, "addPatient"),
+    ALT_PATIENT(20, "altPatient"),
     CHECK_PATIENT(21, "checkPatient"),
 
     /*
      * 医生排班管理
      */
-    ADD_SCHEDULE(22, "addSchedule"),
-    ALT_SCHEDULE(23, "altSchedule"),
-    DEL_SCHEDULE(24, "delSchedule"),
-    CHECK_SCHEDULE(25, "checkSchedule"),
+    SCHEDULE_MG_PAGE(22, "scheduleMGPage"),
+    ADD_SCHEDULE(23, "addSchedule"),
+    ALT_SCHEDULE(24, "altSchedule"),
+    DEL_SCHEDULE(25, "delSchedule"),
+    CHECK_SCHEDULE(26, "checkSchedule"),
     /*
      *预约记录管理
      */
-    CHECK_APPOINTMENT(26,"checkAppointment"),
+    APPOINTMENT_MG_PAGE(27, "appointmentMGPage"),
+    ADD_APPOINTMENT(28, "addAppointment"),
+    ALT_APPOINTMENT(29, "altAppointment"),
+    CHECK_APPOINTMENT(30,"checkAppointment"),
 
 
     /*
      * 运营规则管理
      */
-    CHECK_RULE(27, "checkRule"),
-    ALT_RULE(28, "altRule"),
+    RULE_MG_PAGE(31, "ruleMGPage"),
+    CHECK_RULE(32, "checkRule"),
+    ALT_RULE(33, "altRule"),
 
 
     /*
