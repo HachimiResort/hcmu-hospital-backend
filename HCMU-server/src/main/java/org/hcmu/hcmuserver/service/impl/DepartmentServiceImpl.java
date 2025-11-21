@@ -16,7 +16,7 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
-import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
