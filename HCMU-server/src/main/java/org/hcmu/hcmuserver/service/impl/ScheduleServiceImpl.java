@@ -438,7 +438,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             MPJLambdaWrapper<Appointment> noShowWrapper = new MPJLambdaWrapper<>();
             noShowWrapper
                 .selectAll(Appointment.class)
-                .selectAs(DoctorSchedule::getScheduleDate, Appointment::getScheduleId)
                 .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
                 .eq(Appointment::getPatientUserId, patientUserId)
                 .eq(Appointment::getStatus, 6)
