@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-public class Schedule {
+public class DoctorSchedule {
     @TableId(type = IdType.AUTO, value = "schedule_id")
     private Long scheduleId; // 排班ID，主键自增
     

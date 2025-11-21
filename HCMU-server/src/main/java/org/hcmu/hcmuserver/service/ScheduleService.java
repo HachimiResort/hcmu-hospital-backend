@@ -5,11 +5,11 @@ import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.ScheduleDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
-import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 
 import java.util.List;
 
-public interface ScheduleService extends MPJBaseService<Schedule> {
+public interface ScheduleService extends MPJBaseService<DoctorSchedule> {
     Result<ScheduleDTO.ScheduleListDTO> createSchedule(ScheduleDTO.ScheduleCreateDTO createDTO);
     Result<PageDTO<ScheduleDTO.ScheduleListDTO>> findAllSchedules(ScheduleDTO.ScheduleGetRequestDTO requestDTO);
     Result<ScheduleDTO.ScheduleListDTO> findScheduleById(Long scheduleId);

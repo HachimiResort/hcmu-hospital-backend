@@ -17,7 +17,7 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.UserDTO;
 import org.hcmu.hcmupojo.entity.Permission;
 import org.hcmu.hcmupojo.entity.Role;
-import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.relation.RolePermission;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
@@ -248,8 +248,8 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 .collect(Collectors.toList());
 
         // 检查是否存在关联的排班记录
-        LambdaQueryWrapper<Schedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
-        scheduleQueryWrapper.in(Schedule::getDoctorUserId, validUserIds);
+        LambdaQueryWrapper<DoctorSchedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
+        scheduleQueryWrapper.in(DoctorSchedule::getDoctorUserId, validUserIds);
         Long scheduleCount = scheduleMapper.selectCount(scheduleQueryWrapper);
         if (scheduleCount > 0) {
             return Result.error("不能删除这些用户，存在关联的排班记录");
@@ -283,8 +283,8 @@ public class UserServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
         }
 
         // 检查是否存在关联的排班记录
-        LambdaQueryWrapper<Schedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
-        scheduleQueryWrapper.eq(Schedule::getDoctorUserId, userId);
+        LambdaQueryWrapper<DoctorSchedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
+        scheduleQueryWrapper.eq(DoctorSchedule::getDoctorUserId, userId);
         Long scheduleCount = scheduleMapper.selectCount(scheduleQueryWrapper);
         if (scheduleCount > 0) {
             return Result.error("不能删除此用户，存在关联的排班记录");

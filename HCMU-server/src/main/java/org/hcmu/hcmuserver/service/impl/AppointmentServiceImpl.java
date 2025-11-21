@@ -55,15 +55,15 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
                 // 关联排班表
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
                 // 关联医生用户表（通过排班表的doctor_user_id）
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
                 // 关联医生档案表（获取职称）
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 // 关联科室表（通过医生档案表的department_id）
@@ -103,15 +103,15 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
                 // 关联排班表
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
                 // 关联医生用户表（通过排班表的doctor_user_id）
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
                 // 关联医生档案表（获取职称）
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 // 关联科室表（通过医生档案表的department_id）
@@ -187,7 +187,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
             }
         }
 
-        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         if (schedule == null) {
             return Result.error("关联的排班信息不存在");
         }
@@ -236,13 +236,13 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
@@ -313,13 +313,13 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
@@ -334,7 +334,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
 
         User user = userService.getById(appointment.getPatientUserId());
-        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         String userEmail = user.getEmail();
 
         // 获取时段信息
@@ -391,13 +391,13 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
@@ -411,7 +411,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
 
         User user = userService.getById(appointment.getPatientUserId());
-        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         String userEmail = user.getEmail();
 
         // 获取时段信息
@@ -469,13 +469,13 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
@@ -490,7 +490,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
 
         User user = userService.getById(appointment.getPatientUserId());
-        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         String userEmail = user.getEmail();
 
         // 获取时段信息
@@ -545,13 +545,13 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
-                .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
-                .selectAs(Schedule::getScheduleDate, "scheduleDate")
-                .selectAs(Schedule::getSlotType, "slotType")
-                .selectAs(Schedule::getSlotPeriod, "slotPeriod")
-                .leftJoin(User.class, "doctor_user", User::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
                 .select("doctor_user.name as doctorName")
-                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, Schedule::getDoctorUserId)
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
                 .selectAs(DoctorProfile::getTitle, "doctorTitle")
                 .selectAs(DoctorProfile::getUserId, "doctorUserId")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
@@ -567,7 +567,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
 
         User user = userService.getById(appointment.getPatientUserId());
-        Schedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+        DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         String userEmail = user.getEmail();
 
         // 获取时段信息

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import lombok.Data;
-import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -103,7 +103,7 @@ public class ScheduleDTO {
         private BigDecimal fee;
         private Integer status;
 
-        public void updateSchedule(Schedule schedule) {
+        public void updateSchedule(DoctorSchedule schedule) {
             if (doctorUserId != null && !doctorUserId.toString().trim().isEmpty()) schedule.setDoctorUserId(doctorUserId);
             if (scheduleDate != null && !scheduleDate.toString().trim().isEmpty()) schedule.setScheduleDate(scheduleDate);
             if (slotType != null && !slotType.toString().trim().isEmpty()) schedule.setSlotType(slotType);

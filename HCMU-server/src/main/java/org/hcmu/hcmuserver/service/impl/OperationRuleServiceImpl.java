@@ -13,7 +13,7 @@ import org.hcmu.hcmupojo.dto.OperationRuleDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.OperationRule;
-import org.hcmu.hcmupojo.entity.Schedule;
+import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.operationrule.OperationRuleMapper;
 import org.hcmu.hcmuserver.service.OperationRuleService;
@@ -173,7 +173,7 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
         queryWrapper.select(Appointment::getPatientUserId)
         .select("t1.schedule_date")
         .select("COUNT(*) AS cnt")
-        .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+        .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
         .eq(Appointment::getIsDeleted, 0)
         .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
         .last("GROUP BY t.patient_user_id, t1.schedule_date HAVING COUNT(*) > " + newValue + " LIMIT 1");
@@ -198,7 +198,7 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
         .select("t1.schedule_date")
         .select("doctor_profile.department_id")
         .select("COUNT(*) AS cnt")
-        .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+        .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
         .leftJoin("doctor_profile ON doctor_profile.user_id = t1.doctor_user_id")
         .eq(Appointment::getIsDeleted, 0)
         .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
@@ -223,10 +223,10 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper.select(Appointment::getPatientUserId)
             .select("t1.schedule_date")
-            .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+            .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
             .eq(Appointment::getIsDeleted, 0)
             .in(Appointment::getStatus, Arrays.asList(1, 2))
-            .gt(Schedule::getScheduleDate, threshold)
+            .gt(DoctorSchedule::getScheduleDate, threshold)
             .last("LIMIT 1");
 
         List<Map<String, Object>> results = appointmentMapper.selectJoinMaps(queryWrapper);
@@ -258,7 +258,7 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
             .select("t1.schedule_date")
             .select("t1.slot_period")
             .select("COUNT(*) AS cnt")
-            .leftJoin(Schedule.class, Schedule::getScheduleId, Appointment::getScheduleId)
+            .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
             .eq(Appointment::getIsDeleted, 0)
             .in(Appointment::getStatus, Arrays.asList(1, 2, 3, 4))
             .last("GROUP BY t.patient_user_id, t1.schedule_date, t1.slot_period HAVING COUNT(*) > 1 LIMIT 1");
