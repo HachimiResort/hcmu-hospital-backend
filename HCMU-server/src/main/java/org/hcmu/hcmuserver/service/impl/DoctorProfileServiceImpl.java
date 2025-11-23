@@ -430,9 +430,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -467,7 +465,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             existWrapper.eq(DoctorSchedule::getDoctorUserId, userId)
                     .eq(DoctorSchedule::getScheduleDate, scheduleDate)
                     .eq(DoctorSchedule::getSlotPeriod, schedule.getSlotPeriod())
-                    .eq(DoctorSchedule::getIsDeleted, 0);
+                    .eq(DoctorSchedule::getStatus, 1);
             Long existCount = scheduleMapper.selectCount(existWrapper);
 
             if (existCount > 0) {
