@@ -37,7 +37,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -424,7 +427,73 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
     @Override
     public Result<String> importSchedulesFromTemplate(Long userId, DoctorScheduleImportDTO importDTO) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'importSchedulesFromTemplate'");
+        MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
+        roleQueryWrapper.select(Role::getType)
+                .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
+                .eq(UserRole::getUserId, userId)
+                .eq(UserRole::getIsDeleted, 0)
+                .eq(Role::getIsDeleted, 0);
+
+        Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
+        if (userRole == null) {
+            return Result.error("用户未分配角色");
+        }
+        if (!RoleTypeEnum.DOCTOR.getCode().equals(userRole.getType())) {
+            return Result.error("用户不是医生角色，无法导入排班");
+        }
+
+        // start and end of a week
+        LocalDate inputDate = importDTO.getScheduleDate();
+        LocalDate weekStart = inputDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate weekEnd = inputDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+
+        Long templateId = importDTO.getTemplateId();
+        LambdaQueryWrapper<Schedule> scheduleQueryWrapper = new LambdaQueryWrapper<>();
+        scheduleQueryWrapper.eq(Schedule::getTemplateId, templateId)
+                .eq(Schedule::getIsDeleted, 0);
+        List<Schedule> templateSchedules = templateScheduleMapper.selectList(scheduleQueryWrapper);
+
+        if (templateSchedules.isEmpty()) {
+            return Result.error("该模板下没有排班信息");
+        }
+
+        // 冲突
+        List<DoctorSchedule> toInsert = new ArrayList<>();
+        for (Schedule schedule : templateSchedules) {
+            Integer weekday = schedule.getWeekday();
+            LocalDate scheduleDate = weekStart.plusDays(weekday - 1);
+            LambdaQueryWrapper<DoctorSchedule> existWrapper = new LambdaQueryWrapper<>();
+            existWrapper.eq(DoctorSchedule::getDoctorUserId, userId)
+                    .eq(DoctorSchedule::getScheduleDate, scheduleDate)
+                    .eq(DoctorSchedule::getSlotPeriod, schedule.getSlotPeriod())
+                    .eq(DoctorSchedule::getIsDeleted, 0);
+            Long existCount = scheduleMapper.selectCount(existWrapper);
+
+            if (existCount > 0) {
+                return Result.error("排班冲突：" + scheduleDate + " 的时间段 " + schedule.getSlotPeriod() + " 已存在排班");
+            }
+
+            DoctorSchedule doctorSchedule = new DoctorSchedule();
+            doctorSchedule.setDoctorUserId(userId);
+            doctorSchedule.setScheduleDate(scheduleDate);
+            doctorSchedule.setSlotType(schedule.getSlotType());
+            doctorSchedule.setTotalSlots(schedule.getTotalSlots());
+            doctorSchedule.setSlotPeriod(schedule.getSlotPeriod());
+            doctorSchedule.setAvailableSlots(schedule.getTotalSlots());
+            doctorSchedule.setFee(schedule.getFee());
+            doctorSchedule.setStatus(1);
+            doctorSchedule.setCreateTime(LocalDateTime.now());
+            doctorSchedule.setUpdateTime(LocalDateTime.now());
+
+            toInsert.add(doctorSchedule);
+        }
+
+        for (DoctorSchedule ds : toInsert) {
+            scheduleMapper.insert(ds);
+        }
+
+        log.info("成功为医生{}导入{}条排班记录，周期：{} 至 {}", userId, toInsert.size(), weekStart, weekEnd);
+        return Result.success("成功导入" + toInsert.size() + "条排班记录");
     }
 }
