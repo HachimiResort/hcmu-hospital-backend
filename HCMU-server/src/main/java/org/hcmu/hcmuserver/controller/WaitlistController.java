@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmuserver.service.WaitlistService;
@@ -70,5 +71,12 @@ public class WaitlistController {
     @PostMapping("/join")
     public Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(@RequestBody @Valid WaitlistDTO.PatientJoinDTO joinDTO) {
         return waitlistService.patientJoinWaitlist(joinDTO);
+    }
+
+    @AutoLog("候补支付")
+    @Operation(description = "候补支付", summary = "候补支付")
+    @PostMapping("/{waitlistId}/pay")
+    public Result<AppointmentDTO.AppointmentListDTO> payWaitlist(@PathVariable Long waitlistId) {
+        return waitlistService.payWaitlist(waitlistId);
     }
 }

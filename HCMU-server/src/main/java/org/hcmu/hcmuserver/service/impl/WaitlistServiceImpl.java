@@ -7,11 +7,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmucommon.enumeration.PeriodEnum;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.enumeration.WaitListEnum;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
+import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmupojo.entity.Department;
@@ -29,6 +31,7 @@ import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
 import org.hcmu.hcmuserver.service.MailService;
+import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +44,6 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Waitlist> implements WaitlistService {
-
-    //TODO：加入全局规则
-    private static final int LOCK_EXPIRE_MINUTES = 120;
 
     @Autowired
     private ScheduleMapper scheduleMapper;
@@ -68,6 +68,17 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
     @Autowired
     private ScheduleService scheduleService;
+
+    @Autowired
+    private OperationRuleService operationRuleService;
+
+    private int getLockExpireMinutes() {
+        RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.WAITLIST_MAX_PAY_TIME);
+        if (ruleInfo != null && ruleInfo.getEnabled() == 1 && ruleInfo.getValue() != null) {
+            return ruleInfo.getValue();
+        }
+        return OpRuleEnum.WAITLIST_MAX_PAY_TIME.getDefaultValue();
+    }
 
     @Override
     public Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO) {
@@ -279,7 +290,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         LocalDateTime now = LocalDateTime.now();
         nextWaitlist.setStatus(WaitListEnum.NOTIFIED.getCode());
         nextWaitlist.setNotifiedTime(now);
-        nextWaitlist.setLockExpireTime(now.plusMinutes(LOCK_EXPIRE_MINUTES));
+        nextWaitlist.setLockExpireTime(now.plusMinutes(getLockExpireMinutes()));
         nextWaitlist.setUpdateTime(now);
         baseMapper.updateById(nextWaitlist);
 

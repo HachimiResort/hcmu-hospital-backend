@@ -245,6 +245,16 @@ public enum OpRuleEnum {
         0,
         1,
         "加号是否需要填写原因（默认 true）"
+    ),
+
+    WAITLIST_MAX_PAY_TIME(
+        601,
+        OpRuleType.WAITING_LIST,
+        "waitlist.max_pay_time",
+                120,
+                5,
+                2880,
+                "候补成功后，未支付释放时间的允许值（默认120分钟）"
     );
 
 
