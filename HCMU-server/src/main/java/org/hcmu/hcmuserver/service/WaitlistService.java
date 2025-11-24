@@ -5,8 +5,13 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 
 public interface WaitlistService {
-    public Result<PageDTO<WaitlistDTO.WaitlistListDTO>> getWaitlists(WaitlistDTO.WaitlistGetRequestDTO requestDTO);
+    Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO);
 
-    public Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(Long waitlistId);
+    Result<PageDTO<WaitlistDTO.WaitlistListDTO>> getWaitlists(WaitlistDTO.WaitlistGetRequestDTO requestDTO);
 
+    Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(Long waitlistId);
+
+    Result<String> updateWaitlistById(Long waitlistId, WaitlistDTO.WaitlistUpdateDTO updateDTO);
+
+    Result<String> deleteWaitlistById(Long waitlistId);
 }
