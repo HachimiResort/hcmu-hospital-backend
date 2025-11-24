@@ -260,7 +260,16 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             return Result.error("排班不存在");
         }
 
-        //Todo: 如果有appointment，不能删除排班
+
+        LambdaQueryWrapper<Appointment> appointmentWrapper = new LambdaQueryWrapper<>();
+        appointmentWrapper.eq(Appointment::getScheduleId, scheduleId)
+                .in(Appointment::getStatus, 1, 2, 3);
+        Long appointmentCount = appointmentMapper.selectCount(appointmentWrapper);
+
+        if (appointmentCount > 0) {
+            return Result.error("该排班存在未完成的预约，无法删除");
+        }
+
 
         baseMapper.deleteById(scheduleId);
         return Result.success("删除成功");
@@ -280,7 +289,15 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             return Result.error("部分排班不存在");
         }
 
-        //Todo: 如果有appointment，不能删除排班
+        LambdaQueryWrapper<Appointment> appointmentWrapper = new LambdaQueryWrapper<>();
+        appointmentWrapper.in(Appointment::getScheduleId, scheduleIds)
+                .in(Appointment::getStatus, 1, 2, 3);
+        Long appointmentCount = appointmentMapper.selectCount(appointmentWrapper);
+
+        if (appointmentCount > 0) {
+            return Result.error("部分排班存在未完成的预约，无法删除");
+        }
+
 
         baseMapper.deleteBatchIds(scheduleIds);
 
@@ -568,13 +585,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         if (patientProfile != null && patientProfile.getIdentityType() != null) {
             Integer identityType = patientProfile.getIdentityType();
             if (identityType == 1) {
-                // 学生10%
                 actualFee = originalFee.multiply(new java.math.BigDecimal("0.05"));
-                // log.info("患者ID {} 为学生身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else if (identityType == 2) {
-                // 教职工5%
                 actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
-                // log.info("患者ID {} 为教职工身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else {
                 return Result.error("身份类型不合法");
             }
