@@ -10,6 +10,7 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class WaitlistController {
     @AutoLog("创建等待队列")
     @Operation(description = "创建等待队列", summary = "创建等待队列")
     @PostMapping("")
+    @PreAuthorize("@ex.hasSysAuthority('ADD_WAITLIST')")
     public Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(@RequestBody @Valid WaitlistDTO.WaitlistCreateDTO createDTO) {
         return waitlistService.createWaitlist(createDTO);
     }
@@ -32,6 +34,7 @@ public class WaitlistController {
     @AutoLog("获取等待队列列表")
     @Operation(description = "获取等待队列列表", summary = "获取等待队列列表")
     @GetMapping("")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_WAITLIST')")
     public Result<PageDTO<WaitlistDTO.WaitlistListDTO>> getWaitlists(@ModelAttribute WaitlistDTO.WaitlistGetRequestDTO requestDTO) {
         return waitlistService.getWaitlists(requestDTO);
     }
@@ -39,6 +42,7 @@ public class WaitlistController {
     @AutoLog("获取等待队列详情")
     @Operation(description = "获取等待队列详情", summary = "获取等待队列详情")
     @GetMapping("/{waitlistId}")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_WAITLIST')")
     public Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(@PathVariable Long waitlistId) {
         return waitlistService.getWaitlistById(waitlistId);
     }
@@ -46,6 +50,7 @@ public class WaitlistController {
     @AutoLog("更新等待队列信息")
     @Operation(description = "更新等待队列信息", summary = "更新等待队列信息")
     @PutMapping("/{waitlistId}")
+    @PreAuthorize("@ex.hasSysAuthority('ALT_WAITLIST')")
     public Result<String> updateWaitlist(@PathVariable Long waitlistId,
                                          @RequestBody @Valid WaitlistDTO.WaitlistUpdateDTO updateDTO) {
         return waitlistService.updateWaitlistById(waitlistId, updateDTO);
@@ -54,6 +59,7 @@ public class WaitlistController {
     @AutoLog("删除等待队列（逻辑删除）")
     @Operation(description = "删除等待队列（逻辑删除）", summary = "删除等待队列")
     @DeleteMapping("/{waitlistId}")
+    @PreAuthorize("@ex.hasSysAuthority('DEL_WAITLIST')")
     public Result<String> deleteWaitlist(@PathVariable Long waitlistId) {
         return waitlistService.deleteWaitlistById(waitlistId);
     }

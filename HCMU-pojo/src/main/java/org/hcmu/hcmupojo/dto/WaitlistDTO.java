@@ -1,6 +1,7 @@
 package org.hcmu.hcmupojo.dto;
 
 import jakarta.validation.constraints.NotNull;
+import org.hcmu.hcmucommon.enumeration.WaitListEnum;
 import lombok.Data;
 import org.hcmu.hcmupojo.entity.Waitlist;
 
@@ -62,7 +63,7 @@ public class WaitlistDTO {
         private Long scheduleId;
 
         @NotNull(message = "排班状态不能为空")
-        private Integer status = 1;
+        private Integer status = WaitListEnum.WAITING.getCode();
     }
 
     // 更新 DTO
