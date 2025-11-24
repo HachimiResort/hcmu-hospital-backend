@@ -93,9 +93,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -112,7 +110,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         wrapper.eq(DoctorSchedule::getDoctorUserId, createDTO.getDoctorUserId())
                 .eq(DoctorSchedule::getScheduleDate, createDTO.getScheduleDate())
                 .eq(DoctorSchedule::getSlotPeriod, createDTO.getSlotPeriod())
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1);
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("该医生在此日期和时段已有排班");
@@ -162,7 +159,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 .eq(requestDTO.getSlotType() != null, DoctorSchedule::getSlotType, requestDTO.getSlotType())
                 .eq(requestDTO.getSlotPeriod() != null, DoctorSchedule::getSlotPeriod, requestDTO.getSlotPeriod())
                 .eq(requestDTO.getStatus() != null, DoctorSchedule::getStatus, requestDTO.getStatus())
-                .eq(DoctorSchedule::getIsDeleted, 0) 
                 .orderByAsc(DoctorSchedule::getSlotType);
 
         IPage<ScheduleDTO.ScheduleListDTO> page = baseMapper.selectJoinPage(
@@ -213,9 +209,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
             roleQueryWrapper.select(Role::getType)
                     .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                    .eq(UserRole::getUserId, updateDTO.getDoctorUserId())
-                    .eq(UserRole::getIsDeleted, 0)
-                    .eq(Role::getIsDeleted, 0);
+                    .eq(UserRole::getUserId, updateDTO.getDoctorUserId());
 
             Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
             if (userRole == null) {
@@ -239,7 +233,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             wrapper.eq(DoctorSchedule::getDoctorUserId, doctorUserId)
                     .eq(DoctorSchedule::getScheduleDate, scheduleDate)
                     .eq(DoctorSchedule::getSlotType, slotType)
-                    .eq(DoctorSchedule::getIsDeleted, 0)
                     .eq(DoctorSchedule::getStatus, 1)
                     .ne(DoctorSchedule::getScheduleId, scheduleId); // 排除当前记录
             if (baseMapper.selectCount(wrapper) > 0) {
@@ -326,7 +319,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         LambdaQueryWrapper<DoctorSchedule> targetDateWrapper = new LambdaQueryWrapper<>();
         targetDateWrapper.eq(DoctorSchedule::getDoctorUserId, doctorUserId)
                 .eq(DoctorSchedule::getScheduleDate, targetDate)
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1);
         
         Long existingScheduleCount = baseMapper.selectCount(targetDateWrapper);

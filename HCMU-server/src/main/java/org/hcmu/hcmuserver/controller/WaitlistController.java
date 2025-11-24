@@ -31,6 +31,7 @@ public class WaitlistController {
         return waitlistService.createWaitlist(createDTO);
     }
 
+
     @AutoLog("获取等待队列列表")
     @Operation(description = "获取等待队列列表", summary = "获取等待队列列表")
     @GetMapping("")
@@ -62,5 +63,12 @@ public class WaitlistController {
     @PreAuthorize("@ex.hasSysAuthority('DEL_WAITLIST')")
     public Result<String> deleteWaitlist(@PathVariable Long waitlistId) {
         return waitlistService.deleteWaitlistById(waitlistId);
+    }
+
+    @AutoLog("患者加入候补队列")
+    @Operation(description = "患者加入候补队列", summary = "患者加入候补队列")
+    @PostMapping("/join")
+    public Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(@RequestBody @Valid WaitlistDTO.PatientJoinDTO joinDTO) {
+        return waitlistService.patientJoinWaitlist(joinDTO);
     }
 }

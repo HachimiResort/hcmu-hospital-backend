@@ -83,9 +83,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -104,8 +102,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
         // 校验用户是否已关联医生档案
         LambdaQueryWrapper<DoctorProfile> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DoctorProfile::getUserId, createDTO.getUserId())
-                .eq(DoctorProfile::getIsDeleted, 0);
+        queryWrapper.eq(DoctorProfile::getUserId, createDTO.getUserId());
         if (baseMapper.selectCount(queryWrapper) > 0) {
             return Result.error("该用户已关联医生档案");
         }
@@ -146,7 +143,6 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
         .eq(requestDTO.getDepartmentId() != null, DoctorProfile::getDepartmentId, requestDTO.getDepartmentId())
         .like(requestDTO.getTitle() != null && !requestDTO.getTitle().isEmpty(), DoctorProfile::getTitle, requestDTO.getTitle())
-        .eq(DoctorProfile::getIsDeleted, 0)
         .orderByDesc(DoctorProfile::getCreateTime);
 
     IPage<DoctorProfileDTO.DoctorProfileListDTO> page = userMapper.selectJoinPage(
@@ -175,9 +171,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -190,8 +184,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
         // 是否已有医生档案呢
         LambdaQueryWrapper<DoctorProfile> doctorProfileWrapper = new LambdaQueryWrapper<>();
-        doctorProfileWrapper.eq(DoctorProfile::getUserId, userId)
-                .eq(DoctorProfile::getIsDeleted, 0);
+        doctorProfileWrapper.eq(DoctorProfile::getUserId, userId);
         
         DoctorProfile doctorProfile = baseMapper.selectOne(doctorProfileWrapper);
         boolean isNewProfile = false; // 标记是否是新创建的档案

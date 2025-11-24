@@ -86,4 +86,14 @@ public class WaitlistDTO {
             waitlist.setUpdateTime(LocalDateTime.now());
         }
     }
+
+    // 患者加入候补 DTO
+    @Data
+    public static class PatientJoinDTO {
+        @NotNull(message = "用户ID不能为空")
+        private Long userId;
+
+        @NotNull(message = "排班ID不能为空")
+        private Long scheduleId;
+    }
 }

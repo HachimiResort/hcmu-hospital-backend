@@ -117,8 +117,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 // 关联科室表（通过医生档案表的department_id）
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
-                .eq(Appointment::getAppointmentId, appointmentId)
-                .eq(Appointment::getIsDeleted, 0);  // 只查询未删除的记录
+                .eq(Appointment::getAppointmentId, appointmentId);
 
         AppointmentDTO.AppointmentListDTO detailDTO = baseMapper.selectJoinOne(
                 AppointmentDTO.AppointmentListDTO.class,
@@ -149,7 +148,6 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
                 .selectAs(User::getName, "patientName")
                 .selectAs(User::getPhone, "patientPhone")
                 .eq(Appointment::getPatientUserId, patientUserId)
-                .eq(Appointment::getIsDeleted, 0)
                 .orderByDesc(Appointment::getCreateTime);
 
         // 执行分页查询

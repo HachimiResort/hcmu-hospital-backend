@@ -52,8 +52,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
         // 校验用户是否已关联患者档案
         LambdaQueryWrapper<PatientProfile> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(PatientProfile::getUserId, createDTO.getUserId())
-                .eq(PatientProfile::getIsDeleted, 0);
+        queryWrapper.eq(PatientProfile::getUserId, createDTO.getUserId());
         if (baseMapper.selectCount(queryWrapper) > 0) {
             return Result.error("该用户已关联患者档案");
         }
@@ -90,7 +89,6 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
         .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
         .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
-        .eq(PatientProfile::getIsDeleted, 0)
         .orderByDesc(PatientProfile::getCreateTime);
 
     IPage<PatientProfileDTO.PatientProfileListDTO> page = userMapper.selectJoinPage(
@@ -124,8 +122,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         .leftJoin(PatientProfile.class, PatientProfile::getUserId, User::getUserId)
         .selectAs(User::getUserName, "userName")
         .selectAs(User::getName, "name")
-        .eq(PatientProfile::getUserId, userId)
-        .eq(PatientProfile::getIsDeleted, 0);
+        .eq(PatientProfile::getUserId, userId);
 
     PatientProfileDTO.PatientProfileDetailDTO detailDTO = userMapper.selectJoinOne(
         PatientProfileDTO.PatientProfileDetailDTO.class,
@@ -165,8 +162,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
         // 查询患者档案
         LambdaQueryWrapper<PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
-        patientProfileWrapper.eq(PatientProfile::getUserId, userId)
-                .eq(PatientProfile::getIsDeleted, 0);
+        patientProfileWrapper.eq(PatientProfile::getUserId, userId);
 
         PatientProfile patientProfile = baseMapper.selectOne(patientProfileWrapper);
 
@@ -201,9 +197,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -216,8 +210,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
 
         // 查询患者档案
         LambdaQueryWrapper<PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
-        patientProfileWrapper.eq(PatientProfile::getUserId, userId)
-                .eq(PatientProfile::getIsDeleted, 0);
+        patientProfileWrapper.eq(PatientProfile::getUserId, userId);
 
         PatientProfile patientProfile = baseMapper.selectOne(patientProfileWrapper);
 

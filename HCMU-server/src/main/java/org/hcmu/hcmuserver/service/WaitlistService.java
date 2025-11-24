@@ -7,6 +7,8 @@ import org.hcmu.hcmupojo.dto.WaitlistDTO;
 public interface WaitlistService {
     Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO);
 
+    Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO);
+
     Result<PageDTO<WaitlistDTO.WaitlistListDTO>> getWaitlists(WaitlistDTO.WaitlistGetRequestDTO requestDTO);
 
     Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(Long waitlistId);

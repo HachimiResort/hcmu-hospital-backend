@@ -42,8 +42,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     public Result<DepartmentDTO.DepartmentListDTO> createDepartment(DepartmentDTO.DepartmentCreateDTO createDTO) {
         // 校验科室名称是否存在
         LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Department::getName, createDTO.getName())
-                .eq(Department::getIsDeleted, 0); // 只校验未删除的
+        wrapper.eq(Department::getName, createDTO.getName());
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("科室名称已存在");
         }
@@ -77,9 +76,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                         Department::getDescription, Department::getLocation, Department::getCreateTime)
                 .like(requestDTO.getName() != null, Department::getName, requestDTO.getName())
                 .eq(requestDTO.getParentId() != null, Department::getParentId, requestDTO.getParentId())
-                .eq(Department::getIsDeleted, 0)
                 .ne(Department::getDepartmentId, 0)
-                
                 .orderByDesc(Department::getCreateTime);
 
         IPage<DepartmentDTO.DepartmentListDTO> page = baseMapper.selectJoinPage(
@@ -111,15 +108,14 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
     @Override
     public Result<String> updateDepartmentById(Long departmentId, DepartmentDTO.DepartmentUpdateDTO updateDTO) {
         Department department = baseMapper.selectById(departmentId);
-        if (department == null || department.getIsDeleted() == 1 || departmentId == 0) {
+        if (department == null || departmentId == 0) {
             return Result.error("科室不存在");
         }
 
         // 若修改名称，需校验新名称是否重复
         if (updateDTO.getName() != null && !updateDTO.getName().equals(department.getName())) {
             LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(Department::getName, updateDTO.getName())
-                    .eq(Department::getIsDeleted, 0);
+            wrapper.eq(Department::getName, updateDTO.getName());
             if (baseMapper.selectCount(wrapper) > 0) {
                 return Result.error("科室名称已存在");
             }
@@ -237,7 +233,6 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
                 .eq(DoctorProfile::getDepartmentId, departmentId) // 筛选当前科室
-                .eq(DoctorProfile::getIsDeleted, 0) // 只查未删除的医生
                 .orderByDesc(DoctorProfile::getCreateTime);
 
         // 3. 执行分页查询（使用DoctorProfileMapper进行查询，因数据来自DoctorProfile表）
