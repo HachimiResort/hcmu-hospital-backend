@@ -363,6 +363,14 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId) {
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long patientUserId = loginUser.getUser().getUserId();
+        return appointSchedule(scheduleId, patientUserId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId, Long patientUserId) {
         DoctorSchedule schedule = baseMapper.selectById(scheduleId);
         if (schedule.getStatus() != null && !Integer.valueOf(1).equals(schedule.getStatus())) {
             return Result.error("当前排班暂不可预约");
@@ -388,7 +396,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             Integer minHours = minHoursRule.getValue();
             PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
             if (periodEnum != null) {
-                String startTimeStr = periodEnum.getDesc().split("-")[0]; 
+                String startTimeStr = periodEnum.getDesc().split("-")[0];
                 LocalTime startTime = LocalTime.parse(startTimeStr);
 
                 LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
@@ -406,9 +414,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         if (availableSlots == null || availableSlots <= 0) {
             return Result.error("该排班号源已满");
         }
-
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long patientUserId = loginUser.getUser().getUserId();
 
         // 校验患者角色
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
@@ -613,8 +618,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         );
 
         // 发送预约成功邮件通知
-        String userEmail = loginUser.getUser().getEmail();
-        if (userEmail != null && !userEmail.isEmpty()) {
+        User patientUser = userMapper.selectById(patientUserId);
+        if (patientUser != null && patientUser.getEmail() != null && !patientUser.getEmail().isEmpty()) {
             try {
                 // 获取时段信息
                 String periodDesc = "";
@@ -626,7 +631,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 // 构建邮件内容
                 String subject = "预约成功通知";
                 StringBuilder content = new StringBuilder();
-                content.append("尊敬的 ").append(loginUser.getUser().getName()).append("，您好！\n\n");
+                content.append("尊敬的 ").append(patientUser.getName()).append("，您好！\n\n");
                 content.append("您的预约已成功！\n\n");
                 content.append("预约信息如下：\n");
                 content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
@@ -642,8 +647,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 content.append("\n请您准时付款，如有问题请及时联系医院。\n");
                 content.append("\n祝您早日康复！");
 
-                mailService.sendNotification(subject, content.toString(), userEmail);
-                log.info("预约成功邮件已发送至: {}", userEmail);
+                mailService.sendNotification(subject, content.toString(), patientUser.getEmail());
+                log.info("预约成功邮件已发送至: {}", patientUser.getEmail());
             } catch (Exception e) {
                 // 邮件发送失败不影响预约流程
                 log.error("发送预约成功邮件失败: {}", e.getMessage());

@@ -18,6 +18,7 @@ public interface ScheduleService extends MPJBaseService<DoctorSchedule> {
     Result<String> batchDeleteSchedules(List<Long> scheduleIds); // 新增批量删除方法
     Result<String> copySchedule(ScheduleDTO.ScheduleCopyDTO copyDTO); // 新增复制排班方法
     Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId);
+    Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId, Long patientUserId); // 重载方法，指定患者ID
     Result<List<ScheduleDTO.ScheduleListDTO>> getDoctorSchedules(Long doctorUserId); // 新增查询医生排班方法
     Result<List<ScheduleDTO.SchedulePatientDTO>> getSchedulePatients(Long doctorUserId, Long scheduleId); // 新增查询排班患者方法
 }
