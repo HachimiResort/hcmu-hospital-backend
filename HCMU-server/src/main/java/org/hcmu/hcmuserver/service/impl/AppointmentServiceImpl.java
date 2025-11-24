@@ -21,6 +21,7 @@ import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.MailService;
 import org.hcmu.hcmuserver.service.OperationRuleService;
 import org.hcmu.hcmuserver.service.UserService;
+import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,9 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private WaitlistService waitlistService;
 
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
@@ -222,9 +226,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         appointment.setCancellationReason(reason);
         baseMapper.updateById(appointment);
 
-        // 恢复号源
-        schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
-        scheduleMapper.updateById(schedule);
+
 
         // 查询完整的预约信息（包含关联的患者、排班、医生、科室信息）
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
@@ -283,6 +285,15 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         mailService.sendNotification(subject, content.toString(), userEmail);
         log.info("预约取消邮件已发送至: {}", userEmail);
 
+        // 检查是否有候补队列，如果有则通知下一个候补，否则恢复号源
+        boolean hasWaitlist = waitlistService.notifyNextWaitlist(appointment.getScheduleId());
+        if (hasWaitlist) {
+            log.info("已通知排班ID {} 的下一个候补患者，号源已锁定", appointment.getScheduleId());
+        } else {
+            log.info("排班ID {} 没有候补患者，恢复号源", appointment.getScheduleId());
+            schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
+            scheduleMapper.updateById(schedule);
+        }
 
         return Result.success("取消预约成功", dto);
     }

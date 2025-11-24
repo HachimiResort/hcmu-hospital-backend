@@ -7,30 +7,43 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.hcmu.hcmucommon.enumeration.PeriodEnum;
 import org.hcmu.hcmucommon.enumeration.RoleTypeEnum;
 import org.hcmu.hcmucommon.enumeration.WaitListEnum;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
+import org.hcmu.hcmupojo.entity.Department;
+import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Waitlist;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.Waitlist.WaitlistMapper;
+import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
 import org.hcmu.hcmuserver.mapper.user.UserRoleMapper;
+import org.hcmu.hcmuserver.service.MailService;
+import org.hcmu.hcmuserver.service.ScheduleService;
 import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
 @Slf4j
 public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Waitlist> implements WaitlistService {
+
+    //TODO：加入全局规则
+    private static final int LOCK_EXPIRE_MINUTES = 120;
 
     @Autowired
     private ScheduleMapper scheduleMapper;
@@ -43,6 +56,18 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
     @Autowired
     private RoleMapper roleMapper;
+
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
+
+    @Autowired
+    private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private ScheduleService scheduleService;
 
     @Override
     public Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO) {
@@ -173,6 +198,11 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         return Result.success("删除成功");
     }
 
+    /**
+     * 用户申请加入候补队列
+     * @param joinDTO
+     * @return
+     */
     @Override
     public Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO) {
 
@@ -223,6 +253,147 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         baseMapper.insert(waitlist);
 
         return getWaitlistById(waitlist.getWaitlistId());
+    }
+
+    /**
+     * 通知候补队列中的下一位患者
+     * @param scheduleId 排班ID
+     * @return
+     */
+    @Override
+    public boolean notifyNextWaitlist(Long scheduleId) {
+        LambdaQueryWrapper<Waitlist> waitlistWrapper = new LambdaQueryWrapper<>();
+        waitlistWrapper.eq(Waitlist::getScheduleId, scheduleId)
+                .eq(Waitlist::getStatus, WaitListEnum.WAITING.getCode())
+                .orderByAsc(Waitlist::getCreateTime)
+                .last("LIMIT 1");
+
+        Waitlist nextWaitlist = baseMapper.selectOne(waitlistWrapper);
+
+        if (nextWaitlist == null) {
+            log.info("排班ID {} 没有候补患者", scheduleId);
+            return false;
+        }
+
+        // 更新候补状态
+        LocalDateTime now = LocalDateTime.now();
+        nextWaitlist.setStatus(WaitListEnum.NOTIFIED.getCode());
+        nextWaitlist.setNotifiedTime(now);
+        nextWaitlist.setLockExpireTime(now.plusMinutes(LOCK_EXPIRE_MINUTES));
+        nextWaitlist.setUpdateTime(now);
+        baseMapper.updateById(nextWaitlist);
+
+        log.info("候补ID {} 已通知，支付截止时间: {}", nextWaitlist.getWaitlistId(), nextWaitlist.getLockExpireTime());
+
+
+        try {
+            User patient = userMapper.selectById(nextWaitlist.getPatientUserId());
+            if (patient == null || patient.getEmail() == null || patient.getEmail().isEmpty()) {
+                log.warn("候补患者ID {} 没有邮箱，无法发送通知", nextWaitlist.getPatientUserId());
+                return true;
+            }
+
+            DoctorSchedule schedule = scheduleMapper.selectById(scheduleId);
+            if (schedule == null) {
+                log.warn("排班ID {} 不存在，无法发送通知", scheduleId);
+                return true;
+            }
+
+            User doctor = userMapper.selectById(schedule.getDoctorUserId());
+            String doctorName = doctor != null ? doctor.getName() : "🦆🦆";
+
+            String departmentName = "";
+            LambdaQueryWrapper<DoctorProfile> profileWrapper = new LambdaQueryWrapper<>();
+            profileWrapper.eq(DoctorProfile::getUserId, schedule.getDoctorUserId())
+                    .last("LIMIT 1");
+            DoctorProfile doctorProfile = doctorProfileMapper.selectOne(profileWrapper);
+            if (doctorProfile != null && doctorProfile.getDepartmentId() != null) {
+                Department department = departmentMapper.selectById(doctorProfile.getDepartmentId());
+                if (department != null) {
+                    departmentName = department.getName();
+                }
+            }
+
+            String periodDesc = "";
+            PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+            if (periodEnum != null) {
+                periodDesc = periodEnum.getDesc();
+            }
+
+            String subject = "候补成功通知";
+            StringBuilder content = new StringBuilder();
+            content.append("尊敬的 ").append(patient.getName()).append("，您好！\n\n");
+            content.append("恭喜您！您候补的号源已经释放，请及时完成支付。\n\n");
+            content.append("预约信息如下：\n");
+            content.append("就诊日期：").append(schedule.getScheduleDate()).append("\n");
+            content.append("就诊时段：").append(periodDesc).append("\n");
+            if (!departmentName.isEmpty()) {
+                content.append("科室：").append(departmentName).append("\n");
+            }
+            content.append("医生：").append(doctorName).append("\n");
+            content.append("挂号费：¥").append(schedule.getFee()).append("\n");
+            content.append("\n【重要提醒】\n");
+            content.append("请在 ").append(nextWaitlist.getLockExpireTime()).append(" 前完成支付，");
+            content.append("超时将自动转给下一位候补患者。\n");
+            content.append("\n祝您早日康复！");
+
+            mailService.sendNotification(subject, content.toString(), patient.getEmail());
+            log.info("候补成功通知邮件已发送至: {}", patient.getEmail());
+        } catch (Exception e) {
+            log.error("发送候补通知邮件失败: {}", e.getMessage());
+        }
+
+        return true;
+    }
+
+    /**
+     * 候补成功后支付并正式加入预约
+     * @param waitlistId 候补ID
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<AppointmentDTO.AppointmentListDTO> payWaitlist(Long waitlistId) {
+
+        Waitlist waitlist = baseMapper.selectById(waitlistId);
+        if (waitlist == null) {
+            return Result.error("候补记录不存在");
+        }
+
+        // 进入当前方法时，状态必须是已通知
+        if (!WaitListEnum.NOTIFIED.getCode().equals(waitlist.getStatus())) {
+            return Result.error("该候补尚未通知或已失效，当前状态: " + waitlist.getStatus());
+        }
+
+        // 检查是否超时
+        if (waitlist.getLockExpireTime() == null || LocalDateTime.now().isAfter(waitlist.getLockExpireTime())) {
+            return Result.error("支付超时，请重新候补或预约其他时段");
+        }
+
+        DoctorSchedule schedule = scheduleMapper.selectById(waitlist.getScheduleId());
+        if (schedule == null) {
+            return Result.error("排班不存在");
+        }
+
+        if (schedule.getStatus() == null || schedule.getStatus() != 1) {
+            return Result.error("该排班已关闭，无法预约");
+        }
+
+        //预约
+        Result<AppointmentDTO.AppointmentListDTO> appointResult =
+                scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId());
+
+        if (appointResult.getCode() != 200) {
+            return appointResult;
+        }
+
+        waitlist.setStatus(WaitListEnum.BOOKED.getCode());
+        waitlist.setUpdateTime(LocalDateTime.now());
+        baseMapper.updateById(waitlist);
+
+        log.info("候补ID {} 支付成功，已转为预约", waitlistId);
+
+        return appointResult;
     }
 
 }
