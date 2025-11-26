@@ -19,6 +19,7 @@ import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
+import org.hcmu.hcmupojo.entity.PatientProfile;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Waitlist;
@@ -26,6 +27,7 @@ import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.Waitlist.WaitlistMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
+import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
 import org.hcmu.hcmuserver.mapper.role.RoleMapper;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.mapper.user.UserMapper;
@@ -67,6 +69,9 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
     private DepartmentMapper departmentMapper;
 
     @Autowired
+    private PatientProfileMapper patientProfileMapper;
+
+    @Autowired
     private ScheduleService scheduleService;
 
     @Autowired
@@ -81,7 +86,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
     }
 
     @Override
-    public Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO) {
+    public Result<WaitlistDTO.WaitlistFullDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO) {
 
         User user = userMapper.selectById(createDTO.getPatientUserId());
         if (user == null) {
@@ -159,31 +164,94 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
     }
 
     @Override
-    public Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(Long waitlistId) {
+    public Result<WaitlistDTO.WaitlistFullDTO> getWaitlistById(Long waitlistId) {
+        // 先验证 waitlistId 是否存在
+        Waitlist waitlist = baseMapper.selectById(waitlistId);
+        if (waitlist == null) {
+            return Result.error("候补记录不存在或已被删除");
+        }
+
         MPJLambdaWrapper<Waitlist> queryWrapper = new MPJLambdaWrapper<>();
-        queryWrapper.select(Waitlist::getWaitlistId,
+        queryWrapper
+                .select(Waitlist::getWaitlistId,
                         Waitlist::getPatientUserId,
                         Waitlist::getScheduleId,
                         Waitlist::getStatus,
                         Waitlist::getNotifiedTime,
                         Waitlist::getLockExpireTime,
-                        Waitlist::getCreateTime,
-                        Waitlist::getUpdateTime)
-                // 关联用户表获取患者详细信息
+                        Waitlist::getCreateTime)
+
                 .leftJoin(User.class, User::getUserId, Waitlist::getPatientUserId)
                 .selectAs(User::getUserName, "patientUserName")
                 .selectAs(User::getPhone, "patientPhone")
+                .selectAs(User::getName, "patientName")
+
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Waitlist::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .select("t2.doctor_user_id AS doctorUserId")
+
+                .leftJoin("user AS doctor_user ON doctor_user.user_id = t2.doctor_user_id")
+                .select("doctor_user.name AS doctorName")
+
+                .leftJoin("doctor_profile ON doctor_profile.user_id = t2.doctor_user_id")
+                .select("doctor_profile.title AS doctorTitle")
+
+                .leftJoin("department ON department.department_id = doctor_profile.department_id")
+                .select("department.name AS departmentName")
                 .eq(Waitlist::getWaitlistId, waitlistId);
 
+        WaitlistDTO.WaitlistFullDTO fullDTO = baseMapper.selectJoinOne(
+                WaitlistDTO.WaitlistFullDTO.class, queryWrapper);
 
-        WaitlistDTO.WaitlistDetailDTO detailDTO = baseMapper.selectJoinOne(
-                WaitlistDTO.WaitlistDetailDTO.class, queryWrapper);
-
-        if (detailDTO == null) {
-            return Result.error("候诊记录不存在或已被删除");
+        if (fullDTO == null) {
+            return Result.error("候补记录不存在或已被删除");
         }
 
-        return Result.success(detailDTO);
+        // 计算实际费用
+        DoctorSchedule schedule = scheduleMapper.selectById(fullDTO.getScheduleId());
+        if (schedule != null && schedule.getFee() != null) {
+            java.math.BigDecimal originalFee = schedule.getFee();
+            java.math.BigDecimal actualFee = originalFee;
+
+            log.info("候补ID {} - 原始费用: {}", waitlistId, originalFee);
+
+            LambdaQueryWrapper<PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
+            patientProfileWrapper.eq(PatientProfile::getUserId, fullDTO.getPatientUserId())
+                    .last("LIMIT 1");
+            PatientProfile patientProfile = patientProfileMapper.selectOne(patientProfileWrapper);
+
+            if (patientProfile != null) {
+                log.info("候补ID {} - 找到患者档案，身份类型: {}", waitlistId, patientProfile.getIdentityType());
+
+                if (patientProfile.getIdentityType() != null) {
+                    Integer identityType = patientProfile.getIdentityType();
+                    if (identityType == 1) {
+                        // 学生：10% 费用
+                        actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
+                        log.info("候补ID {} - 应用学生折扣(10%)，实际费用: {}", waitlistId, actualFee);
+                    } else if (identityType == 2) {
+                        // 老师：20% 费用
+                        actualFee = originalFee.multiply(new java.math.BigDecimal("0.20"));
+                        log.info("候补ID {} - 应用教师折扣(20%)，实际费用: {}", waitlistId, actualFee);
+                    } else {
+                        log.info("候补ID {} - 身份类型为 {}，不应用折扣", waitlistId, identityType);
+                    }
+                } else {
+                    log.warn("候补ID {} - 患者档案存在但身份类型为空", waitlistId);
+                }
+            } else {
+                log.warn("候补ID {} - 未找到患者档案，患者ID: {}", waitlistId, fullDTO.getPatientUserId());
+            }
+
+            fullDTO.setActualFee(actualFee);
+            log.info("候补ID {} - 最终返回费用: {}", waitlistId, actualFee);
+        } else {
+            log.warn("候补ID {} - 排班或费用信息不存在", waitlistId);
+        }
+
+        return Result.success(fullDTO);
     }
 
     @Override
@@ -215,7 +283,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
      * @return
      */
     @Override
-    public Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO) {
+    public Result<WaitlistDTO.WaitlistFullDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO) {
 
         User user = userMapper.selectById(joinDTO.getUserId());
         if (user == null) {
@@ -364,7 +432,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<AppointmentDTO.AppointmentListDTO> payWaitlist(Long waitlistId) {
+    public Result<WaitlistDTO.WaitlistFullDTO> payWaitlist(Long waitlistId) {
 
         Waitlist waitlist = baseMapper.selectById(waitlistId);
         if (waitlist == null) {
@@ -395,7 +463,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
                 scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId());
 
         if (appointResult.getCode() != 200) {
-            return appointResult;
+            return Result.error(appointResult.getMsg());
         }
 
         waitlist.setStatus(WaitListEnum.BOOKED.getCode());
@@ -404,7 +472,8 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         log.info("候补ID {} 支付成功，已转为预约", waitlistId);
 
-        return appointResult;
+        // 返回完整的候补信息
+        return getWaitlistById(waitlistId);
     }
 
     /**
@@ -413,7 +482,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
      * @return 操作结果
      */
     @Override
-    public Result<String> cancelWaitlist(Long waitlistId) {
+    public Result<WaitlistDTO.WaitlistFullDTO> cancelWaitlist(Long waitlistId) {
 
         Waitlist waitlist = baseMapper.selectById(waitlistId);
         if (waitlist == null) {
@@ -431,7 +500,8 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         log.info("候补ID {} 已被患者取消", waitlistId);
 
-        return Result.success("取消候补成功");
+        // 返回完整的候补信息
+        return getWaitlistById(waitlistId);
     }
 
 }

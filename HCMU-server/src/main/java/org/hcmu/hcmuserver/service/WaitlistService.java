@@ -5,13 +5,13 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 
 public interface WaitlistService {
-    Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO);
+    Result<WaitlistDTO.WaitlistFullDTO> createWaitlist(WaitlistDTO.WaitlistCreateDTO createDTO);
 
-    Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO);
+    Result<WaitlistDTO.WaitlistFullDTO> patientJoinWaitlist(WaitlistDTO.PatientJoinDTO joinDTO);
 
     Result<PageDTO<WaitlistDTO.WaitlistListDTO>> getWaitlists(WaitlistDTO.WaitlistGetRequestDTO requestDTO);
 
-    Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(Long waitlistId);
+    Result<WaitlistDTO.WaitlistFullDTO> getWaitlistById(Long waitlistId);
 
     Result<String> updateWaitlistById(Long waitlistId, WaitlistDTO.WaitlistUpdateDTO updateDTO);
 
@@ -27,14 +27,14 @@ public interface WaitlistService {
     /**
      * 候补患者支付接口
      * @param waitlistId 候补ID
-     * @return 预约信息
+     * @return 候补完整信息
      */
-    Result<org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO> payWaitlist(Long waitlistId);
+    Result<WaitlistDTO.WaitlistFullDTO> payWaitlist(Long waitlistId);
 
     /**
      * 患者取消候补
      * @param waitlistId 候补ID
-     * @return 操作结果
+     * @return 候补完整信息
      */
-    Result<String> cancelWaitlist(Long waitlistId);
+    Result<WaitlistDTO.WaitlistFullDTO> cancelWaitlist(Long waitlistId);
 }
