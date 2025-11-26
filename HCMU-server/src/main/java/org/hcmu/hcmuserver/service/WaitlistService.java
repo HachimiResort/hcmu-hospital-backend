@@ -30,4 +30,11 @@ public interface WaitlistService {
      * @return 预约信息
      */
     Result<org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO> payWaitlist(Long waitlistId);
+
+    /**
+     * 患者取消候补
+     * @param waitlistId 候补ID
+     * @return 操作结果
+     */
+    Result<String> cancelWaitlist(Long waitlistId);
 }

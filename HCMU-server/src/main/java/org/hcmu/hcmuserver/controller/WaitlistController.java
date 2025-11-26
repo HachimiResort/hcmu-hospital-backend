@@ -79,4 +79,11 @@ public class WaitlistController {
     public Result<AppointmentDTO.AppointmentListDTO> payWaitlist(@PathVariable Long waitlistId) {
         return waitlistService.payWaitlist(waitlistId);
     }
+
+    @AutoLog("患者取消候补")
+    @Operation(description = "患者取消候补", summary = "患者取消候补")
+    @PostMapping("/{waitlistId}/cancel")
+    public Result<String> cancelWaitlist(@PathVariable Long waitlistId) {
+        return waitlistService.cancelWaitlist(waitlistId);
+    }
 }

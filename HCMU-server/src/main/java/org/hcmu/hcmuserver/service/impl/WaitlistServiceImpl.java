@@ -407,4 +407,31 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         return appointResult;
     }
 
+    /**
+     * 患者取消候补
+     * @param waitlistId 候补ID
+     * @return 操作结果
+     */
+    @Override
+    public Result<String> cancelWaitlist(Long waitlistId) {
+
+        Waitlist waitlist = baseMapper.selectById(waitlistId);
+        if (waitlist == null) {
+            return Result.error("候补记录不存在");
+        }
+
+
+        if (!WaitListEnum.WAITING.getCode().equals(waitlist.getStatus())) {
+            return Result.error("只有候补中状态才能取消候补");
+        }
+
+        waitlist.setStatus(WaitListEnum.CANCELLED.getCode());
+        waitlist.setUpdateTime(LocalDateTime.now());
+        baseMapper.updateById(waitlist);
+
+        log.info("候补ID {} 已被患者取消", waitlistId);
+
+        return Result.success("取消候补成功");
+    }
+
 }
