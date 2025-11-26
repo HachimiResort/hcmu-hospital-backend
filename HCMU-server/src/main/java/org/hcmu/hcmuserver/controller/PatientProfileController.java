@@ -8,8 +8,10 @@ import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.PatientProfileDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
+import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmuserver.service.AppointmentService;
 import org.hcmu.hcmuserver.service.PatientProfileService;
+import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,9 @@ public class PatientProfileController {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    @Autowired
+    private WaitlistService waitlistService;
 
     @Deprecated
     @AutoLog("创建患者档案（已废弃）")
@@ -103,5 +108,13 @@ public class PatientProfileController {
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointmentByPatientId(@PathVariable Long userId, @ModelAttribute AppointmentDTO.AppointmentGetRequestDTO appointmentGetRequestDTO) {
         appointmentGetRequestDTO.setPatientUserId(userId);
         return appointmentService.getAppointments(appointmentGetRequestDTO);
+    }
+
+    @AutoLog("根据用户id查找候补列表")
+    @Operation(description = "根据用户id查找候补列表", summary = "根据用户id查找候补列表('CHECK_WAITLIST')")
+    @GetMapping("/{userId}/waitlists")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_WAITLIST') || @ex.isSelf(#userId)")
+    public Result<List<WaitlistDTO.WaitlistFullDTO>> getWaitlistsByUserId(@PathVariable Long userId) {
+        return waitlistService.getWaitlistsByUserId(userId);
     }
 }

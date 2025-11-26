@@ -37,4 +37,11 @@ public interface WaitlistService {
      * @return 候补完整信息
      */
     Result<WaitlistDTO.WaitlistFullDTO> cancelWaitlist(Long waitlistId);
+
+    /**
+     * 根据用户ID获取候补列表
+     * @param userId 用户ID
+     * @return 候补完整信息列表
+     */
+    Result<java.util.List<WaitlistDTO.WaitlistFullDTO>> getWaitlistsByUserId(Long userId);
 }

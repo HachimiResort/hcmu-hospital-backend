@@ -504,4 +504,32 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         return getWaitlistById(waitlistId);
     }
 
+    @Override
+    public Result<java.util.List<WaitlistDTO.WaitlistFullDTO>> getWaitlistsByUserId(Long userId) {
+        log.info("查询用户ID {} 的候补列表", userId);
+
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        LambdaQueryWrapper<Waitlist> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Waitlist::getPatientUserId, userId)
+                .orderByDesc(Waitlist::getCreateTime);
+
+        java.util.List<Waitlist> waitlistList = this.list(queryWrapper);
+
+        java.util.List<WaitlistDTO.WaitlistFullDTO> fullDTOList = new java.util.ArrayList<>();
+        for (Waitlist waitlist : waitlistList) {
+            Result<WaitlistDTO.WaitlistFullDTO> result = getWaitlistById(waitlist.getWaitlistId());
+            if (result.getCode() == 200 && result.getData() != null) {
+                fullDTOList.add(result.getData());
+            }
+        }
+
+        log.info("用户ID {} 的候补列表查询成功，共 {} 条记录", userId, fullDTOList.size());
+
+        return Result.success(fullDTOList);
+    }
+
 }
