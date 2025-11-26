@@ -28,8 +28,7 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
     @Override
     public Result<ScheduleTemplateDTO.TemplateListDTO> createTemplate(ScheduleTemplateDTO.TemplateCreateDTO createDTO) {
         LambdaQueryWrapper<ScheduleTemplate> nameWrapper = new LambdaQueryWrapper<>();
-        nameWrapper.eq(ScheduleTemplate::getTemplateName, createDTO.getTemplateName())
-                .eq(ScheduleTemplate::getIsDeleted, 0);
+        nameWrapper.eq(ScheduleTemplate::getTemplateName, createDTO.getTemplateName());
         if (baseMapper.selectCount(nameWrapper) > 0) {
             return Result.error("模板名称已存在");
         }
@@ -53,7 +52,6 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
         wrapper.select(ScheduleTemplate::getTemplateId, ScheduleTemplate::getTemplateName,
                         ScheduleTemplate::getCreateTime, ScheduleTemplate::getUpdateTime)
                 .like(requestDTO.getTemplateName() != null, ScheduleTemplate::getTemplateName, requestDTO.getTemplateName())
-                .eq(ScheduleTemplate::getIsDeleted, 0)
                 .orderByDesc(ScheduleTemplate::getCreateTime);
 
         IPage<ScheduleTemplateDTO.TemplateListDTO> page = baseMapper.selectJoinPage(
@@ -87,8 +85,7 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
 
         if (updateDTO.getTemplateName() != null && !updateDTO.getTemplateName().equals(template.getTemplateName())) {
             LambdaQueryWrapper<ScheduleTemplate> nameWrapper = new LambdaQueryWrapper<>();
-            nameWrapper.eq(ScheduleTemplate::getTemplateName, updateDTO.getTemplateName())
-                    .eq(ScheduleTemplate::getIsDeleted, 0);
+            nameWrapper.eq(ScheduleTemplate::getTemplateName, updateDTO.getTemplateName());
             if (baseMapper.selectCount(nameWrapper) > 0) {
                 return Result.error("模板名称已存在");
             }
@@ -119,7 +116,8 @@ public class ScheduleTemplateServiceImpl extends MPJBaseServiceImpl<ScheduleTemp
 
         LambdaQueryWrapper<Schedule> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Schedule::getTemplateId, templateId)
-                .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod());
+                .eq(Schedule::getSlotPeriod, createDTO.getSlotPeriod())
+                .eq(Schedule::getWeekday, createDTO.getWeekday());
         if (templateScheduleMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("该模板在该时间段已存在排班");
         }

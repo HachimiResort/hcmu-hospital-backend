@@ -93,9 +93,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
                 .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                .eq(UserRole::getUserId, userId)
-                .eq(UserRole::getIsDeleted, 0)
-                .eq(Role::getIsDeleted, 0);
+                .eq(UserRole::getUserId, userId);
 
         Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
         if (userRole == null) {
@@ -112,7 +110,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         wrapper.eq(DoctorSchedule::getDoctorUserId, createDTO.getDoctorUserId())
                 .eq(DoctorSchedule::getScheduleDate, createDTO.getScheduleDate())
                 .eq(DoctorSchedule::getSlotPeriod, createDTO.getSlotPeriod())
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1);
         if (baseMapper.selectCount(wrapper) > 0) {
             return Result.error("该医生在此日期和时段已有排班");
@@ -162,8 +159,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 .eq(requestDTO.getSlotType() != null, DoctorSchedule::getSlotType, requestDTO.getSlotType())
                 .eq(requestDTO.getSlotPeriod() != null, DoctorSchedule::getSlotPeriod, requestDTO.getSlotPeriod())
                 .eq(requestDTO.getStatus() != null, DoctorSchedule::getStatus, requestDTO.getStatus())
-                .eq(DoctorSchedule::getIsDeleted, 0) 
-                .orderByDesc(DoctorSchedule::getCreateTime);
+                .orderByAsc(DoctorSchedule::getSlotType);
 
         IPage<ScheduleDTO.ScheduleListDTO> page = baseMapper.selectJoinPage(
                 new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
@@ -213,9 +209,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
             roleQueryWrapper.select(Role::getType)
                     .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
-                    .eq(UserRole::getUserId, updateDTO.getDoctorUserId())
-                    .eq(UserRole::getIsDeleted, 0)
-                    .eq(Role::getIsDeleted, 0);
+                    .eq(UserRole::getUserId, updateDTO.getDoctorUserId());
 
             Role userRole = userRoleMapper.selectJoinOne(Role.class, roleQueryWrapper);
             if (userRole == null) {
@@ -239,7 +233,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             wrapper.eq(DoctorSchedule::getDoctorUserId, doctorUserId)
                     .eq(DoctorSchedule::getScheduleDate, scheduleDate)
                     .eq(DoctorSchedule::getSlotType, slotType)
-                    .eq(DoctorSchedule::getIsDeleted, 0)
                     .eq(DoctorSchedule::getStatus, 1)
                     .ne(DoctorSchedule::getScheduleId, scheduleId); // 排除当前记录
             if (baseMapper.selectCount(wrapper) > 0) {
@@ -267,7 +260,16 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             return Result.error("排班不存在");
         }
 
-        //Todo: 如果有appointment，不能删除排班
+
+        LambdaQueryWrapper<Appointment> appointmentWrapper = new LambdaQueryWrapper<>();
+        appointmentWrapper.eq(Appointment::getScheduleId, scheduleId)
+                .in(Appointment::getStatus, 1, 2, 3);
+        Long appointmentCount = appointmentMapper.selectCount(appointmentWrapper);
+
+        if (appointmentCount > 0) {
+            return Result.error("该排班存在未完成的预约，无法删除");
+        }
+
 
         baseMapper.deleteById(scheduleId);
         return Result.success("删除成功");
@@ -287,7 +289,15 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             return Result.error("部分排班不存在");
         }
 
-        //Todo: 如果有appointment，不能删除排班
+        LambdaQueryWrapper<Appointment> appointmentWrapper = new LambdaQueryWrapper<>();
+        appointmentWrapper.in(Appointment::getScheduleId, scheduleIds)
+                .in(Appointment::getStatus, 1, 2, 3);
+        Long appointmentCount = appointmentMapper.selectCount(appointmentWrapper);
+
+        if (appointmentCount > 0) {
+            return Result.error("部分排班存在未完成的预约，无法删除");
+        }
+
 
         baseMapper.deleteBatchIds(scheduleIds);
 
@@ -326,7 +336,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         LambdaQueryWrapper<DoctorSchedule> targetDateWrapper = new LambdaQueryWrapper<>();
         targetDateWrapper.eq(DoctorSchedule::getDoctorUserId, doctorUserId)
                 .eq(DoctorSchedule::getScheduleDate, targetDate)
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1);
         
         Long existingScheduleCount = baseMapper.selectCount(targetDateWrapper);
@@ -371,6 +380,14 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId) {
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long patientUserId = loginUser.getUser().getUserId();
+        return appointSchedule(scheduleId, patientUserId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId, Long patientUserId) {
         DoctorSchedule schedule = baseMapper.selectById(scheduleId);
         if (schedule.getStatus() != null && !Integer.valueOf(1).equals(schedule.getStatus())) {
             return Result.error("当前排班暂不可预约");
@@ -396,7 +413,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             Integer minHours = minHoursRule.getValue();
             PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
             if (periodEnum != null) {
-                String startTimeStr = periodEnum.getDesc().split("-")[0]; 
+                String startTimeStr = periodEnum.getDesc().split("-")[0];
                 LocalTime startTime = LocalTime.parse(startTimeStr);
 
                 LocalDateTime scheduleDateTime = LocalDateTime.of(schedule.getScheduleDate(), startTime);
@@ -414,9 +431,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         if (availableSlots == null || availableSlots <= 0) {
             return Result.error("该排班号源已满");
         }
-
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long patientUserId = loginUser.getUser().getUserId();
 
         // 校验患者角色
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
@@ -438,7 +452,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             MPJLambdaWrapper<Appointment> noShowWrapper = new MPJLambdaWrapper<>();
             noShowWrapper
                 .selectAll(Appointment.class)
-                .selectAs(DoctorSchedule::getScheduleDate, Appointment::getScheduleId)
                 .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
                 .eq(Appointment::getPatientUserId, patientUserId)
                 .eq(Appointment::getStatus, 6)
@@ -572,13 +585,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         if (patientProfile != null && patientProfile.getIdentityType() != null) {
             Integer identityType = patientProfile.getIdentityType();
             if (identityType == 1) {
-                // 学生10%
                 actualFee = originalFee.multiply(new java.math.BigDecimal("0.05"));
-                // log.info("患者ID {} 为学生身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else if (identityType == 2) {
-                // 教职工5%
                 actualFee = originalFee.multiply(new java.math.BigDecimal("0.10"));
-                // log.info("患者ID {} 为教职工身份，原费用: {}, 实际费用: {}", patientUserId, originalFee, actualFee);
             } else {
                 return Result.error("身份类型不合法");
             }
@@ -622,8 +631,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         );
 
         // 发送预约成功邮件通知
-        String userEmail = loginUser.getUser().getEmail();
-        if (userEmail != null && !userEmail.isEmpty()) {
+        User patientUser = userMapper.selectById(patientUserId);
+        if (patientUser != null && patientUser.getEmail() != null && !patientUser.getEmail().isEmpty()) {
             try {
                 // 获取时段信息
                 String periodDesc = "";
@@ -635,7 +644,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 // 构建邮件内容
                 String subject = "预约成功通知";
                 StringBuilder content = new StringBuilder();
-                content.append("尊敬的 ").append(loginUser.getUser().getName()).append("，您好！\n\n");
+                content.append("尊敬的 ").append(patientUser.getName()).append("，您好！\n\n");
                 content.append("您的预约已成功！\n\n");
                 content.append("预约信息如下：\n");
                 content.append("预约号：").append(appointment.getAppointmentNo()).append("\n");
@@ -651,8 +660,8 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 content.append("\n请您准时付款，如有问题请及时联系医院。\n");
                 content.append("\n祝您早日康复！");
 
-                mailService.sendNotification(subject, content.toString(), userEmail);
-                log.info("预约成功邮件已发送至: {}", userEmail);
+                mailService.sendNotification(subject, content.toString(), patientUser.getEmail());
+                log.info("预约成功邮件已发送至: {}", patientUser.getEmail());
             } catch (Exception e) {
                 // 邮件发送失败不影响预约流程
                 log.error("发送预约成功邮件失败: {}", e.getMessage());

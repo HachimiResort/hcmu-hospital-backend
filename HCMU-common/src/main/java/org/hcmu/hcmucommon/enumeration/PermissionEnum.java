@@ -90,7 +90,16 @@ public enum PermissionEnum {
     ADD_TEMPLATE(35, "addtemplate"),
     ALT_TEMPLATE(36, "alttemplate"),
     DEL_TEMPLATE(37, "deltemplate"),
-    CHECK_TEMPLATE(38, "checktemplate");
+    CHECK_TEMPLATE(38, "checktemplate"),
+
+    /*
+     * 候补管理
+     */
+    WAITLIST_MG_PAGE(39, "waitlistMGPage"),
+    ADD_WAITLIST(40, "addwaitlist"),
+    ALT_WAITLIST(41, "altwaitlist"),
+    DEL_WAITLIST(42, "delwaitlist"),
+    CHECK_WAITLIST(43, "checkwaitlist");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
