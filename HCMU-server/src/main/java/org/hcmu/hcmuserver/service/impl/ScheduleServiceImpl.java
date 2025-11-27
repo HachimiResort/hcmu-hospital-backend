@@ -486,7 +486,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         // 防止重复预约
         LambdaQueryWrapper<Appointment> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Appointment::getScheduleId, scheduleId)
-                .eq(Appointment::getPatientUserId, patientUserId);
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .ne(Appointment::getStatus, 5)
+                .ne(Appointment::getStatus, 6);
         if (appointmentMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("请勿重复预约该排班");
         }
