@@ -171,10 +171,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("候补记录不存在或已被删除");
         }
 
-        // DEBUG: 打印原始数据库记录的时间戳
-        log.info("候补ID {} 数据库原始时间 - createTime: {}, notifiedTime: {}, lockExpireTime: {}, updateTime: {}",
-            waitlistId, waitlist.getCreateTime(), waitlist.getNotifiedTime(),
-            waitlist.getLockExpireTime(), waitlist.getUpdateTime());
+
 
         MPJLambdaWrapper<Waitlist> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper
@@ -336,8 +333,6 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
                 .patientUserId(joinDTO.getUserId())
                 .scheduleId(joinDTO.getScheduleId())
                 .status(WaitListEnum.WAITING.getCode())
-                .notifiedTime(null)
-                .lockExpireTime(null)
                 .build();
 
         baseMapper.insert(waitlist);
@@ -371,10 +366,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         // 更新候补状态
         LocalDateTime now = LocalDateTime.now();
 
-        // DEBUG: 记录通知前的状态
-        log.info("候补ID {} 通知前状态 - createTime: {}, status: {}, notifiedTime: {}, lockExpireTime: {}",
-            nextWaitlist.getWaitlistId(), nextWaitlist.getCreateTime(), nextWaitlist.getStatus(),
-            nextWaitlist.getNotifiedTime(), nextWaitlist.getLockExpireTime());
+
 
         nextWaitlist.setStatus(WaitListEnum.NOTIFIED.getCode());
         nextWaitlist.setNotifiedTime(now);
@@ -479,7 +471,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("该排班已关闭，无法预约");
         }
 
-        //预约
+        // 预约（号源已在取消预约时恢复，直接调用正常预约流程即可）
         Result<AppointmentDTO.AppointmentListDTO> appointResult =
                 scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId());
 
