@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
-import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
 import org.hcmu.hcmuserver.service.WaitlistService;
@@ -28,7 +27,7 @@ public class WaitlistController {
     @Operation(description = "创建等待队列", summary = "创建等待队列")
     @PostMapping("")
     @PreAuthorize("@ex.hasSysAuthority('ADD_WAITLIST')")
-    public Result<WaitlistDTO.WaitlistDetailDTO> createWaitlist(@RequestBody @Valid WaitlistDTO.WaitlistCreateDTO createDTO) {
+    public Result<WaitlistDTO.WaitlistFullDTO> createWaitlist(@RequestBody @Valid WaitlistDTO.WaitlistCreateDTO createDTO) {
         return waitlistService.createWaitlist(createDTO);
     }
 
@@ -45,7 +44,7 @@ public class WaitlistController {
     @Operation(description = "获取等待队列详情", summary = "获取等待队列详情")
     @GetMapping("/{waitlistId}")
     @PreAuthorize("@ex.hasSysAuthority('CHECK_WAITLIST')")
-    public Result<WaitlistDTO.WaitlistDetailDTO> getWaitlistById(@PathVariable Long waitlistId) {
+    public Result<WaitlistDTO.WaitlistFullDTO> getWaitlistById(@PathVariable Long waitlistId) {
         return waitlistService.getWaitlistById(waitlistId);
     }
 
@@ -69,14 +68,21 @@ public class WaitlistController {
     @AutoLog("患者加入候补队列")
     @Operation(description = "患者加入候补队列", summary = "患者加入候补队列")
     @PostMapping("/join")
-    public Result<WaitlistDTO.WaitlistDetailDTO> patientJoinWaitlist(@RequestBody @Valid WaitlistDTO.PatientJoinDTO joinDTO) {
+    public Result<WaitlistDTO.WaitlistFullDTO> patientJoinWaitlist(@RequestBody @Valid WaitlistDTO.PatientJoinDTO joinDTO) {
         return waitlistService.patientJoinWaitlist(joinDTO);
     }
 
     @AutoLog("候补支付")
     @Operation(description = "候补支付", summary = "候补支付")
     @PostMapping("/{waitlistId}/pay")
-    public Result<AppointmentDTO.AppointmentListDTO> payWaitlist(@PathVariable Long waitlistId) {
+    public Result<WaitlistDTO.WaitlistFullDTO> payWaitlist(@PathVariable Long waitlistId) {
         return waitlistService.payWaitlist(waitlistId);
+    }
+
+    @AutoLog("患者取消候补")
+    @Operation(description = "患者取消候补", summary = "患者取消候补")
+    @PostMapping("/{waitlistId}/cancel")
+    public Result<WaitlistDTO.WaitlistFullDTO> cancelWaitlist(@PathVariable Long waitlistId) {
+        return waitlistService.cancelWaitlist(waitlistId);
     }
 }

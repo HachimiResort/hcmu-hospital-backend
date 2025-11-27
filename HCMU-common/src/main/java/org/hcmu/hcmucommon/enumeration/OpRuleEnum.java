@@ -90,6 +90,16 @@ public enum OpRuleEnum {
         "是否限制同一时段多重预约（1=限制，默认 1）"
     ),
 
+    BOOKING_MAX_PAY_TIME(
+            106,
+            OpRuleType.BOOKING,
+            "booking.max_pay_time",
+            90,
+            5,
+            2880,
+            "候补成功后，未支付释放时间的允许值（默认90分钟）"
+    ),
+
     /* ====================== 退号规则 CANCEL ====================== */
 
     /**
@@ -245,17 +255,9 @@ public enum OpRuleEnum {
         0,
         1,
         "加号是否需要填写原因（默认 true）"
-    ),
-
-    WAITLIST_MAX_PAY_TIME(
-        601,
-        OpRuleType.WAITING_LIST,
-        "waitlist.max_pay_time",
-                120,
-                5,
-                2880,
-                "候补成功后，未支付释放时间的允许值（默认120分钟）"
     );
+
+
 
 
     // ====================== 字段定义 ======================

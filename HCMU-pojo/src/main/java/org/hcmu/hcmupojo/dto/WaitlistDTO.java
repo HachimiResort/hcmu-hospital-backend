@@ -96,4 +96,38 @@ public class WaitlistDTO {
         @NotNull(message = "排班ID不能为空")
         private Long scheduleId;
     }
+
+    // 候补相关信息
+    @Data
+    public static class WaitlistFullDTO {
+        // 候补基本信息
+        private Long waitlistId;
+        private Long patientUserId;
+        private Long scheduleId;
+        private Integer status;  // waitlist的状态
+        private LocalDateTime lockExpireTime;
+        private LocalDateTime notifiedTime;
+        private LocalDateTime createTime;
+
+        // 患者信息
+        private String patientUserName;  // 用户名
+        private String patientPhone;     // 电话
+        private String patientName;      // 真实姓名
+
+        // 排班信息
+        private LocalDate scheduleDate;  // 就诊日期
+        private Integer slotType;        // 号别
+        private Integer slotPeriod;      // 时间段
+
+        // 医生信息
+        private String doctorName;       // 医生姓名
+        private String doctorTitle;      // 医生职称
+        private String doctorUserId;     // 医生用户ID
+
+        // 科室信息
+        private String departmentName;   // 科室名称
+
+        // 费用信息
+        private BigDecimal actualFee;    // 实际费用
+    }
 }
