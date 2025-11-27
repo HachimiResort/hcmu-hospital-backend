@@ -486,7 +486,9 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         // 防止重复预约
         LambdaQueryWrapper<Appointment> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Appointment::getScheduleId, scheduleId)
-                .eq(Appointment::getPatientUserId, patientUserId);
+                .eq(Appointment::getPatientUserId, patientUserId)
+                .ne(Appointment::getStatus, 5)
+                .ne(Appointment::getStatus, 6);
         if (appointmentMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("请勿重复预约该排班");
         }
@@ -568,11 +570,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             }
         }
 
-        if (availableSlots < 1) {
-            return Result.error("该排班号源已满");
-        }
-
-
         LambdaQueryWrapper<org.hcmu.hcmupojo.entity.PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
         patientProfileWrapper.eq(org.hcmu.hcmupojo.entity.PatientProfile::getUserId, patientUserId)
                 .eq(org.hcmu.hcmupojo.entity.PatientProfile::getIsDeleted, 0)
@@ -601,6 +598,16 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         appointment.setStatus(1);
         appointment.setOriginalFee(originalFee);
         appointment.setActualFee(actualFee);
+
+        // 106规则
+        RuleInfo payTimeRule = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PAY_TIME);
+        Integer lockMinutes = OpRuleEnum.BOOKING_MAX_PAY_TIME.getDefaultValue(); // 默认值
+        if (payTimeRule != null && payTimeRule.getEnabled() == 1 && payTimeRule.getValue() != null) {
+            lockMinutes = payTimeRule.getValue();
+        }
+        appointment.setLockExpireTime(LocalDateTime.now().plusMinutes(lockMinutes));
+        log.info("创建预约，支付截止时间: {}", appointment.getLockExpireTime());
+
         appointmentMapper.insert(appointment);
         schedule.setAvailableSlots(Math.max(availableSlots - 1, 0));
 

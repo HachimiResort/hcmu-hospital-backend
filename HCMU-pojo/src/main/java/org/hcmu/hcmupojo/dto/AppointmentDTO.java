@@ -26,6 +26,7 @@ public class AppointmentDTO {
         private BigDecimal originalFee;
         private BigDecimal actualFee;
         private LocalDateTime paymentTime;
+        private LocalDateTime lockExpireTime; // 支付锁定过期时间
         private LocalDateTime cancellationTime;
         private LocalDateTime callingTime;
         private LocalDateTime completionTime;

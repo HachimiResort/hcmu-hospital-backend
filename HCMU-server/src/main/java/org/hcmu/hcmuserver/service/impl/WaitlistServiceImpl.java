@@ -25,6 +25,7 @@ import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Waitlist;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.Waitlist.WaitlistMapper;
+import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
@@ -76,6 +77,9 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
     @Autowired
     private OperationRuleService operationRuleService;
+
+    @Autowired
+    private AppointmentMapper appointmentMapper;
 
     private int getLockExpireMinutes() {
         RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PAY_TIME);
@@ -170,6 +174,8 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         if (waitlist == null) {
             return Result.error("候补记录不存在或已被删除");
         }
+
+
 
         MPJLambdaWrapper<Waitlist> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper
@@ -316,9 +322,13 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("当前排班还有可用号源，无需候补");
         }
 
+        // 排除已取消和已过期
         LambdaQueryWrapper<Waitlist> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Waitlist::getPatientUserId, joinDTO.getUserId())
-                .eq(Waitlist::getScheduleId, joinDTO.getScheduleId());
+                .eq(Waitlist::getScheduleId, joinDTO.getScheduleId())
+                .in(Waitlist::getStatus, WaitListEnum.WAITING.getCode(),
+                                        WaitListEnum.NOTIFIED.getCode(),
+                                        WaitListEnum.BOOKED.getCode());
         if (baseMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("您已在该排班的候补队列中");
         }
@@ -326,10 +336,13 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         Waitlist waitlist = Waitlist.builder()
                 .patientUserId(joinDTO.getUserId())
                 .scheduleId(joinDTO.getScheduleId())
-                .status( WaitListEnum.WAITING.getCode())
+                .status(WaitListEnum.WAITING.getCode())
                 .build();
 
         baseMapper.insert(waitlist);
+
+        log.info("用户ID {} 成功加入排班ID {} 的候补队列,候补ID: {}",
+            joinDTO.getUserId(), joinDTO.getScheduleId(), waitlist.getWaitlistId());
 
         return getWaitlistById(waitlist.getWaitlistId());
     }
@@ -356,13 +369,17 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         // 更新候补状态
         LocalDateTime now = LocalDateTime.now();
+
+
+
         nextWaitlist.setStatus(WaitListEnum.NOTIFIED.getCode());
         nextWaitlist.setNotifiedTime(now);
         nextWaitlist.setLockExpireTime(now.plusMinutes(getLockExpireMinutes()));
         nextWaitlist.setUpdateTime(now);
         baseMapper.updateById(nextWaitlist);
 
-        log.info("候补ID {} 已通知，支付截止时间: {}", nextWaitlist.getWaitlistId(), nextWaitlist.getLockExpireTime());
+        log.info("候补ID {} 已通知 - 当前时间: {}, 通知时间: {}, 支付截止时间: {}",
+            nextWaitlist.getWaitlistId(), now, nextWaitlist.getNotifiedTime(), nextWaitlist.getLockExpireTime());
 
 
         try {
@@ -458,12 +475,25 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("该排班已关闭，无法预约");
         }
 
-        //预约
+        // 预约（号源已在取消预约时恢复，直接调用正常预约流程即可）
         Result<AppointmentDTO.AppointmentListDTO> appointResult =
                 scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId());
 
         if (appointResult.getCode() != 200) {
             return Result.error(appointResult.getMsg());
+        }
+
+        // 更新为"已支付"
+        AppointmentDTO.AppointmentListDTO appointmentDTO = appointResult.getData();
+        if (appointmentDTO != null && appointmentDTO.getAppointmentId() != null) {
+            org.hcmu.hcmupojo.entity.Appointment appointment =
+                appointmentMapper.selectById(appointmentDTO.getAppointmentId());
+            if (appointment != null) {
+                appointment.setStatus(2);
+                appointment.setPaymentTime(LocalDateTime.now());
+                appointmentMapper.updateById(appointment);
+                log.info("候补ID {} 创建的预约ID {} 已更新为已支付状态", waitlistId, appointment.getAppointmentId());
+            }
         }
 
         waitlist.setStatus(WaitListEnum.BOOKED.getCode());
