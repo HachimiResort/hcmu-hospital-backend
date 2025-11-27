@@ -157,6 +157,8 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
                 return validateBookingMaxFutureDays(newValue);
             case BOOKING_LIMIT_SAME_TIMESLOT:
                 return validateBookingLimitSameTimeslot(newValue);
+            case BOOKING_MAX_PAY_TIME:
+                return validateBookingMaxPayTime(newValue);
             // 可以继续添加其他规则的校验逻辑
             default:
                 // 其他规则暂不校验
@@ -267,6 +269,46 @@ public class OperationRuleServiceImpl extends MPJBaseServiceImpl<OperationRuleMa
 
         if (results != null && !results.isEmpty()) {
             return Result.error("存在用户在一天有同一时间段有超过1个有效预约, 无法修改此规则");
+        }
+
+        return Result.success(null);
+    }
+
+    /**
+     * 校验 106 规则修改
+     * BOOKING_MAX_PAY_TIME (106，单位：分钟) 必须小于 BOOKING_MIN_HOURS_BEFORE_BOOKING_END (104，单位：小时)
+     * 防止出现就诊已经开始但还未支付的情况
+     */
+    private Result<Void> validateBookingMaxPayTime(Integer newValue) {
+        if (newValue == null) {
+            return Result.success(null);
+        }
+
+        RuleInfo rule104 = getRuleValueByCode(OpRuleEnum.BOOKING_MIN_HOURS_BEFORE_BOOKING_END);
+        if (rule104 == null || rule104.getValue() == null) {
+            log.warn("规则 104 (BOOKING_MIN_HOURS_BEFORE_BOOKING_END) 未配置，使用默认值");
+            Integer default104Hours = OpRuleEnum.BOOKING_MIN_HOURS_BEFORE_BOOKING_END.getDefaultValue();
+            if (default104Hours == null) {
+                return Result.success(null);
+            }
+
+            Integer minHoursInMinutes = default104Hours * 60;
+            if (newValue >= minHoursInMinutes) {
+                return Result.error(
+                    String.format("支付超时时间（%d 分钟）必须小于就诊前停止预约时间（%d 小时 = %d 分钟）",
+                        newValue, default104Hours, minHoursInMinutes)
+                );
+            }
+        } else {
+            Integer rule104Hours = rule104.getValue();
+
+            Integer minHoursInMinutes = rule104Hours * 60;
+            if (newValue >= minHoursInMinutes) {
+                return Result.error(
+                    String.format("支付超时时间（%d 分钟）必须小于就诊前停止预约时间（%d 小时 = %d 分钟）",
+                        newValue, rule104Hours, minHoursInMinutes)
+                );
+            }
         }
 
         return Result.success(null);

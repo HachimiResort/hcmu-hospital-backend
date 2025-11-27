@@ -106,10 +106,10 @@ public class WaitlistScheduledTask {
     }
 
     /**
-     * every 5 min
+     * every 1 min
      * 排班开始前2小时内的候补都无掉了
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 60000)
     public void handleUpcomingSchedules() {
         log.debug("开始处理排班临期的候补...");
 

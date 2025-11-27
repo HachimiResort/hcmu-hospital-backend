@@ -78,11 +78,11 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
     private OperationRuleService operationRuleService;
 
     private int getLockExpireMinutes() {
-        RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.WAITLIST_MAX_PAY_TIME);
+        RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PAY_TIME);
         if (ruleInfo != null && ruleInfo.getEnabled() == 1 && ruleInfo.getValue() != null) {
             return ruleInfo.getValue();
         }
-        return OpRuleEnum.WAITLIST_MAX_PAY_TIME.getDefaultValue();
+        return OpRuleEnum.BOOKING_MAX_PAY_TIME.getDefaultValue();
     }
 
     @Override
