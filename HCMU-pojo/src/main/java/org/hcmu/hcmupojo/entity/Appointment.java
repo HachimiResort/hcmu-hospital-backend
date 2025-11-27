@@ -40,6 +40,9 @@ public class Appointment {
     @TableField("payment_time")
     private LocalDateTime paymentTime; // 付款时间
 
+    @TableField("lock_expire_time")
+    private LocalDateTime lockExpireTime; // 支付锁定过期时间
+
     @TableField("cancellation_time")
     private LocalDateTime cancellationTime; // 取消时间
 
