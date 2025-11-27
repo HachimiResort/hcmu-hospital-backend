@@ -171,6 +171,11 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("候补记录不存在或已被删除");
         }
 
+        // DEBUG: 打印原始数据库记录的时间戳
+        log.info("候补ID {} 数据库原始时间 - createTime: {}, notifiedTime: {}, lockExpireTime: {}, updateTime: {}",
+            waitlistId, waitlist.getCreateTime(), waitlist.getNotifiedTime(),
+            waitlist.getLockExpireTime(), waitlist.getUpdateTime());
+
         MPJLambdaWrapper<Waitlist> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper
                 .select(Waitlist::getWaitlistId,
@@ -330,10 +335,15 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         Waitlist waitlist = Waitlist.builder()
                 .patientUserId(joinDTO.getUserId())
                 .scheduleId(joinDTO.getScheduleId())
-                .status( WaitListEnum.WAITING.getCode())
+                .status(WaitListEnum.WAITING.getCode())
+                .notifiedTime(null)
+                .lockExpireTime(null)
                 .build();
 
         baseMapper.insert(waitlist);
+
+        log.info("用户ID {} 成功加入排班ID {} 的候补队列,候补ID: {}",
+            joinDTO.getUserId(), joinDTO.getScheduleId(), waitlist.getWaitlistId());
 
         return getWaitlistById(waitlist.getWaitlistId());
     }
@@ -360,13 +370,20 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         // 更新候补状态
         LocalDateTime now = LocalDateTime.now();
+
+        // DEBUG: 记录通知前的状态
+        log.info("候补ID {} 通知前状态 - createTime: {}, status: {}, notifiedTime: {}, lockExpireTime: {}",
+            nextWaitlist.getWaitlistId(), nextWaitlist.getCreateTime(), nextWaitlist.getStatus(),
+            nextWaitlist.getNotifiedTime(), nextWaitlist.getLockExpireTime());
+
         nextWaitlist.setStatus(WaitListEnum.NOTIFIED.getCode());
         nextWaitlist.setNotifiedTime(now);
         nextWaitlist.setLockExpireTime(now.plusMinutes(getLockExpireMinutes()));
         nextWaitlist.setUpdateTime(now);
         baseMapper.updateById(nextWaitlist);
 
-        log.info("候补ID {} 已通知，支付截止时间: {}", nextWaitlist.getWaitlistId(), nextWaitlist.getLockExpireTime());
+        log.info("候补ID {} 已通知 - 当前时间: {}, 通知时间: {}, 支付截止时间: {}",
+            nextWaitlist.getWaitlistId(), now, nextWaitlist.getNotifiedTime(), nextWaitlist.getLockExpireTime());
 
 
         try {
