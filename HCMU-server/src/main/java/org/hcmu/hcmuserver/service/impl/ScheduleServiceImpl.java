@@ -570,11 +570,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
             }
         }
 
-        if (availableSlots < 1) {
-            return Result.error("该排班号源已满");
-        }
-
-
         LambdaQueryWrapper<org.hcmu.hcmupojo.entity.PatientProfile> patientProfileWrapper = new LambdaQueryWrapper<>();
         patientProfileWrapper.eq(org.hcmu.hcmupojo.entity.PatientProfile::getUserId, patientUserId)
                 .eq(org.hcmu.hcmupojo.entity.PatientProfile::getIsDeleted, 0)

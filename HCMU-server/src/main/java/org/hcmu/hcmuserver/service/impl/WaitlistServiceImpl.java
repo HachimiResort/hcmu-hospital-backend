@@ -25,6 +25,7 @@ import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmupojo.entity.Waitlist;
 import org.hcmu.hcmupojo.entity.relation.UserRole;
 import org.hcmu.hcmuserver.mapper.Waitlist.WaitlistMapper;
+import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.mapper.patientprofile.PatientProfileMapper;
@@ -76,6 +77,9 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
     @Autowired
     private OperationRuleService operationRuleService;
+
+    @Autowired
+    private AppointmentMapper appointmentMapper;
 
     private int getLockExpireMinutes() {
         RuleInfo ruleInfo = operationRuleService.getRuleValueByCode(OpRuleEnum.BOOKING_MAX_PAY_TIME);
@@ -477,6 +481,19 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         if (appointResult.getCode() != 200) {
             return Result.error(appointResult.getMsg());
+        }
+
+        // 更新为"已支付"
+        AppointmentDTO.AppointmentListDTO appointmentDTO = appointResult.getData();
+        if (appointmentDTO != null && appointmentDTO.getAppointmentId() != null) {
+            org.hcmu.hcmupojo.entity.Appointment appointment =
+                appointmentMapper.selectById(appointmentDTO.getAppointmentId());
+            if (appointment != null) {
+                appointment.setStatus(2);
+                appointment.setPaymentTime(LocalDateTime.now());
+                appointmentMapper.updateById(appointment);
+                log.info("候补ID {} 创建的预约ID {} 已更新为已支付状态", waitlistId, appointment.getAppointmentId());
+            }
         }
 
         waitlist.setStatus(WaitListEnum.BOOKED.getCode());
