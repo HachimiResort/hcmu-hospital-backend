@@ -99,6 +99,7 @@ jobs:
             --name \${IMAGE_NAME} \
             -v \${CONFIG_FILE}:/app/config/application-\${SPRING_PROFILE}.yml \
             -e SPRING_PROFILES_ACTIVE=\${SPRING_PROFILE} \
+            -e TZ=Asia/Shanghai \
             --restart always \
             \${FULL_IMAGE_NAME} \
             --spring.config.location=file:/app/config/application-\${SPRING_PROFILE}.yml
