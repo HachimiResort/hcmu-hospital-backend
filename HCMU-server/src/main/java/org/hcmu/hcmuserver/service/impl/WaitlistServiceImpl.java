@@ -316,9 +316,13 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("当前排班还有可用号源，无需候补");
         }
 
+        // 排除已取消和已过期
         LambdaQueryWrapper<Waitlist> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Waitlist::getPatientUserId, joinDTO.getUserId())
-                .eq(Waitlist::getScheduleId, joinDTO.getScheduleId());
+                .eq(Waitlist::getScheduleId, joinDTO.getScheduleId())
+                .in(Waitlist::getStatus, WaitListEnum.WAITING.getCode(),
+                                        WaitListEnum.NOTIFIED.getCode(),
+                                        WaitListEnum.BOOKED.getCode());
         if (baseMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("您已在该排班的候补队列中");
         }
