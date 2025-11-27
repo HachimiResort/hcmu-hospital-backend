@@ -78,6 +78,8 @@ public enum PermissionEnum {
     ALT_RULE(33, "altRule"),
 
 
+    
+
     /*
      * 医生页面
      */
@@ -99,7 +101,9 @@ public enum PermissionEnum {
     ADD_WAITLIST(40, "addwaitlist"),
     ALT_WAITLIST(41, "altwaitlist"),
     DEL_WAITLIST(42, "delwaitlist"),
-    CHECK_WAITLIST(43, "checkwaitlist");
+    CHECK_WAITLIST(43, "checkwaitlist"),
+
+    APPROVE_SCHEDULE_REQUEST(44, "approveScheduleRequest");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
