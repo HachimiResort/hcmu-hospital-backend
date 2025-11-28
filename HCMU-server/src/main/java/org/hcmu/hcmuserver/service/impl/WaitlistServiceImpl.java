@@ -16,6 +16,7 @@ import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
+import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
@@ -326,7 +327,17 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("当前排班还有可用号源，无需候补");
         }
 
-        // 排除已取消和已过期
+
+        LambdaQueryWrapper<org.hcmu.hcmupojo.entity.Appointment> appointmentWrapper = new LambdaQueryWrapper<>();
+        appointmentWrapper.eq(org.hcmu.hcmupojo.entity.Appointment::getPatientUserId, joinDTO.getUserId())
+                .eq(org.hcmu.hcmupojo.entity.Appointment::getScheduleId, joinDTO.getScheduleId())
+                .eq(org.hcmu.hcmupojo.entity.Appointment::getIsDeleted, 0)
+                .in(org.hcmu.hcmupojo.entity.Appointment::getStatus, 1, 2, 3, 4);
+        if (appointmentMapper.selectCount(appointmentWrapper) > 0) {
+            return Result.error("您已预约该排班，无需候补");
+        }
+
+        // 检查是否已在候补队列中（排除已取消和已过期）
         LambdaQueryWrapper<Waitlist> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Waitlist::getPatientUserId, joinDTO.getUserId())
                 .eq(Waitlist::getScheduleId, joinDTO.getScheduleId())
@@ -485,6 +496,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         if (appointResult.getCode() != 200) {
             return Result.error(appointResult.getMsg());
         }
+
 
         // 更新为"已支付"
         AppointmentDTO.AppointmentListDTO appointmentDTO = appointResult.getData();
