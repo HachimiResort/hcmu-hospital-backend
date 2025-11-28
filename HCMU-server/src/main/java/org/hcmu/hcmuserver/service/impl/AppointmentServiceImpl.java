@@ -292,17 +292,15 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         mailService.sendNotification(subject, content.toString(), userEmail);
         log.info("预约取消邮件已发送至: {}", userEmail);
 
-        // 先恢复号源
-        schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
-        scheduleMapper.updateById(schedule);
-        log.info("排班ID {} 号源已恢复，当前可用号源: {}", appointment.getScheduleId(), schedule.getAvailableSlots());
-
-        // 检查是否有候补队列，如果有则通知下一个候补
         boolean hasWaitlist = waitlistService.notifyNextWaitlist(appointment.getScheduleId());
         if (hasWaitlist) {
-            log.info("已通知排班ID {} 的下一个候补患者", appointment.getScheduleId());
+
+            log.info("已通知排班ID {} 的下一个候补患者，号源保持锁定", appointment.getScheduleId());
         } else {
-            log.info("排班ID {} 没有候补患者", appointment.getScheduleId());
+
+            schedule.setAvailableSlots(schedule.getAvailableSlots() + 1);
+            scheduleMapper.updateById(schedule);
+            log.info("排班ID {} 没有候补患者，号源已恢复，当前可用号源: {}", appointment.getScheduleId(), schedule.getAvailableSlots());
         }
 
         return Result.success("取消预约成功", dto);
