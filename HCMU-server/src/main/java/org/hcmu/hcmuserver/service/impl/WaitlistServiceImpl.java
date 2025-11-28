@@ -16,6 +16,7 @@ import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
 import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.dto.WaitlistDTO;
+import org.hcmu.hcmupojo.entity.Appointment;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
@@ -485,6 +486,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         if (appointResult.getCode() != 200) {
             return Result.error(appointResult.getMsg());
         }
+
 
         // 更新为"已支付"
         AppointmentDTO.AppointmentListDTO appointmentDTO = appointResult.getData();

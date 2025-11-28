@@ -427,11 +427,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         }
 
 
-        Integer availableSlots = schedule.getAvailableSlots();
-        if (availableSlots == null || availableSlots <= 0) {
-            return Result.error("该排班号源已满");
-        }
-
         // 校验患者角色
         MPJLambdaWrapper<UserRole> roleQueryWrapper = new MPJLambdaWrapper<>();
         roleQueryWrapper.select(Role::getType)
@@ -609,9 +604,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         log.info("创建预约，支付截止时间: {}", appointment.getLockExpireTime());
 
         appointmentMapper.insert(appointment);
-        schedule.setAvailableSlots(Math.max(availableSlots - 1, 0));
-
-        baseMapper.updateById(schedule);
 
         // 查询完整的预约信息（包含关联的患者、排班、医生、科室信息）
         MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
