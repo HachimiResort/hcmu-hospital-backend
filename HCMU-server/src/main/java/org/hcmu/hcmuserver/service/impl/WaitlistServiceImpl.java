@@ -341,8 +341,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
         duplicateWrapper.eq(Waitlist::getPatientUserId, joinDTO.getUserId())
                 .eq(Waitlist::getScheduleId, joinDTO.getScheduleId())
                 .in(Waitlist::getStatus, WaitListEnum.WAITING.getCode(),
-                                        WaitListEnum.NOTIFIED.getCode(),
-                                        WaitListEnum.BOOKED.getCode());
+                                        WaitListEnum.NOTIFIED.getCode());
         if (baseMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("您已在该排班的候补队列中");
         }
