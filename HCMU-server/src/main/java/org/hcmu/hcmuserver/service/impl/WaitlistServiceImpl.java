@@ -117,7 +117,8 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         LambdaQueryWrapper<Waitlist> duplicateWrapper = new LambdaQueryWrapper<>();
         duplicateWrapper.eq(Waitlist::getPatientUserId, createDTO.getPatientUserId())
-                .eq(Waitlist::getScheduleId, createDTO.getScheduleId());
+                .eq(Waitlist::getScheduleId, createDTO.getScheduleId())
+                .ne(Waitlist::getStatus, WaitListEnum.CANCELLED.getCode());
         if (baseMapper.selectCount(duplicateWrapper) > 0) {
             return Result.error("该患者已在该排班的等待队列中");
         }
