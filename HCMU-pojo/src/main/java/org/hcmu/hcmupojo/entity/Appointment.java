@@ -53,6 +53,9 @@ public class Appointment {
     private LocalDateTime callingTime;
     private LocalDateTime completionTime;
 
+    @TableField("check_in_time")
+    private LocalDateTime checkInTime; // 签到时间
+
     @TableField("is_deleted")
     private Integer isDeleted; // 逻辑删除
 

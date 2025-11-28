@@ -24,15 +24,22 @@ import org.hcmu.hcmuserver.service.UserService;
 import org.hcmu.hcmuserver.service.WaitlistService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Service
 @Slf4j
+@EnableScheduling
 public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper, Appointment> implements AppointmentService {
+
+    // 允许预期的时间
+    private static final int OVERDUE_DELAY_MINUTES = 1;
 
     @Autowired
     private UserService userService;
@@ -426,7 +433,6 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
         DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
         String userEmail = user.getEmail();
 
-        // 获取时段信息
         String periodDesc = "";
         PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
         if (periodEnum != null) {
@@ -544,8 +550,9 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
             return Result.error("预约记录不存在");
         }
 
-        if (appointment.getStatus() == null || appointment.getStatus() != 3) {
-            return Result.error("该预约不可支付,当前状态为: " + appointment.getStatus());
+        // 允许状态为2(已预约)或3(传呼)的预约标记为未到
+        if (appointment.getStatus() == null || (appointment.getStatus() != 2 && appointment.getStatus() != 3)) {
+            return Result.error("该预约不可标记为未到,当前状态为: " + appointment.getStatus());
         }
 
         appointment.setStatus(6);
@@ -612,5 +619,83 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
         return Result.success("取缔成功", dto);
     }
-   
+
+    /**
+     * every min
+     * 定时检测逾期未签到的预约
+     */
+    @Scheduled(cron = "0 * * * * ?") // evert min 第0秒执行
+    @Transactional(rollbackFor = Exception.class)
+    public void checkOverdueAppointments() {
+        log.info("开始执行逾期预约检测任务");
+
+        try {
+
+            List<Appointment> appointments = lambdaQuery()
+                .in(Appointment::getStatus, 2, 3)
+                .eq(Appointment::getIsDeleted, 0)
+                .isNull(Appointment::getCheckInTime)
+                .list();
+
+            if (appointments.isEmpty()) {
+                log.info("当前没有需要检测的预约");
+                return;
+            }
+
+            log.info("找到 {} 条待检测的预约记录", appointments.size());
+
+            int overdueCount = 0;
+            LocalDateTime now = LocalDateTime.now();
+
+            for (Appointment appointment : appointments) {
+
+                DoctorSchedule schedule = scheduleMapper.selectById(appointment.getScheduleId());
+                if (schedule == null) {
+                    log.warn("预约ID {} 的排班信息不存在，跳过", appointment.getAppointmentId());
+                    continue;
+                }
+
+
+                PeriodEnum periodEnum = PeriodEnum.getEnumByCode(schedule.getSlotPeriod());
+                if (periodEnum == null) {
+                    log.warn("预约ID {} 的时段信息无效，跳过", appointment.getAppointmentId());
+                    continue;
+                }
+                String timeRange = periodEnum.getDesc();
+                String endTimeStr = timeRange.split("-")[1];
+                LocalTime endTime = LocalTime.parse(endTimeStr);
+
+
+                LocalDateTime appointmentEndTime = LocalDateTime.of(schedule.getScheduleDate(), endTime);
+
+
+                LocalDateTime overdueTime = appointmentEndTime.plusMinutes(OVERDUE_DELAY_MINUTES);
+
+                // 检查是否已逾期且未签到
+                if (now.isAfter(overdueTime) && appointment.getCheckInTime() == null) {
+                    log.info("预约ID {} 已逾期，预约时间: {}, 逾期检测时间: {}, 当前时间: {}, 签到时间: null",
+                            appointment.getAppointmentId(),
+                            appointmentEndTime,
+                            overdueTime,
+                            now);
+
+
+                    Result<AppointmentListDTO> result = noShowAppointment(appointment.getAppointmentId());
+
+                    if (result.getCode() == 1) {
+                        overdueCount++;
+                        log.info("预约ID {} 已自动标记为未到", appointment.getAppointmentId());
+                    } else {
+                        log.error("预约ID {} 标记为未到失败: {}", appointment.getAppointmentId(), result.getMsg());
+                    }
+                }
+            }
+
+            log.info("逾期预约检测任务完成，共处理 {} 条逾期记录", overdueCount);
+
+        } catch (Exception e) {
+            log.error("逾期预约检测任务执行失败", e);
+        }
+    }
+
 }
