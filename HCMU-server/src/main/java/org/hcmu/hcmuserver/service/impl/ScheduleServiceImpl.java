@@ -450,7 +450,6 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 .eq(Appointment::getPatientUserId, patientUserId)
                 .eq(Appointment::getStatus, 6)
                 .eq(Appointment::getIsDeleted, 0)
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1)
                 .orderByDesc(DoctorSchedule::getScheduleDate);
 
