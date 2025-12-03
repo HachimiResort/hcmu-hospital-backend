@@ -439,10 +439,17 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
 
         // 爽约限制挂号检查
         RuleInfo noShowPunishRule = operationRuleService.getRuleValueByCode(OpRuleEnum.CANCEL_NO_SHOW_PUNISH_DAYS);
-        if (noShowPunishRule != null && noShowPunishRule.getEnabled() == 1) {
-            Integer punishDays = noShowPunishRule.getValue();
+        RuleInfo noShowCountThresholdRule = operationRuleService.getRuleValueByCode(OpRuleEnum.CANCEL_NO_SHOW_LIMIT);
 
-            // 查询用户的爽约记录（status=6）
+        if (noShowPunishRule != null && noShowPunishRule.getEnabled() == 1
+            && noShowCountThresholdRule != null && noShowCountThresholdRule.getEnabled() == 1) {
+            Integer punishDays = noShowPunishRule.getValue();
+            Integer noShowCountThreshold = noShowCountThresholdRule.getValue();
+
+            LocalDate currentDate = LocalDate.now();
+            LocalDate startDate = currentDate.minusDays(90); // 查询最近90天内的爽约记录
+
+            // 查询最近90天内的爽约记录
             MPJLambdaWrapper<Appointment> noShowWrapper = new MPJLambdaWrapper<>();
             noShowWrapper
                 .selectAll(Appointment.class)
@@ -450,28 +457,27 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
                 .eq(Appointment::getPatientUserId, patientUserId)
                 .eq(Appointment::getStatus, 6)
                 .eq(Appointment::getIsDeleted, 0)
-                .eq(DoctorSchedule::getIsDeleted, 0)
                 .eq(DoctorSchedule::getStatus, 1)
+                .ge(DoctorSchedule::getScheduleDate, startDate)
                 .orderByDesc(DoctorSchedule::getScheduleDate);
 
             List<Appointment> noShowAppointments = appointmentMapper.selectJoinList(Appointment.class, noShowWrapper);
 
-            if (!noShowAppointments.isEmpty()) {
-                LocalDate currentDate = LocalDate.now();
+            // 爽约是否达到阈值
+            if (noShowAppointments.size() >= noShowCountThreshold) {
 
-                for (Appointment noShowAppointment : noShowAppointments) {
-                    // 获取爽约的排班信息
-                    DoctorSchedule noShowSchedule = baseMapper.selectById(noShowAppointment.getScheduleId());
-                    if (noShowSchedule != null) {
-                        LocalDate noShowDate = noShowSchedule.getScheduleDate();
-                        LocalDate punishmentEndDate = noShowDate.plusDays(punishDays);
+                Appointment lastNoShowAppointment = noShowAppointments.get(0);
+                DoctorSchedule lastNoShowSchedule = baseMapper.selectById(lastNoShowAppointment.getScheduleId());
 
-                        // 当前日期在惩罚期内
-                        if (currentDate.isBefore(punishmentEndDate)) {
-                            log.info("用户ID {} 因爽约被限制挂号，爽约日期: {}, 惩罚结束日期: {}",
-                                     patientUserId, noShowDate, punishmentEndDate);
-                            return Result.error("您因爽约记录被限制挂号，限制至 " + punishmentEndDate + "，请届时再试");
-                        }
+                if (lastNoShowSchedule != null) {
+                    LocalDate lastNoShowDate = lastNoShowSchedule.getScheduleDate();
+                    LocalDate punishmentEndDate = lastNoShowDate.plusDays(punishDays);
+
+                    // 当前日期在惩罚期内
+                    if (currentDate.isBefore(punishmentEndDate)) {
+                        log.info("用户ID {} 因爽约被限制挂号，90天内爽约次数: {}, 最后爽约日期: {}, 惩罚结束日期: {}",
+                                 patientUserId, noShowAppointments.size(), lastNoShowDate, punishmentEndDate);
+                        return Result.error("您因爽约记录被限制挂号(90天内爽约" + noShowAppointments.size() + "次)，限制至 " + punishmentEndDate + "，请届时再试");
                     }
                 }
             }
