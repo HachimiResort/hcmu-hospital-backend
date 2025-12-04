@@ -18,4 +18,14 @@ public class AppointmentDashboardDTO {
         @NotNull(message = "时间范围不能为空")
         private StatisticsTimeRangeEnum timeRange;
     }
+
+    /**
+     * 时段-预约量曲线图请求
+     */
+    @Data
+    public static class AppointmentTrendDTO {
+
+        @NotNull(message = "时间范围不能为空")
+        private StatisticsTimeRangeEnum timeRange;
+    }
 }

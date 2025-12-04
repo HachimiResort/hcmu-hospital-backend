@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class AppointmentDashboardVO {
 
@@ -47,5 +48,37 @@ public class AppointmentDashboardVO {
          * 收入统计
          */
         private BigDecimal totalRevenue;
+    }
+
+    /**
+     * 时段-预约量曲线图
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AppointmentTrendVO {
+
+        private List<TrendDataPoint> trendData;
+    }
+
+    /**
+     * 曲线图数据点
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrendDataPoint {
+
+        /**
+         * 预约数量
+         */
+        private Long count;
+
+        /**
+         * 时段标签
+         */
+        private String periodLabel;
     }
 }

@@ -31,4 +31,12 @@ public class AppointmentDashboardController {
             @RequestBody @Valid AppointmentDashboardDTO.AppointmentStatisticsDTO requestDTO) {
         return appointmentDashboardService.getAppointmentStatistics(requestDTO);
     }
+
+    @AutoLog("获取时段-预约量曲线图")
+    @Operation(description = "获取时段-预约量曲线图", summary = "获取时段-预约量曲线图")
+    @PostMapping("/trend")
+    public Result<AppointmentDashboardVO.AppointmentTrendVO> getAppointmentTrend(
+            @RequestBody @Valid AppointmentDashboardDTO.AppointmentTrendDTO requestDTO) {
+        return appointmentDashboardService.getAppointmentTrend(requestDTO);
+    }
 }
