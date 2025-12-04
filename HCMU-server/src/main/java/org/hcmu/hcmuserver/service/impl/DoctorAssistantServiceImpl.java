@@ -3,8 +3,11 @@ package org.hcmu.hcmuserver.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmupojo.dto.AiAssistantDTO;
+import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmuserver.config.DoctorAssistantProperties;
+import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.service.DoctorAssistantService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +21,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.github.yulichang.wrapper.MPJLambdaWrapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +33,9 @@ public class DoctorAssistantServiceImpl implements DoctorAssistantService {
 
     private final RestTemplate aiAssistantRestTemplate;
     private final DoctorAssistantProperties doctorAssistantProperties;
+
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Override
     public AiAssistantDTO.ChatCompletionResponse chat(AiAssistantDTO.ChatCompletionRequest request) {
@@ -108,9 +116,21 @@ public class DoctorAssistantServiceImpl implements DoctorAssistantService {
         upstream.setStream(false);
 
         List<AiAssistantDTO.ChatMessage> messages = new ArrayList<>();
-        String prompt = StringUtils.hasText(request.getSystemPrompt())
-                ? request.getSystemPrompt()
-                : doctorAssistantProperties.getSystemPrompt();
+        String prompt = "你是基米医生，可以帮助患者解答医疗相关的问题，尤其是帮助患者进行预诊并进行就诊科室的推荐。请确保你的回答准确且专业。\n目前医院的科室有：\n";
+
+        MPJLambdaWrapper<Department> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Department.class)
+                .ne(Department::getDepartmentId, 0);
+        List<Department> departments = departmentMapper.selectList(queryWrapper);
+        for (Department dept : departments) {
+            prompt += String.format("科室ID：%d，科室名称：%s；\n", dept.getDepartmentId(), dept.getName());
+        }
+
+        prompt += "当推荐科室时，需要你解释一下可能的原因，可能的疾病类型等。如果用户描述的症状不明确，可以先通过提问获取更多信息再进行推荐。\n";
+
+        prompt += "你只需要以“[科室名](/pages/appointment/dep/dep?departmentId={科室ID})”的格式来推荐科室，用户就能点击转跳到对应页面进行预约挂号。\n";
+
+
 
         if (StringUtils.hasText(prompt)) {
             AiAssistantDTO.ChatMessage systemMessage = new AiAssistantDTO.ChatMessage();
