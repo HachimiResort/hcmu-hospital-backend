@@ -26,17 +26,15 @@ public class AppointmentDashboardController {
 
     @AutoLog("获取号源统计")
     @Operation(description = "获取号源统计", summary = "获取号源统计")
-    @PostMapping("/statistics")
-    public Result<AppointmentDashboardVO.AppointmentStatisticsVO> getAppointmentStatistics(
-            @RequestBody @Valid AppointmentDashboardDTO.AppointmentStatisticsDTO requestDTO) {
+    @GetMapping("/statistics")
+    public Result<AppointmentDashboardVO.AppointmentStatisticsVO> getAppointmentStatistics(@Valid AppointmentDashboardDTO.AppointmentStatisticsDTO requestDTO) {
         return appointmentDashboardService.getAppointmentStatistics(requestDTO);
     }
 
     @AutoLog("获取时段-预约量曲线图")
     @Operation(description = "获取时段-预约量曲线图", summary = "获取时段-预约量曲线图")
-    @PostMapping("/trend")
-    public Result<AppointmentDashboardVO.AppointmentTrendVO> getAppointmentTrend(
-            @RequestBody @Valid AppointmentDashboardDTO.AppointmentTrendDTO requestDTO) {
+    @GetMapping("/trend")
+    public Result<AppointmentDashboardVO.AppointmentTrendVO> getAppointmentTrend(@Valid AppointmentDashboardDTO.AppointmentTrendDTO requestDTO) {
         return appointmentDashboardService.getAppointmentTrend(requestDTO);
     }
 }
