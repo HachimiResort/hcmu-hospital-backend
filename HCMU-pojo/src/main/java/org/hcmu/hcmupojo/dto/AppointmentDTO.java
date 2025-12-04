@@ -31,6 +31,7 @@ public class AppointmentDTO {
         private LocalDateTime callingTime;
         private LocalDateTime completionTime;
         private String cancellationReason;
+        private LocalDateTime checkInTime;
         private LocalDateTime createTime;
         private LocalDateTime updateTime;
 
@@ -61,6 +62,16 @@ public class AppointmentDTO {
     @Data
     public static class AppointmentPayDTO {
 
+    }
+
+    @Data
+    public static class AppointmentCheckInDTO {
+        private String token;
+    }
+
+    @Data
+    public static class AppointmentCheckInTokenDTO {
+        private String token;
     }
 
 

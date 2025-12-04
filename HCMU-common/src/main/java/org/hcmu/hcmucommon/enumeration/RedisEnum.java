@@ -12,7 +12,8 @@ public enum RedisEnum {
     LOGIN(1, "login:"),
     REGISTER(2, "register:"),
     REBIND(3, "rebind:"),
-    FORGET(4, "forget:");
+    FORGET(4, "forget:"),
+    CHECK_IN_TOKEN(5, "checkin-token:");
 
     @EnumValue
     private Integer code;
