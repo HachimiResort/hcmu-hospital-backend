@@ -179,8 +179,6 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
             return Result.error("候补记录不存在或已被删除");
         }
 
-
-
         MPJLambdaWrapper<Waitlist> queryWrapper = new MPJLambdaWrapper<>();
         queryWrapper
                 .select(Waitlist::getWaitlistId,

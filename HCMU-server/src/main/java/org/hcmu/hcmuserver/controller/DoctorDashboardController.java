@@ -26,25 +26,22 @@ public class DoctorDashboardController {
 
     @AutoLog("获取医生就诊量排行")
     @Operation(description = "获取医生就诊量排行", summary = "获取医生就诊量排行")
-    @PostMapping("/visit-rank")
-    public Result<DoctorDashboardVO.DoctorVisitRankVO> getDoctorVisitRank(
-            @RequestBody @Valid DoctorDashboardDTO.DoctorVisitRankDTO requestDTO) {
+    @GetMapping("/visit-rank")
+    public Result<DoctorDashboardVO.DoctorVisitRankVO> getDoctorVisitRank(@Valid DoctorDashboardDTO.DoctorVisitRankDTO requestDTO) {
         return doctorDashboardService.getDoctorVisitRank(requestDTO);
     }
 
     @AutoLog("获取医生收入排行")
     @Operation(description = "获取医生收入排行", summary = "获取医生收入排行")
-    @PostMapping("/income-rank")
-    public Result<DoctorDashboardVO.DoctorIncomeRankVO> getDoctorIncomeRank(
-            @RequestBody @Valid DoctorDashboardDTO.DoctorIncomeRankDTO requestDTO) {
+    @GetMapping("/income-rank")
+    public Result<DoctorDashboardVO.DoctorIncomeRankVO> getDoctorIncomeRank(@Valid DoctorDashboardDTO.DoctorIncomeRankDTO requestDTO) {
         return doctorDashboardService.getDoctorIncomeRank(requestDTO);
     }
 
     @AutoLog("获取医生预约率统计")
     @Operation(description = "获取医生预约率统计", summary = "获取医生预约率统计")
-    @PostMapping("/appointment-rate")
-    public Result<DoctorDashboardVO.DoctorAppointmentRateVO> getDoctorAppointmentRate(
-            @RequestBody @Valid DoctorDashboardDTO.DoctorAppointmentRateDTO requestDTO) {
+    @GetMapping("/appointment-rate")
+    public Result<DoctorDashboardVO.DoctorAppointmentRateVO> getDoctorAppointmentRate(@Valid DoctorDashboardDTO.DoctorAppointmentRateDTO requestDTO) {
         return doctorDashboardService.getDoctorAppointmentRate(requestDTO);
     }
 }
