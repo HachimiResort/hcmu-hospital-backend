@@ -23,5 +23,9 @@ public interface AppointmentService{
     public Result<AppointmentDTO.AppointmentListDTO> completeAppointment(Long appointmentId); // 完成就诊
 
     public Result<AppointmentDTO.AppointmentListDTO> noShowAppointment(Long appointmentId); // 未到诊
+
+    Result<AppointmentDTO.AppointmentCheckInTokenDTO> generateCheckInToken();
+
+    Result<AppointmentDTO.AppointmentListDTO> checkInAppointment(Long appointmentId, String token);
  
 }
