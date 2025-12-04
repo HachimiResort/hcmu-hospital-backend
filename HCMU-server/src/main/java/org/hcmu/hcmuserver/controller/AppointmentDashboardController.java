@@ -9,6 +9,7 @@ import org.hcmu.hcmupojo.dto.AppointmentDashboardDTO;
 import org.hcmu.hcmupojo.vo.AppointmentDashboardVO;
 import org.hcmu.hcmuserver.service.AppointmentDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class AppointmentDashboardController {
     @AutoLog("获取号源统计")
     @Operation(description = "获取号源统计", summary = "获取号源统计")
     @GetMapping("/statistics")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<AppointmentDashboardVO.AppointmentStatisticsVO> getAppointmentStatistics(@Valid AppointmentDashboardDTO.AppointmentStatisticsDTO requestDTO) {
         return appointmentDashboardService.getAppointmentStatistics(requestDTO);
     }
@@ -34,6 +36,7 @@ public class AppointmentDashboardController {
     @AutoLog("获取时段-预约量曲线图")
     @Operation(description = "获取时段-预约量曲线图", summary = "获取时段-预约量曲线图")
     @GetMapping("/trend")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<AppointmentDashboardVO.AppointmentTrendVO> getAppointmentTrend(@Valid AppointmentDashboardDTO.AppointmentTrendDTO requestDTO) {
         return appointmentDashboardService.getAppointmentTrend(requestDTO);
     }

@@ -103,7 +103,9 @@ public enum PermissionEnum {
     DEL_WAITLIST(42, "delwaitlist"),
     CHECK_WAITLIST(43, "checkwaitlist"),
 
-    APPROVE_SCHEDULE_REQUEST(44, "approveScheduleRequest");
+    APPROVE_SCHEDULE_REQUEST(44, "approveScheduleRequest"),
+
+    CHECK_DASHBOARD(45, "checkdashboard");
 
     PermissionEnum(Integer code, String name) {
         this.code = code;
