@@ -2,7 +2,6 @@ package org.hcmu.hcmuserver.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AiAssistantDTO;
 import org.hcmu.hcmuserver.config.DoctorAssistantProperties;
 import org.hcmu.hcmuserver.service.DoctorAssistantService;
@@ -31,13 +30,13 @@ public class DoctorAssistantServiceImpl implements DoctorAssistantService {
     private final DoctorAssistantProperties doctorAssistantProperties;
 
     @Override
-    public Result<AiAssistantDTO.ChatCompletionResponse> chat(AiAssistantDTO.ChatCompletionRequest request) {
+    public AiAssistantDTO.ChatCompletionResponse chat(AiAssistantDTO.ChatCompletionRequest request) {
         if (request == null || CollectionUtils.isEmpty(request.getMessages())) {
-            return Result.error("messages不能为空");
+            throw new IllegalArgumentException("messages不能为空");
         }
 
         if (Boolean.TRUE.equals(request.getStream())) {
-            return Result.error("当前接口暂不支持流式响应");
+            throw new IllegalArgumentException("当前接口暂不支持流式响应");
         }
 
         AiAssistantDTO.ChatCompletionRequest upstreamRequest = buildUpstreamRequest(request);
@@ -58,19 +57,19 @@ public class DoctorAssistantServiceImpl implements DoctorAssistantService {
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 log.warn("调用智能医生助手失败，status={}", response.getStatusCode());
-                return Result.error("智能医生助手服务调用失败");
+                throw new RestClientException("智能医生助手服务调用失败，状态码：" + response.getStatusCode());
             }
 
             AiAssistantDTO.ChatCompletionResponse responseBody = response.getBody();
             if (responseBody == null) {
                 log.warn("智能医生助手返回空响应");
-                return Result.error("智能医生助手服务返回空响应");
+                throw new RestClientException("智能医生助手服务返回空响应");
             }
 
-            return Result.success(responseBody);
+            return responseBody;
         } catch (RestClientException ex) {
             log.error("调用智能医生助手异常", ex);
-            return Result.error("智能医生助手服务暂不可用，请稍后重试");
+            throw ex;
         }
     }
 

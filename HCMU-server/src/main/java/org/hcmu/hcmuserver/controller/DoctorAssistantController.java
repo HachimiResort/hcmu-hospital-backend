@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.annotation.AutoLog;
-import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.AiAssistantDTO;
 import org.hcmu.hcmuserver.service.DoctorAssistantService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +27,7 @@ public class DoctorAssistantController {
     @AutoLog("智能医生助手对话")
     @Operation(summary = "智能医生助手对话", description = "遵循 OpenAI chat completions 格式，内部转发到本地推理服务")
     @PostMapping("/v1/chat/completions")
-    public Result<AiAssistantDTO.ChatCompletionResponse> chat(
+    public AiAssistantDTO.ChatCompletionResponse chat(
             @Valid @RequestBody AiAssistantDTO.ChatCompletionRequest request) {
         return doctorAssistantService.chat(request);
     }
