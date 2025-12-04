@@ -9,7 +9,9 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.enumeration.OpRuleEnum;
 import org.hcmu.hcmucommon.enumeration.PeriodEnum;
+import org.hcmu.hcmucommon.enumeration.RedisEnum;
 import org.hcmu.hcmucommon.result.Result;
+import org.hcmu.hcmucommon.utils.RedisUtil;
 import org.hcmu.hcmupojo.dto.AppointmentDTO;
 import org.hcmu.hcmupojo.dto.AppointmentDTO.AppointmentListDTO;
 import org.hcmu.hcmupojo.dto.OperationRuleDTO.RuleInfo;
@@ -32,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -40,6 +44,7 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
     // 允许预期的时间
     private static final int OVERDUE_DELAY_MINUTES = 1;
+    private static final long CHECK_IN_TOKEN_TTL_MINUTES = 5L;
 
     @Autowired
     private UserService userService;
@@ -55,6 +60,9 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
     @Autowired
     private WaitlistService waitlistService;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     public Result<PageDTO<AppointmentDTO.AppointmentListDTO>> getAppointments(AppointmentDTO.AppointmentGetRequestDTO requestDTO) {
@@ -616,6 +624,72 @@ public class AppointmentServiceImpl extends MPJBaseServiceImpl<AppointmentMapper
 
 
         return Result.success("取缔成功", dto);
+    }
+
+    @Override
+    public Result<AppointmentDTO.AppointmentCheckInTokenDTO> generateCheckInToken() {
+        String token = UUID.randomUUID().toString();
+        String key = RedisEnum.CHECK_IN_TOKEN.getDesc() + token;
+        redisUtil.setCacheObject(key, "1", (int) CHECK_IN_TOKEN_TTL_MINUTES, TimeUnit.MINUTES);
+
+        AppointmentDTO.AppointmentCheckInTokenDTO dto = new AppointmentDTO.AppointmentCheckInTokenDTO();
+        dto.setToken(token);
+        return Result.success("生成签到token成功", dto);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<AppointmentListDTO> checkInAppointment(Long appointmentId, String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return Result.error("签到token不能为空");
+        }
+
+        String redisKey = RedisEnum.CHECK_IN_TOKEN.getDesc() + token;
+        Object cachedToken = redisUtil.getCacheObject(redisKey);
+        if (cachedToken == null) {
+            return Result.error("签到token无效或已过期");
+        }
+
+        Appointment appointment = baseMapper.selectById(appointmentId);
+        if (appointment == null) {
+            return Result.error("预约记录不存在");
+        }
+
+        if (appointment.getCheckInTime() != null) {
+            return Result.error("该预约已签到");
+        }
+
+        if (appointment.getStatus() == null || (appointment.getStatus() != 2 && appointment.getStatus() != 3)) {
+            return Result.error("当前预约状态不可签到");
+        }
+
+        appointment.setCheckInTime(LocalDateTime.now());
+        baseMapper.updateById(appointment);
+
+        // token设置为一次性使用，签到成功后删除
+        redisUtil.deleteObject(redisKey);
+
+        MPJLambdaWrapper<Appointment> queryWrapper = new MPJLambdaWrapper<>();
+        queryWrapper.selectAll(Appointment.class)
+                .leftJoin(User.class, User::getUserId, Appointment::getPatientUserId)
+                .selectAs(User::getUserName, "patientUserName")
+                .selectAs(User::getName, "patientName")
+                .selectAs(User::getPhone, "patientPhone")
+                .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
+                .selectAs(DoctorSchedule::getScheduleDate, "scheduleDate")
+                .selectAs(DoctorSchedule::getSlotType, "slotType")
+                .selectAs(DoctorSchedule::getSlotPeriod, "slotPeriod")
+                .leftJoin(User.class, "doctor_user", User::getUserId, DoctorSchedule::getDoctorUserId)
+                .select("doctor_user.name as doctorName")
+                .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
+                .selectAs(DoctorProfile::getTitle, "doctorTitle")
+                .selectAs(DoctorProfile::getUserId, "doctorUserId")
+                .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
+                .selectAs(Department::getName, "departmentName")
+                .eq(Appointment::getAppointmentId, appointmentId);
+        
+        AppointmentListDTO dto = baseMapper.selectJoinOne(AppointmentListDTO.class, queryWrapper);
+        return Result.success("签到成功", dto);
     }
 
     /**
