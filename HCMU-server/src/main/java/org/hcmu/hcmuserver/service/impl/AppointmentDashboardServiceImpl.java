@@ -80,7 +80,7 @@ public class AppointmentDashboardServiceImpl implements AppointmentDashboardServ
         MPJLambdaWrapper<Appointment> revenueWrapper = new MPJLambdaWrapper<>();
         revenueWrapper.selectSum(DoctorSchedule::getFee, "totalFee")
                 .leftJoin(DoctorSchedule.class, DoctorSchedule::getScheduleId, Appointment::getScheduleId)
-                .in(Appointment::getStatus, 2, 3, 4);
+                .in(Appointment::getStatus, 2, 3, 4, 6);
         if (startTime != null) {
             revenueWrapper.ge(Appointment::getCreateTime, startTime);
         }

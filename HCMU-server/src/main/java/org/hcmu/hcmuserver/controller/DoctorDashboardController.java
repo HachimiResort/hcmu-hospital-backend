@@ -9,6 +9,7 @@ import org.hcmu.hcmupojo.dto.DoctorDashboardDTO;
 import org.hcmu.hcmupojo.vo.DoctorDashboardVO;
 import org.hcmu.hcmuserver.service.DoctorDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class DoctorDashboardController {
     @AutoLog("获取医生就诊量排行")
     @Operation(description = "获取医生就诊量排行", summary = "获取医生就诊量排行")
     @GetMapping("/visit-rank")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<DoctorDashboardVO.DoctorVisitRankVO> getDoctorVisitRank(@Valid DoctorDashboardDTO.DoctorVisitRankDTO requestDTO) {
         return doctorDashboardService.getDoctorVisitRank(requestDTO);
     }
@@ -34,6 +36,7 @@ public class DoctorDashboardController {
     @AutoLog("获取医生收入排行")
     @Operation(description = "获取医生收入排行", summary = "获取医生收入排行")
     @GetMapping("/income-rank")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<DoctorDashboardVO.DoctorIncomeRankVO> getDoctorIncomeRank(@Valid DoctorDashboardDTO.DoctorIncomeRankDTO requestDTO) {
         return doctorDashboardService.getDoctorIncomeRank(requestDTO);
     }
@@ -41,6 +44,7 @@ public class DoctorDashboardController {
     @AutoLog("获取医生预约率统计")
     @Operation(description = "获取医生预约率统计", summary = "获取医生预约率统计")
     @GetMapping("/appointment-rate")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<DoctorDashboardVO.DoctorAppointmentRateVO> getDoctorAppointmentRate(@Valid DoctorDashboardDTO.DoctorAppointmentRateDTO requestDTO) {
         return doctorDashboardService.getDoctorAppointmentRate(requestDTO);
     }

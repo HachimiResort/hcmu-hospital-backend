@@ -9,6 +9,7 @@ import org.hcmu.hcmupojo.dto.DepartmentDashboardDTO;
 import org.hcmu.hcmupojo.vo.DepartmentDashboardVO;
 import org.hcmu.hcmuserver.service.DepartmentDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class DepartmentDashboardController {
     @AutoLog("获取科室负荷统计")
     @Operation(description = "获取科室负荷统计", summary = "获取科室负荷统计")
     @GetMapping("/department-load")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<DepartmentDashboardVO.LoadStatisticsVO> getDepartmentLoadStatistics() {
         return departmentDashboardService.getDepartmentLoadStatistics();
     }
@@ -34,6 +36,7 @@ public class DepartmentDashboardController {
     @AutoLog("获取科室预约排行")
     @Operation(description = "获取科室预约排行", summary = "获取科室预约排行")
     @GetMapping("/appointment-rank")
+    @PreAuthorize("@ex.hasSysAuthority('CHECK_DASHBOARD')")
     public Result<DepartmentDashboardVO.AppointmentRankVO> getDepartmentAppointmentRank(@Valid DepartmentDashboardDTO.AppointmentRankDTO requestDTO) {
         return departmentDashboardService.getDepartmentAppointmentRank(requestDTO);
     }
