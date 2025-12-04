@@ -33,9 +33,8 @@ public class DepartmentDashboardController {
 
     @AutoLog("获取科室预约排行")
     @Operation(description = "获取科室预约排行", summary = "获取科室预约排行")
-    @PostMapping("/appointment-rank")
-    public Result<DepartmentDashboardVO.AppointmentRankVO> getDepartmentAppointmentRank(
-            @RequestBody @Valid DepartmentDashboardDTO.AppointmentRankDTO requestDTO) {
+    @GetMapping("/appointment-rank")
+    public Result<DepartmentDashboardVO.AppointmentRankVO> getDepartmentAppointmentRank(@Valid DepartmentDashboardDTO.AppointmentRankDTO requestDTO) {
         return departmentDashboardService.getDepartmentAppointmentRank(requestDTO);
     }
 }
