@@ -14,6 +14,7 @@ import org.hcmu.hcmupojo.entity.DoctorSchedule;
 import org.hcmu.hcmupojo.vo.DepartmentDashboardVO;
 import org.hcmu.hcmuserver.mapper.appointment.AppointmentMapper;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
+import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
 import org.hcmu.hcmuserver.mapper.schedule.ScheduleMapper;
 import org.hcmu.hcmuserver.service.DepartmentDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
     private DepartmentMapper departmentMapper;
 
     @Autowired
+    private DoctorProfileMapper doctorProfileMapper;
+
+    @Autowired
     private ScheduleMapper scheduleMapper;
 
     @Autowired
@@ -44,10 +48,12 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
 
     @Override
     public Result<DepartmentDashboardVO.LoadStatisticsVO> getDepartmentLoadStatistics() {
+        log.info("开始查询科室负荷统计数据");
 
         LambdaQueryWrapper<Department> departmentWrapper = new LambdaQueryWrapper<>();
         departmentWrapper.ne(Department::getDepartmentId, 0);
         List<Department> departments = departmentMapper.selectList(departmentWrapper);
+        log.info("查询到科室总数: {}", departments.size());
 
         int totalDepartments = departments.size();
         int highLoadCount = 0;
@@ -63,42 +69,82 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
         for (Department department : departments) {
             Long departmentId = department.getDepartmentId();
             String departmentName = department.getName();
+            log.debug("正在处理科室: id={}, name={}", departmentId, departmentName);
 
-            MPJLambdaWrapper<DoctorSchedule> scheduleWrapper = new MPJLambdaWrapper<>();
-            scheduleWrapper
-                    .selectSum(DoctorSchedule::getTotalSlots, "totalSlots")
-                    .selectSum(DoctorSchedule::getAvailableSlots, "availableSlots")
-                    .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, DoctorSchedule::getDoctorUserId)
-                    .eq(DoctorProfile::getDepartmentId, departmentId);
+            int totalSlots = 0;
+            int availableSlots = 0;
 
-            Map<String, Object> resultMap = scheduleMapper.selectJoinMaps(scheduleWrapper).stream()
-                    .findFirst()
-                    .orElse(new HashMap<>());
+            try {
+                LambdaQueryWrapper<DoctorProfile> doctorWrapper = new LambdaQueryWrapper<>();
+                doctorWrapper.select(DoctorProfile::getUserId)
+                        .eq(DoctorProfile::getDepartmentId, departmentId);
+                List<DoctorProfile> doctors = doctorProfileMapper.selectList(doctorWrapper);
 
-            Object totalSlotsObj = resultMap.get("totalSlots");
-            Object availableSlotsObj = resultMap.get("availableSlots");
+                if (doctors == null || doctors.isEmpty()) {
+                    log.debug("科室 {} 没有医生，标记为空闲", departmentName);
+                    idleCount++;
+                    idleList.add(buildDepartmentInfoVO(departmentId, departmentName));
+                    continue;
+                }
 
-            DepartmentDashboardVO.DepartmentInfoVO simpleVO = DepartmentDashboardVO.DepartmentInfoVO.builder()
-                    .departmentId(departmentId)
-                    .departmentName(departmentName)
-                    .build();
+                List<Long> doctorIds = new ArrayList<>();
+                for (DoctorProfile doctor : doctors) {
+                    if (doctor.getUserId() != null) {
+                        doctorIds.add(doctor.getUserId());
+                    }
+                }
 
-            if (totalSlotsObj == null || availableSlotsObj == null) {
+                if (doctorIds.isEmpty()) {
+                    log.debug("科室 {} 没有有效医生ID，标记为空闲", departmentName);
+                    idleCount++;
+                    idleList.add(buildDepartmentInfoVO(departmentId, departmentName));
+                    continue;
+                }
+                
+                LambdaQueryWrapper<DoctorSchedule> scheduleWrapper = new LambdaQueryWrapper<>();
+                scheduleWrapper.select(DoctorSchedule::getTotalSlots, DoctorSchedule::getAvailableSlots)
+                        .in(DoctorSchedule::getDoctorUserId, doctorIds);
+                List<DoctorSchedule> schedules = scheduleMapper.selectList(scheduleWrapper);
+
+                if (schedules == null || schedules.isEmpty()) {
+                    log.debug("科室 {} 没有排班信息，标记为空闲", departmentName);
+                    idleCount++;
+                    idleList.add(buildDepartmentInfoVO(departmentId, departmentName));
+                    continue;
+                }
+
+                for (DoctorSchedule schedule : schedules) {
+                    if (schedule.getTotalSlots() != null) {
+                        totalSlots += schedule.getTotalSlots();
+                    }
+                    if (schedule.getAvailableSlots() != null) {
+                        availableSlots += schedule.getAvailableSlots();
+                    }
+                }
+
+                log.debug("科室 {} 槽位统计: totalSlots={}, availableSlots={}",
+                        departmentName, totalSlots, availableSlots);
+
+            } catch (Exception e) {
+                log.error("查询科室负荷数据失败，departmentId: {}, departmentName: {}",
+                        departmentId, departmentName, e);
+
                 idleCount++;
-                idleList.add(simpleVO);
+                idleList.add(buildDepartmentInfoVO(departmentId, departmentName));
                 continue;
             }
 
-            int totalSlots = ((Number) totalSlotsObj).intValue();
-            int availableSlots = ((Number) availableSlotsObj).intValue();
+            DepartmentDashboardVO.DepartmentInfoVO simpleVO = buildDepartmentInfoVO(departmentId, departmentName);
 
             if (totalSlots == 0) {
+                log.debug("科室 {} 总槽位为0，标记为空闲", departmentName);
                 idleCount++;
                 idleList.add(simpleVO);
                 continue;
             }
 
             double availabilityRate = (double) availableSlots / totalSlots;
+            log.debug("科室 {} 可用率: {}", departmentName, availabilityRate);
 
             DepartmentLoadStatusEnum loadStatus = DepartmentLoadStatusEnum.getByAvailabilityRate(availabilityRate);
 
@@ -122,6 +168,9 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
             }
         }
 
+        log.info("科室负荷统计完成: 总数={}, 高负荷={}, 中负荷={}, 低负荷={}, 空闲={}",
+                totalDepartments, highLoadCount, mediumLoadCount, lowLoadCount, idleCount);
+
         DepartmentDashboardVO.LoadStatisticsVO result = DepartmentDashboardVO.LoadStatisticsVO.builder()
                 .totalDepartments(totalDepartments)
                 .highLoadDepartments(highLoadCount)
@@ -135,6 +184,16 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
                 .build();
 
         return Result.success(result);
+    }
+
+    /**
+     * 构建科室信息VO
+     */
+    private DepartmentDashboardVO.DepartmentInfoVO buildDepartmentInfoVO(Long departmentId, String departmentName) {
+        return DepartmentDashboardVO.DepartmentInfoVO.builder()
+                .departmentId(departmentId)
+                .departmentName(departmentName)
+                .build();
     }
 
     @Override
@@ -193,7 +252,6 @@ public class DepartmentDashboardServiceImpl implements DepartmentDashboardServic
             Long departmentId = ((Number) departmentIdObj).longValue();
             Long appointmentCount = appointmentCountObj != null ? ((Number) appointmentCountObj).longValue() : 0L;
 
-            // 查询科室名称
             Department department = departmentMapper.selectById(departmentId);
             if (department == null || department.getIsDeleted() == 1) {
                 log.warn("科室不存在或已删除，departmentId: {}", departmentId);
