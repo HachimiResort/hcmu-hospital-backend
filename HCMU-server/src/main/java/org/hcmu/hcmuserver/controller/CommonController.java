@@ -2,14 +2,17 @@ package org.hcmu.hcmuserver.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmucommon.utils.AliOssUtil;
+import org.hcmu.hcmupojo.dto.DashboardExportDTO;
+import org.hcmu.hcmuserver.service.DashboardExportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -22,10 +25,14 @@ import java.util.UUID;
 @RequestMapping("/common")
 @Tag(name = "通用功能相关接口", description = "通用功能相关接口")
 @Slf4j
+@Validated
 public class CommonController {
 
     @Autowired
     private AliOssUtil aliOssUtil;
+
+    @Autowired
+    private DashboardExportService dashboardExportService;
 
 
     @PostMapping("/upload")
@@ -42,5 +49,13 @@ public class CommonController {
         String filePath = aliOssUtil.upload(file.getBytes(), objectName);
         return Result.success(filePath);
 
+    }
+
+    @PostMapping("/export-dashboard")
+    @AutoLog("导出大屏数据")
+    @Operation(description = "导出大屏数据为Excel", summary = "导出大屏数据")
+    public Result<String> exportDashboard(@Valid @RequestBody DashboardExportDTO exportDTO) {
+        log.info("导出大屏数据请求: {}", exportDTO);
+        return dashboardExportService.exportDashboardData(exportDTO);
     }
 }
