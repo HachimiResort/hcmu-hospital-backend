@@ -13,7 +13,6 @@ public class MapDTO {
         private Long mapId;
         private String mapName;
         private String imageBase64;
-        private LocalDateTime createTime;
     }
 
     @Data

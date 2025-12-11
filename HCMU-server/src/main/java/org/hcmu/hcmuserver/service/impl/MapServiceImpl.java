@@ -21,7 +21,7 @@ public class MapServiceImpl extends MPJBaseServiceImpl<MapMapper, Map> implement
     @Override
     public Result<List<MapDTO.MapListDTO>> getAllMaps() {
         LambdaQueryWrapper<Map> wrapper = new LambdaQueryWrapper<>();
-        wrapper.select(Map::getMapId, Map::getMapName, Map::getImageBase64, Map::getCreateTime);
+        wrapper.select(Map::getMapId, Map::getMapName, Map::getImageBase64);
 
         List<Map> maps = baseMapper.selectList(wrapper);
 
@@ -30,7 +30,6 @@ public class MapServiceImpl extends MPJBaseServiceImpl<MapMapper, Map> implement
             dto.setMapId(map.getMapId());
             dto.setMapName(map.getMapName());
             dto.setImageBase64(map.getImageBase64());
-            dto.setCreateTime(map.getCreateTime());
             return dto;
         }).collect(Collectors.toList());
 
@@ -58,7 +57,6 @@ public class MapServiceImpl extends MPJBaseServiceImpl<MapMapper, Map> implement
         result.setMapId(map.getMapId());
         result.setMapName(map.getMapName());
         result.setImageBase64(map.getImageBase64());
-        result.setCreateTime(map.getCreateTime());
 
         return Result.success(result);
     }
@@ -74,7 +72,6 @@ public class MapServiceImpl extends MPJBaseServiceImpl<MapMapper, Map> implement
         dto.setMapId(map.getMapId());
         dto.setMapName(map.getMapName());
         dto.setImageBase64(map.getImageBase64());
-        dto.setCreateTime(map.getCreateTime());
 
         return Result.success(dto);
     }

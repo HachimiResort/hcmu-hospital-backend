@@ -6,7 +6,11 @@ import jakarta.validation.Valid;
 import org.hcmu.hcmucommon.annotation.AutoLog;
 import org.hcmu.hcmucommon.result.Result;
 import org.hcmu.hcmupojo.dto.MapDTO;
+import org.hcmu.hcmupojo.dto.MapEdgeDTO;
+import org.hcmu.hcmupojo.dto.MapPointDTO;
 import org.hcmu.hcmuserver.service.MapService;
+import org.hcmu.hcmuserver.service.MapEdgeService;
+import org.hcmu.hcmuserver.service.MapPointService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +25,12 @@ public class MapController {
 
     @Autowired
     private MapService mapService;
+
+    @Autowired
+    private MapPointService mapPointService;
+
+    @Autowired
+    private MapEdgeService mapEdgeService;
 
     @AutoLog("获取所有地图")
     @Operation(description = "获取所有地图", summary = "获取所有地图")
@@ -55,5 +65,75 @@ public class MapController {
     @DeleteMapping("/{mapId}")
     public Result<String> deleteMap(@PathVariable Long mapId) {
         return mapService.deleteMapById(mapId);
+    }
+
+    @AutoLog("获取所有地图点")
+    @Operation(description = "获取所有地图点", summary = "获取所有地图点")
+    @GetMapping("/points")
+    public Result<List<MapPointDTO.MapPointListDTO>> getAllMapPoints() {
+        return mapPointService.getAllMapPoints();
+    }
+
+    @AutoLog("创建地图点")
+    @Operation(description = "创建地图点", summary = "创建地图点")
+    @PostMapping("/points")
+    public Result<MapPointDTO.MapPointListDTO> createMapPoint(@RequestBody @Valid MapPointDTO.MapPointCreateDTO createDTO) {
+        return mapPointService.createMapPoint(createDTO);
+    }
+
+    @AutoLog("获取地图点详情")
+    @Operation(description = "获取地图点详情", summary = "获取地图点详情")
+    @GetMapping("/points/{pointId}")
+    public Result<MapPointDTO.MapPointListDTO> getMapPointById(@PathVariable Long pointId) {
+        return mapPointService.findMapPointById(pointId);
+    }
+
+    @AutoLog("更新地图点信息")
+    @Operation(description = "更新地图点信息", summary = "更新地图点信息")
+    @PutMapping("/points/{pointId}")
+    public Result<String> updateMapPoint(@PathVariable Long pointId, @RequestBody @Valid MapPointDTO.MapPointUpdateDTO updateDTO) {
+        return mapPointService.updateMapPointById(pointId, updateDTO);
+    }
+
+    @AutoLog("删除地图点")
+    @Operation(description = "删除地图点", summary = "删除地图点")
+    @DeleteMapping("/points/{pointId}")
+    public Result<String> deleteMapPoint(@PathVariable Long pointId) {
+        return mapPointService.deleteMapPointById(pointId);
+    }
+
+    @AutoLog("获取所有地图边")
+    @Operation(description = "获取所有地图边", summary = "获取所有地图边")
+    @GetMapping("/edges")
+    public Result<List<MapEdgeDTO.MapEdgeListDTO>> getAllMapEdges() {
+        return mapEdgeService.getAllMapEdges();
+    }
+
+    @AutoLog("创建地图边")
+    @Operation(description = "创建地图边", summary = "创建地图边")
+    @PostMapping("/edges")
+    public Result<MapEdgeDTO.MapEdgeListDTO> createMapEdge(@RequestBody @Valid MapEdgeDTO.MapEdgeCreateDTO createDTO) {
+        return mapEdgeService.createMapEdge(createDTO);
+    }
+
+    @AutoLog("获取地图边详情")
+    @Operation(description = "获取地图边详情", summary = "获取地图边详情")
+    @GetMapping("/edges/{edgeId}")
+    public Result<MapEdgeDTO.MapEdgeListDTO> getMapEdgeById(@PathVariable Long edgeId) {
+        return mapEdgeService.findMapEdgeById(edgeId);
+    }
+
+    @AutoLog("更新地图边信息")
+    @Operation(description = "更新地图边信息", summary = "更新地图边信息")
+    @PutMapping("/edges/{edgeId}")
+    public Result<String> updateMapEdge(@PathVariable Long edgeId, @RequestBody @Valid MapEdgeDTO.MapEdgeUpdateDTO updateDTO) {
+        return mapEdgeService.updateMapEdgeById(edgeId, updateDTO);
+    }
+
+    @AutoLog("删除地图边")
+    @Operation(description = "删除地图边", summary = "删除地图边")
+    @DeleteMapping("/edges/{edgeId}")
+    public Result<String> deleteMapEdge(@PathVariable Long edgeId) {
+        return mapEdgeService.deleteMapEdgeById(edgeId);
     }
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,6 +17,8 @@ public class MapEdge {
     private Long fromPointId;
     @TableField("to_point_id")
     private Long toPointId;
+    @TableField("distance")
+    private BigDecimal distance;
     @TableLogic
     @TableField("is_deleted")
     private Integer isDeleted;
@@ -23,4 +26,5 @@ public class MapEdge {
     private LocalDateTime createTime;
     @TableField("update_time")
     private LocalDateTime updateTime;
+
 }

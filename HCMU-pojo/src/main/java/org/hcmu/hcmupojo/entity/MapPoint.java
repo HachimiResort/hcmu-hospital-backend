@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -22,6 +23,8 @@ public class MapPoint {
     private Integer type;
     @TableField("point_name")
     private String pointName;
+    @TableField("room_code")
+    private String roomCode;
     @TableLogic
     @TableField("is_deleted")
     private Integer isDeleted;
