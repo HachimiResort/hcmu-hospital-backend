@@ -16,6 +16,9 @@ public class DoctorProfile {
     @TableField("department_id")
     private Long departmentId; // 所属科室ID
 
+    @TableField("location_id")
+    private Long locationId; // 关联map_point的point_id
+
     @TableField("title")
     private String title; // 职称
 
