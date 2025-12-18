@@ -26,6 +26,9 @@ public class DoctorProfileDTO {
         private String userName; // 关联用户表的用户名
         private String name;
         private Long departmentId;
+        private Long locationId;
+        private String roomCode;
+        private String locationName;
         private String departmentName; // 关联科室表的科室名称
         private String title;
         private String specialty;
@@ -40,6 +43,9 @@ public class DoctorProfileDTO {
         private String userName;
         private String name;
         private Long departmentId;
+        private Long locationId;
+        private String roomCode;
+        private String locationName;
         private String departmentName;
         private String title;
         private String specialty;
@@ -65,18 +71,22 @@ public class DoctorProfileDTO {
 
         @NotNull(message = "简介不能为空")
         private String bio;
+
+        private Long locationId;
     }
 
     // 更新请求
     @Data
     public static class DoctorProfileUpdateDTO {
         private Long departmentId;
+        private Long locationId;
         private String title;
         private String specialty;
         private String bio;
 
         public void updateDoctorProfile(DoctorProfile doctorProfile) {
             if (departmentId != null) doctorProfile.setDepartmentId(departmentId);
+            if (locationId != null) doctorProfile.setLocationId(locationId);
             if (title != null && !title.trim().isEmpty()) doctorProfile.setTitle(title);
             if (specialty != null && !specialty.trim().isEmpty()) doctorProfile.setSpecialty(specialty);
             if (bio != null && !bio.trim().isEmpty()) doctorProfile.setBio(bio);

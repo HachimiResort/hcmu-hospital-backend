@@ -17,6 +17,7 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
+import org.hcmu.hcmupojo.entity.MapPoint;
 import org.hcmu.hcmupojo.entity.User;
 import org.hcmu.hcmuserver.mapper.department.DepartmentMapper;
 import org.hcmu.hcmuserver.mapper.doctorprofile.DoctorProfileMapper;
@@ -225,6 +226,7 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
         queryWrapper.select(DoctorProfile::getDoctorProfileId,
                         DoctorProfile::getUserId,
                         DoctorProfile::getDepartmentId,
+                        DoctorProfile::getLocationId,
                         DoctorProfile::getTitle,
                         DoctorProfile::getSpecialty,
                         DoctorProfile::getCreateTime)
@@ -232,6 +234,9 @@ public class DepartmentServiceImpl extends MPJBaseServiceImpl<DepartmentMapper, 
                 .selectAs(User::getUserName, "userName")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
+                .leftJoin(MapPoint.class, MapPoint::getPointId, DoctorProfile::getLocationId)
+                .selectAs(MapPoint::getRoomCode, "room_code")
+                .selectAs(MapPoint::getPointName, "location_name")
                 .eq(DoctorProfile::getDepartmentId, departmentId) // 筛选当前科室
                 .orderByDesc(DoctorProfile::getCreateTime);
 

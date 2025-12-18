@@ -17,6 +17,7 @@ import org.hcmu.hcmupojo.dto.PageDTO;
 import org.hcmu.hcmupojo.entity.Department;
 import org.hcmu.hcmupojo.entity.DoctorProfile;
 import org.hcmu.hcmupojo.entity.DoctorSchedule;
+import org.hcmu.hcmupojo.entity.MapPoint;
 import org.hcmu.hcmupojo.entity.Role;
 import org.hcmu.hcmupojo.entity.Schedule;
 import org.hcmu.hcmupojo.entity.ScheduleTemplate;
@@ -109,6 +110,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
 
         DoctorProfile doctorProfile = new DoctorProfile();
         BeanUtils.copyProperties(createDTO, doctorProfile);
+        if (doctorProfile.getLocationId() == null) {
+            doctorProfile.setLocationId(0L);
+        }
         doctorProfile.setCreateTime(LocalDateTime.now());
         doctorProfile.setUpdateTime(LocalDateTime.now());
         doctorProfile.setIsDeleted(0);
@@ -130,6 +134,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     queryWrapper.select(DoctorProfile::getDoctorProfileId,
             DoctorProfile::getUserId,
             DoctorProfile::getDepartmentId,
+            DoctorProfile::getLocationId,
             DoctorProfile::getTitle,
             DoctorProfile::getSpecialty,
             DoctorProfile::getCreateTime)
@@ -138,6 +143,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         .selectAs(User::getName, "name")
         .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
         .selectAs(Department::getName, "departmentName")
+        .leftJoin(MapPoint.class, MapPoint::getPointId, DoctorProfile::getLocationId)
+        .selectAs(MapPoint::getRoomCode, "room_code")
+        .selectAs(MapPoint::getPointName, "location_name")
         .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
         .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
         .eq(Role::getType, RoleTypeEnum.DOCTOR.getCode())
@@ -195,6 +203,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile = new DoctorProfile();
             doctorProfile.setUserId(userId);
             doctorProfile.setDepartmentId(0L); // 默认department_id=0，表示没分配部门
+            doctorProfile.setLocationId(0L); // 默认location_id=0
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
@@ -206,6 +215,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     queryWrapper.select(DoctorProfile::getDoctorProfileId,
             DoctorProfile::getUserId,
             DoctorProfile::getDepartmentId,
+            DoctorProfile::getLocationId,
             DoctorProfile::getTitle,
             DoctorProfile::getSpecialty,
             DoctorProfile::getBio,
@@ -216,6 +226,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         .selectAs(User::getName, "name")
         .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
         .selectAs(Department::getName, "departmentName")
+        .leftJoin(MapPoint.class, MapPoint::getPointId, DoctorProfile::getLocationId)
+        .selectAs(MapPoint::getRoomCode, "room_code")
+        .selectAs(MapPoint::getPointName, "location_name")
         .eq(User::getUserId, userId)
         .eq(DoctorProfile::getIsDeleted, 0);
 
@@ -269,6 +282,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile = new DoctorProfile();
             doctorProfile.setUserId(userId);
             doctorProfile.setDepartmentId(0L); // 默认没分配部门
+            doctorProfile.setLocationId(0L); // 默认location_id=0
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
@@ -372,6 +386,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         doctorProfile = new DoctorProfile();
                         doctorProfile.setUserId(user.getUserId());
                         doctorProfile.setDepartmentId(0L); // 默认没分配部门
+                        doctorProfile.setLocationId(0L); // 默认location_id=0
                         doctorProfile.setTitle("暂无");
                         doctorProfile.setSpecialty("暂无");
                         doctorProfile.setBio("暂无");
@@ -383,6 +398,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             queryWrapper.select(DoctorProfile::getDoctorProfileId,
                     DoctorProfile::getUserId,
                     DoctorProfile::getDepartmentId,
+                    DoctorProfile::getLocationId,
                     DoctorProfile::getTitle,
                     DoctorProfile::getSpecialty,
                     DoctorProfile::getBio,
@@ -392,6 +408,9 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                 .selectAs(User::getUserName, "userName")
                 .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
                 .selectAs(Department::getName, "departmentName")
+                .leftJoin(MapPoint.class, MapPoint::getPointId, DoctorProfile::getLocationId)
+                .selectAs(MapPoint::getRoomCode, "room_code")
+                .selectAs(MapPoint::getPointName, "location_name")
                 .eq(User::getUserId, user.getUserId())
                 .eq(DoctorProfile::getIsDeleted, 0);
 

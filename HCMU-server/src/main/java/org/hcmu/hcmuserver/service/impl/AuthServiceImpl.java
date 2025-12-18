@@ -224,6 +224,7 @@ public class AuthServiceImpl extends MPJBaseServiceImpl<UserMapper, User> implem
                 case DOCTOR:
                     DoctorProfile doctorProfile = new DoctorProfile();
                     doctorProfile.setUserId(user.getUserId());
+                    doctorProfile.setLocationId(0L);
 
                     LambdaQueryWrapper<Department> departmentQueryWrapper = new LambdaQueryWrapper<>();
                     departmentQueryWrapper.eq(Department::getName, exactPendingUser.getDepartmentName());

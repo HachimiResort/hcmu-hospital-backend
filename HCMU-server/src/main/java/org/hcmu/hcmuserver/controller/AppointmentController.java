@@ -42,13 +42,13 @@ public class AppointmentController {
     @AutoLog("生成签到token")
     @Operation(description = "生成签到二维码token", summary = "生成签到二维码token")
     @GetMapping(value = "/check-in/token", produces = MediaType.IMAGE_PNG_VALUE)
-    public ResponseEntity<byte[]> generateCheckInToken() {
+    public ResponseEntity<byte[]> generateCheckInToken(@ModelAttribute AppointmentDTO.AppointmentCheckInGetRequestDTO requestDTO) {
         Result<AppointmentDTO.AppointmentCheckInTokenDTO> tokenResult = appointmentService.generateCheckInToken();
         if (tokenResult.getCode() != 200 || tokenResult.getData() == null) {
             return ResponseEntity.internalServerError().build();
         }
 
-        String content = String.format("{\"check-in-token\":\"%s\"}", tokenResult.getData().getToken());
+        String content = String.format("{\"check-in-token\":\"%s\", \"location-id\":%d}", tokenResult.getData().getToken(), requestDTO.getLocationId());
         try {
             byte[] image = QrCodeUtil.generatePng(content, 240, 240);
             return ResponseEntity.ok()

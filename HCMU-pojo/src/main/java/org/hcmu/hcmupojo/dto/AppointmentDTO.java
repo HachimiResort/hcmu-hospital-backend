@@ -74,5 +74,9 @@ public class AppointmentDTO {
         private String token;
     }
 
+    @Data
+    public static class AppointmentCheckInGetRequestDTO {
+        private Long locationId;
+    }
 
 }
