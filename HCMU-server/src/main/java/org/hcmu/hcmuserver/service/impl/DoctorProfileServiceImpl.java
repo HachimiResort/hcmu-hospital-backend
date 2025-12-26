@@ -132,7 +132,6 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
     public Result<PageDTO<DoctorProfileDTO.DoctorProfileListDTO>> getDoctorProfiles(DoctorProfileDTO.DoctorProfileGetRequestDTO requestDTO) {
     MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
     queryWrapper.select(DoctorProfile::getDoctorProfileId,
-            DoctorProfile::getUserId,
             DoctorProfile::getDepartmentId,
             DoctorProfile::getLocationId,
             DoctorProfile::getTitle,
@@ -141,6 +140,7 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
         .leftJoin(DoctorProfile.class, DoctorProfile::getUserId, User::getUserId)
         .selectAs(User::getUserName, "userName")
         .selectAs(User::getName, "name")
+        .selectAs(User::getUserId, "userId")
         .leftJoin(Department.class, Department::getDepartmentId, DoctorProfile::getDepartmentId)
         .selectAs(Department::getName, "departmentName")
         .leftJoin(MapPoint.class, MapPoint::getPointId, DoctorProfile::getLocationId)
@@ -207,6 +207,8 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
+            doctorProfile.setCreateTime(LocalDateTime.now());
+            doctorProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(doctorProfile);
         }
 
@@ -286,6 +288,8 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
             doctorProfile.setTitle("暂无");
             doctorProfile.setSpecialty("暂无");
             doctorProfile.setBio("暂无");
+            doctorProfile.setCreateTime(LocalDateTime.now());
+            doctorProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(doctorProfile);
             log.info("为用户{}创建默认医生档案: {}", userId, doctorProfile.getDoctorProfileId());
         }
@@ -390,6 +394,8 @@ public class DoctorProfileServiceImpl extends ServiceImpl<DoctorProfileMapper, D
                         doctorProfile.setTitle("暂无");
                         doctorProfile.setSpecialty("暂无");
                         doctorProfile.setBio("暂无");
+                        doctorProfile.setCreateTime(LocalDateTime.now());
+                        doctorProfile.setUpdateTime(LocalDateTime.now());
                         baseMapper.insert(doctorProfile);
                     }
 
