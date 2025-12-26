@@ -488,7 +488,7 @@ public class WaitlistServiceImpl extends MPJBaseServiceImpl<WaitlistMapper, Wait
 
         // 预约（号源已在取消预约时恢复，直接调用正常预约流程即可）
         Result<AppointmentDTO.AppointmentListDTO> appointResult =
-                scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId());
+                scheduleService.appointSchedule(waitlist.getScheduleId(), waitlist.getPatientUserId(), 1);
 
         if (appointResult.getCode() != 200) {
             return Result.error(appointResult.getMsg());
