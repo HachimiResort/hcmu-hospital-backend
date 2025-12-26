@@ -123,12 +123,15 @@ public class DoctorAssistantServiceImpl implements DoctorAssistantService {
                 .ne(Department::getDepartmentId, 0);
         List<Department> departments = departmentMapper.selectList(queryWrapper);
         for (Department dept : departments) {
-            prompt += String.format("科室ID：%d，科室名称：%s；\n", dept.getDepartmentId(), dept.getName());
+            if (dept.getParentId() == null || dept.getParentId() == 0) {
+                continue;
+            }
+            prompt += String.format("科室ID(departmentId)：%d，科室名称：%s；，父科室ID(parentId)：%d\n", dept.getDepartmentId(), dept.getName(), dept.getParentId());
         }
 
-        prompt += "当推荐科室时，需要你解释一下可能的原因，可能的疾病类型等。如果用户描述的症状不明确，可以先通过提问获取更多信息再进行推荐。\n";
+        prompt += "当推荐科室时，需要你解释一下可能的原因，可能的疾病类型等。如果用户描述的症状不明确，可以先给出可能的结果，再通过提问获取更多信息帮用户定位。\n";
 
-        prompt += "你只需要以“[科室名](/pages/appointment/dep/dep?departmentId={科室ID})”的格式来推荐科室，用户就能点击转跳到对应页面进行预约挂号。\n";
+        prompt += "你只需要以“[科室名](/pages/appointment/dep/dep?parentId={父科室ID}&departmentId={科室ID})”的格式来推荐科室，用户就能点击转跳到对应页面进行预约挂号。\n";
 
 
 
