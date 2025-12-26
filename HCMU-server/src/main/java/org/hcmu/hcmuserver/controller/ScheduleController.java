@@ -90,4 +90,13 @@ public class ScheduleController {
     public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(@PathVariable Long scheduleId) {
         return scheduleService.appointSchedule(scheduleId);
     }
+
+    @AutoLog("紧急为患者预约排班号源")
+    @Operation(description = "紧急为患者预约排班", summary = "紧急为患者预约排班")
+    @PostMapping("/{scheduleId}/emergency-appoint/")
+    public Result<AppointmentDTO.AppointmentListDTO> emergencyAppointSchedule(
+            @PathVariable Long scheduleId,
+            @RequestParam Long patientUserId) {
+        return scheduleService.appointSchedule(scheduleId, patientUserId, 2);
+    }
 }

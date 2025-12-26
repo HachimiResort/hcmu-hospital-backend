@@ -680,7 +680,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId, Long patientUserId) {
+    public Result<AppointmentDTO.AppointmentListDTO> appointSchedule(Long scheduleId, Long patientUserId, Integer status) {
         DoctorSchedule schedule = baseMapper.selectById(scheduleId);
         if (schedule.getStatus() != null && !Integer.valueOf(1).equals(schedule.getStatus())) {
             return Result.error("当前排班暂不可预约");
@@ -884,7 +884,7 @@ public class ScheduleServiceImpl extends MPJBaseServiceImpl<ScheduleMapper, Doct
         appointment.setPatientUserId(patientUserId);
         appointment.setScheduleId(scheduleId);
         appointment.setVisitNo(-1);
-        appointment.setStatus(1);
+        appointment.setStatus(status);
         appointment.setOriginalFee(originalFee);
         appointment.setActualFee(actualFee);
 
