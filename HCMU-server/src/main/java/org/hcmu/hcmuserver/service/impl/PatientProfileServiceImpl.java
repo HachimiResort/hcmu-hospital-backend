@@ -89,8 +89,11 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
         .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
         .eq(requestDTO.getIdentityType() != null, PatientProfile::getIdentityType, requestDTO.getIdentityType())
+        .like(requestDTO.getUserName() != null, User::getUserName, requestDTO.getUserName())
+        .like(requestDTO.getName() != null, User::getName, requestDTO.getName())
+        .like(requestDTO.getStudentTeacherId() != null, PatientProfile::getStudentTeacherId, requestDTO.getStudentTeacherId())
         .orderByDesc(PatientProfile::getCreateTime);
-
+        
     IPage<PatientProfileDTO.PatientProfileListDTO> page = userMapper.selectJoinPage(
         new Page<>(requestDTO.getPageNum(), requestDTO.getPageSize()),
         PatientProfileDTO.PatientProfileListDTO.class,

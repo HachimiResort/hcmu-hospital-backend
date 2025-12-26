@@ -15,6 +15,9 @@ public class PatientProfileDTO {
         private Integer pageNum = 1;
         private Integer pageSize = 10;
         private Integer identityType; // 按身份类型筛选
+        private String userName;
+        private String name;
+        private String studentTeacherId;
     }
 
     // 列表展示
