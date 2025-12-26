@@ -77,7 +77,6 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
     public Result<PageDTO<PatientProfileDTO.PatientProfileListDTO>> getPatientProfiles(PatientProfileDTO.PatientProfileGetRequestDTO requestDTO) {
     MPJLambdaWrapper<User> queryWrapper = new MPJLambdaWrapper<>();
     queryWrapper.select(PatientProfile::getPatientProfileId,
-            PatientProfile::getUserId,
             PatientProfile::getIdentityType,
             PatientProfile::getStudentTeacherId,
             PatientProfile::getEmergencyContact,
@@ -85,6 +84,7 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
         .leftJoin(PatientProfile.class, PatientProfile::getUserId, User::getUserId)
         .selectAs(User::getUserName, "userName")
         .selectAs(User::getName, "name")
+        .selectAs(User::getUserId, "userId")
         .leftJoin(UserRole.class, UserRole::getUserId, User::getUserId)
         .leftJoin(Role.class, Role::getRoleId, UserRole::getRoleId)
         .eq(Role::getType, RoleTypeEnum.PATIENT.getCode())
@@ -139,6 +139,8 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
             patientProfile.setAllergyHistory("暂无");
+            patientProfile.setCreateTime(LocalDateTime.now());
+            patientProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(patientProfile);
 
             detailDTO = new PatientProfileDTO.PatientProfileDetailDTO();
@@ -171,11 +173,13 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             patientProfile = new PatientProfile();
             patientProfile.setUserId(userId);
             patientProfile.setIdentityType(0);
-            patientProfile.setStudentTeacherId("");
+            patientProfile.setStudentTeacherId("暂无");
             patientProfile.setEmergencyContact("暂无");
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
             patientProfile.setAllergyHistory("暂无");
+            patientProfile.setCreateTime(LocalDateTime.now());
+            patientProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(patientProfile);
             log.info("为用户{}创建默认患者档案: {}", userId, patientProfile.getPatientProfileId());
         }
@@ -224,6 +228,8 @@ public class PatientProfileServiceImpl extends ServiceImpl<PatientProfileMapper,
             patientProfile.setEmergencyContactPhone("暂无");
             patientProfile.setMedicalHistory("暂无");
             patientProfile.setAllergyHistory("暂无");
+            patientProfile.setCreateTime(LocalDateTime.now());
+            patientProfile.setUpdateTime(LocalDateTime.now());
             baseMapper.insert(patientProfile);
             log.info("为用户{}创建默认患者档案: {}", userId, patientProfile.getPatientProfileId());
         }
